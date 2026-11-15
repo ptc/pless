@@ -10,6 +10,37 @@ enum IngestTests {
         MiniTest.test("Ingest: Duplikat wird erkannt und nach _abgelehnt verschoben") { try duplicateDetected() }
         MiniTest.test("Ingest: ungültige Datei wird rejected und verschoben") { try invalidRejected() }
         MiniTest.test("Ingest: gescanntes PDF → needsReview, ocrDone=false, ocrText=nil") { try scannedPDFNeedsOCR() }
+        MiniTest.test("Ingest: paralleler Import derselben Datei → einer imported, einer duplicate (kein harter Fehler)") { try concurrentSameContent() }
+    }
+
+    /// Simuliert den Watcher-Race (doppelte Lieferung): zwei Kopien, gleicher Inhalt,
+    /// werden parallel verarbeitet — einer gewinnt, der andere muss .duplicate liefern.
+    private static func concurrentSameContent() throws {
+        let (vault, db, root, srcDir) = try makeVault()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let fm = FileManager.default
+        let src = srcDir.appendingPathComponent("d.pdf")
+        try PDFFixture.writePDF(text: "Inhalt für den nebenläufigen Import-Test", to: src)
+        try fm.copyItem(at: src, to: srcDir.appendingPathComponent("d2.pdf"))
+        let svc = IngestService(vault: vault, db: db)
+        let s1 = try vault.stageIntoInbox(fileAt: srcDir.appendingPathComponent("d.pdf"))
+        let s2 = try vault.stageIntoInbox(fileAt: srcDir.appendingPathComponent("d2.pdf"))
+
+        var outcomes: [IngestOutcome?] = [nil, nil]
+        DispatchQueue.concurrentPerform(iterations: 2) { i in
+            outcomes[i] = try? svc.process(fileAt: i == 0 ? s1 : s2)
+        }
+        let count: (IngestOutcome) -> Bool = { o in
+            if case .imported = o { return true }
+            if case .duplicate = o { return true }
+            return false
+        }
+        try MiniTest.expect(outcomes.allSatisfy { $0 != nil && count($0!) }, "kein Ergebnis darf nil (Throw) sein: \(outcomes)")
+        let imported = outcomes.filter { if case .imported = $0 { return true }; return false }.count
+        let dups = outcomes.filter { if case .duplicate = $0 { return true }; return false }.count
+        try MiniTest.expectEqual(imported, 1)
+        try MiniTest.expectEqual(dups, 1)
+        try MiniTest.expectEqual(try db.allDocuments().count, 1)
     }
 
     // MARK: - Fixtures

@@ -12,6 +12,9 @@ public enum IngestOutcome: Equatable, Sendable {
 public struct IngestService: Sendable {
     public let vault: Vault
     public let db: Database
+    /// Serialisiert process(): Duplikat-Check (SHA) und DB-Insert müssen atomar sein,
+    /// sonst liefert ein doppelt gesehener Watcher-Event duplicateSHA256 als harten Fehler.
+    private let queue = DispatchQueue(label: "dev.pless.ingest")
 
     public init(vault: Vault, db: Database) {
         self.vault = vault
@@ -19,6 +22,12 @@ public struct IngestService: Sendable {
     }
 
     public func process(fileAt url: URL) throws -> IngestOutcome {
+        try queue.sync {
+            try processLocked(fileAt: url)
+        }
+    }
+
+    private func processLocked(fileAt url: URL) throws -> IngestOutcome {
         let fm = FileManager.default
         guard fm.fileExists(atPath: url.path) else {
             throw PlessError.io("Datei fehlt: \(url.path)")
@@ -47,7 +56,18 @@ public struct IngestService: Sendable {
             ocrDone: extraction.hasTextLayer,
             needsReview: !extraction.hasTextLayer
         )
-        doc.id = try db.insert(doc)
+        do {
+            doc.id = try db.insert(doc)
+        } catch let err as PlessError {
+            // Race: derselbe Inhalt wurde inzwischen (anderer Thread) importiert
+            if case .duplicateSHA256 = err {
+                try? moveToRejected(url)
+                if let existing = try? db.document(bySHA256: sha) {
+                    return .duplicate(existing: existing)
+                }
+            }
+            throw err
+        }
         // Textschicht vorhanden → Heuristik sofort anwenden (Titel/Datum/Korrespondent/Kategorie)
         // und Datei mit generiertem Namen nach documents/YYYY/MM legen (Phase 9).
         if extraction.hasTextLayer, let id = doc.id {

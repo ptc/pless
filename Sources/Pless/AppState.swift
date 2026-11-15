@@ -48,6 +48,10 @@ final class AppState: ObservableObject {
     private(set) var ocr: OCRService?
     private(set) var metadata: MetadataService?
     private var watcher: InboxWatcher?
+    /// Posteingang-Dateien, die gerade verarbeitet werden — der Watcher kann dieselbe
+    /// Datei mehrfach melden (write+rename, Poll), das darf nicht doppelt importieren.
+    private let inFlightLock = NSLock()
+    private var inFlightInbox = Set<String>()
 
     let vaultPath: URL
     let settings: SettingsStore
@@ -217,6 +221,10 @@ final class AppState: ObservableObject {
     /// Datei liegt bereits in inbox/ (Watcher) → direkt in die Pipeline (asynchron).
     func ingestInboxFile(_ url: URL) {
         guard let ingest, FileManager.default.fileExists(atPath: url.path) else { return }
+        inFlightLock.lock()
+        if inFlightInbox.contains(url.path) { inFlightLock.unlock(); return }
+        inFlightInbox.insert(url.path)
+        inFlightLock.unlock()
         setStatus(.busy, "Posteingang: \(url.lastPathComponent) erkannt — importiere…")
         DispatchQueue.global(qos: .userInitiated).async {
             var failure: String?
@@ -239,6 +247,7 @@ final class AppState: ObservableObject {
                 } else if case .rejected(let reason) = outcome {
                     self.setStatus(.error, "Posteingang: \(url.lastPathComponent) zurückgewiesen (\(reason)) — Datei → _abgelehnt/")
                 }
+                self.inFlightLock.lock(); self.inFlightInbox.remove(url.path); self.inFlightLock.unlock()
                 self.runOCR()
                 self.refresh()
             }
