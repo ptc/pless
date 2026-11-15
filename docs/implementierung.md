@@ -312,6 +312,7 @@ Kategorien
 | 2026-11-15 | 77d82ea | 6 | fix: Thumbnails nicht mehr kopfüber (Flip im CGContext entfernt + Orientierungs-Regressionstest); feat: OCR abbrechen (Statusleiste) + manueller OCR-Start pro Dokument in der Vorschau — 68 Tests grün |
 | 2026-11-15 | e55095c | 6 | App-Icon: `Scripts/make-icon.swift` rendert pless.icns (alle Größen, CoreGraphics), make-app.sh packt es ins Bundle (`CFBundleIconFile=pless`) — 68 Tests grün |
 | 2026-11-15 | a78152b | 6 | fix: bestehende (kopfüber) Thumbnails werden beim Start einmalig invalidiert (Format-Marker `.format-v2` in thumbnails/) und on demand neu gerendert — E2E verifiziert, 69 Tests grün |
+| 2026-11-15 | e160160 | 6 | fix: Import-Race (doppelt gemeldete Posteingang-Datei → duplicateSHA256 als harter Fehler) — process() serialisiert, Race → .duplicate, in-flight-Schutz in AppState, lesbare PlessError-Texte — 70 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
