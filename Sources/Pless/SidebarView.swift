@@ -222,7 +222,12 @@ struct SidebarView: View {
         func kids(_ p: Int64?) -> [CatNode] {
             cats.filter { $0.parentId == p }
                 .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
-                .map { CatNode(id: $0.id, name: $0.name, parentId: $0.parentId, color: $0.color, children: kids($0.id)) }
+                // Kinder == nil → Blatt (kein Aufklapp-Pfeil); nur echte Unterkategorien zeigen ein „>“
+                .map { c in
+                    let children = kids(c.id)
+                    return CatNode(id: c.id, name: c.name, parentId: c.parentId, color: c.color,
+                                   children: children.isEmpty ? nil : children)
+                }
         }
         return kids(nil)
     }
