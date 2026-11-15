@@ -104,18 +104,50 @@ struct StatusBarView: View {
     }
 }
 
-/// Dokumentliste als Thumbnail-Gitter (Karten mit Vorschau, Titel, Korrespondent/Datum).
+/// Dokumentliste als Thumbnail-Gitter, gruppiert nach Jahr/Monat (Datum des Dokuments,
+/// Fallback: Importdatum) mit Trenner-Überschrift pro Monat.
 struct DocumentListView: View {
     @EnvironmentObject var state: AppState
 
+    /// Gruppierung: key "yyyy-MM" → (key, „Februar 2026“, Treffer), absteigend sortiert.
+    private var groups: [(key: String, label: String, hits: [SearchHit])] {
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "de_DE")
+        df.dateFormat = "MMMM yyyy"
+        var dict: [String: [SearchHit]] = [:]
+        for h in state.hits {
+            let d = h.document.documentDate ?? h.document.addedAt
+            dict[String(d.prefix(7)), default: []].append(h)
+        }
+        return dict.keys.sorted(by: >).map { key in
+            let parts = key.split(separator: "-")
+            var label = key
+            if parts.count == 2, let y = Int(parts[0]), let m = Int(parts[1]) {
+                var c = DateComponents()
+                c.year = y
+                c.month = m
+                if let date = Calendar.current.date(from: c) { label = df.string(from: date) }
+            }
+            return (key, label, dict[key] ?? [])
+        }
+    }
+
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150, maximum: 210), spacing: 14)], spacing: 14) {
-                ForEach(state.hits, id: \.document.id) { hit in
-                    DocumentCard(hit: hit, selected: state.selection == hit.document.id)
-                        .onTapGesture {
-                            if let id = hit.document.id { state.selection = id }
+            LazyVStack(alignment: .leading, spacing: 16) {
+                ForEach(groups, id: \.key) { g in
+                    Text(g.label)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                        .padding(.top, g.key == groups.first?.key ? 0 : 8)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150, maximum: 210), spacing: 14)], spacing: 14) {
+                        ForEach(g.hits, id: \.document.id) { hit in
+                            DocumentCard(hit: hit, selected: state.selection == hit.document.id)
+                                .onTapGesture {
+                                    if let id = hit.document.id { state.selection = id }
+                                }
                         }
+                    }
                 }
             }
             .padding(12)

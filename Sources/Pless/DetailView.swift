@@ -3,10 +3,13 @@ import AppKit
 import PDFKit
 import PlessCore
 
+/// Anzeigemodus der PDF-Vorschau.
+enum PDFMode { case fit, height, full }  // fit = an Fenster, height = volle skalierte Höhe, full = 100 %
+
 struct DetailView: View {
     @EnvironmentObject var state: AppState
-    @State private var pdfAutoFit = true     // true = automatisch an Fenster anpassen
-    @State private var pdfZoom: CGFloat = 1.0 // 1.0 = 100 % (volle Größe)
+    @State private var pdfMode: PDFMode = .height  // Default: ganze skalierte Höhe
+    @State private var pdfZoom: CGFloat = 1.0      // nur in .full wirksam (1.0 = 100 %)
 
     var doc: PlessCore.Document? {
         state.hits.first { $0.document.id == state.selection }?.document
@@ -15,25 +18,25 @@ struct DetailView: View {
     var body: some View {
         if let doc, let vault = state.vault {
             VStack(spacing: 0) {
-                // Zoom-Leiste: Anpassen (auto) / 100 % (volle Größe) / Stufen
+                // Zoom-Leiste: Modus (Anpassen / Höhe / 100 %) + Stufen
                 HStack(spacing: 8) {
+                    Picker("Ansicht", selection: $pdfMode) {
+                        Text("Anpassen").tag(PDFMode.fit)
+                        Text("Höhe").tag(PDFMode.height)
+                        Text("100 %").tag(PDFMode.full)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 240)
                     Button {
-                        pdfAutoFit = true
-                        pdfZoom = 1.0
-                    } label: { Label("Anpassen", systemImage: "arrow.up.left.and.arrow.down.right") }
-                    Button {
-                        pdfAutoFit = false
+                        pdfMode = .full
                         pdfZoom = max(0.25, pdfZoom / 1.25)
                     } label: { Image(systemName: "minus.magnifyingglass") }
                     Text("\(Int(pdfZoom * 100)) %").font(.caption).frame(width: 44)
                     Button {
-                        pdfAutoFit = false
+                        pdfMode = .full
                         pdfZoom = min(8, pdfZoom * 1.25)
                     } label: { Image(systemName: "plus.magnifyingglass") }
-                    Button("100 %") {
-                        pdfAutoFit = false
-                        pdfZoom = 1.0
-                    }
                     Spacer()
                 }
                 .buttonStyle(.borderless)
@@ -42,7 +45,7 @@ struct DetailView: View {
                 .padding(.vertical, 4)
                 Divider()
                 PDFViewRepresentable(url: vault.root.appendingPathComponent(doc.relativePath),
-                                     autoFit: $pdfAutoFit, zoom: $pdfZoom)
+                                     mode: $pdfMode, zoom: $pdfZoom)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Divider()
                 if state.isEditing {
@@ -60,15 +63,31 @@ struct DetailView: View {
     }
 }
 
+/// PDFView, das bei Modus „Höhe“ die Skalierung an die View-Höhe koppelt (auch bei Resize).
+final class ScaledPDFView: PDFView {
+    var fitToHeight = false
+
+    override func layout() {
+        super.layout()
+        if fitToHeight, let page = currentPage ?? document?.page(at: 0) {
+            let pageHeight = page.bounds(for: .mediaBox).height
+            if pageHeight > 0, bounds.height > 0 {
+                scaleFactor = bounds.height / pageHeight
+            }
+        }
+    }
+}
+
 struct PDFViewRepresentable: NSViewRepresentable {
     let url: URL
-    @Binding var autoFit: Bool   // true → autoScales (an Fenster anpassen)
-    @Binding var zoom: CGFloat   // scaleFactor; bei autoFit=1.0 = automatisch
+    @Binding var mode: PDFMode
+    @Binding var zoom: CGFloat
 
     func makeNSView(context: Context) -> PDFView {
-        let v = PDFView()
+        let v = ScaledPDFView()
         v.document = PDFDocument(url: url)
-        v.autoScales = true
+        v.autoScales = false
+        v.fitToHeight = true
         return v
     }
 
@@ -76,8 +95,26 @@ struct PDFViewRepresentable: NSViewRepresentable {
         if nsView.document?.documentURL != url {
             nsView.document = PDFDocument(url: url)
         }
-        nsView.autoScales = autoFit
-        nsView.scaleFactor = zoom
+        guard let v = nsView as? ScaledPDFView else { return }
+        switch mode {
+        case .fit:
+            v.fitToHeight = false
+            v.autoScales = true
+            v.scaleFactor = 1.0
+        case .height:
+            v.autoScales = false
+            v.fitToHeight = true
+            if let page = v.currentPage ?? v.document?.page(at: 0) {
+                let pageHeight = page.bounds(for: .mediaBox).height
+                if pageHeight > 0, v.bounds.height > 0 {
+                    v.scaleFactor = v.bounds.height / pageHeight
+                }
+            }
+        case .full:
+            v.fitToHeight = false
+            v.autoScales = false
+            v.scaleFactor = zoom
+        }
     }
 }
 
