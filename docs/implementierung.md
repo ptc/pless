@@ -308,6 +308,7 @@ Kategorien
 | 2026-11-15 | 5317610 | 6 | UI: Thumbnail-Gitter statt Zeilen (Tap selektiert, blauer Rahmen), PDF-Zoom (Anpassen/100 %/±) |
 | 2026-11-15 | 00da931 | 6 | UI: Gitter gruppiert nach Jahr/Monat mit Trenner-Überschriften; PDF-Vorschau default „volle skalierte Höhe“ + Modus-Picker (Anpassen/Höhe/100 %) — 61 Tests grün |
 | 2026-11-15 | 07a3018 | 6 | UI: Doubletten-Hinweis beim Import — neuer Status `.warning` (orange) in der Statusleiste; Duplikat (SHA-256) wird nicht erneut importiert, Datei → `_abgelehnt/`, vorhandenes Dokument wird selektiert — 61 Tests grün |
+| 2026-11-15 | 64e6a44 | 6 | Crash-sichere Imports: stageIntoInbox kopiert nur noch (Original verschwindet nie); RecoveryService beim Start (App + MCP) finalisiert abgebrochene Imports, korrigiert DB-Pfade per SHA-256, adoptiert Waisen-PDFs; Sidebar: Posteingang/Vault im Finder öffnen — 65 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
