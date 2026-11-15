@@ -297,6 +297,7 @@ Kategorien
 | 2026-11-15 | 5bd4302 | 11 | UI: Settings (Cmd+,) + Empty States |
 | 2026-11-15 | 9e62662 | 12 | Docs: README + Phase 10/11/12 abgehakt |
 | 2026-11-15 | a5be7e9 | 12 | build: Scripts/make-app.sh → dist/Pless.app (Release, ad-hoc signiert) |
+| 2026-11-15 | 26305d7 | 11 | fix: Settings-Sheet per „Fertig“/Esc schließbar |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
