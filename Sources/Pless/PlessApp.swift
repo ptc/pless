@@ -65,6 +65,12 @@ struct PlessApp: App {
                     .keyboardShortcut("I", modifiers: .command)
                 Button("Posteingang jetzt scannen") { state.scanInbox() }
             }
+            CommandMenu("Auswahl") {
+                Button("Alle auswählen") { state.selectAll() }
+                    .keyboardShortcut("a", modifiers: .command)
+                Button("Auswahl aufheben") { state.clearSelection() }
+                    .keyboardShortcut("a", modifiers: [.command, .shift])
+            }
             CommandGroup(replacing: .appSettings) {
                 Button("Einstellungen…") { state.showSettings = true }
                     .keyboardShortcut(",", modifiers: .command)

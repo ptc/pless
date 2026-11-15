@@ -28,6 +28,8 @@ final class MetadataDraft: ObservableObject {
 final class AppState: ObservableObject {
     @Published var hits: [SearchHit] = []
     @Published var selection: Int64?
+    /// Mehrfachauswahl im Gitter (Klick = nur diese, Cmd+Klick = umschalten, Shift+Klick = Bereich).
+    @Published var selectionSet: Set<Int64> = []
     @Published var searchText: String = ""
     @Published var sidebarSelection: SidebarSelection = .all
     @Published var errorMessage: String?
@@ -110,6 +112,7 @@ final class AppState: ObservableObject {
                 selection = hits.first?.document.id
             }
             if selection == nil { selection = hits.first?.document.id } // erstes Dokument vorselektieren
+            selectionSet = selectionSet.intersection(Set(hits.compactMap { $0.document.id }))
         } catch {
             errorMessage = "Aktualisieren fehlgeschlagen: \(error)"
         }
@@ -118,6 +121,61 @@ final class AppState: ObservableObject {
     }
 
     var idleText: String { "Bereit — \(hits.count) Dokument(e) im Vault · Posteingang: \(inboxCount)" }
+
+    // MARK: - Mehrfachauswahl & Bulk
+
+    /// Auswahl im Gitter: normal = nur diese, additive (Cmd) = umschalten, range (Shift) = Bereich.
+    func select(_ id: Int64, additive: Bool = false, range: Bool = false) {
+        if range, let anchor = selection,
+           let a = hits.firstIndex(where: { $0.document.id == anchor }),
+           let b = hits.firstIndex(where: { $0.document.id == id }) {
+            let lo = min(a, b), hi = max(a, b)
+            selectionSet = Set(hits[lo...hi].compactMap { $0.document.id })
+            selection = id
+            return
+        }
+        if additive {
+            if selectionSet.contains(id) { selectionSet.remove(id) } else { selectionSet.insert(id) }
+        } else {
+            selectionSet = [id]
+        }
+        selection = id
+    }
+
+    func selectAll() {
+        selectionSet = Set(hits.compactMap { $0.document.id })
+        selection = hits.first?.document.id
+    }
+
+    func clearSelection() { selectionSet = [] }
+
+    /// Bulk: Kategorie und/oder Tag auf alle ausgewählten Dokumente setzen.
+    /// Kategorie wird über saveMetadata gesetzt (andere Felder bleiben erhalten, Datei wird
+    /// ggf. umbenannt, wenn das Template {category} enthält); Tag per findOrCreate + INSERT OR IGNORE.
+    @discardableResult
+    func bulkAssign(categoryId: Int64?, tagName: String?) -> (ok: Int, failed: [String]) {
+        guard let db, let metadata else { return (0, ["kein Vault geladen"]) }
+        var ok = 0
+        var failed: [String] = []
+        for id in selectionSet.sorted() {
+            do {
+                if let cat = categoryId {
+                    guard let doc = try db.document(byId: id) else { continue }
+                    _ = try metadata.saveMetadata(documentId: id, title: doc.title, documentDate: doc.documentDate,
+                                                   correspondentId: doc.correspondentId, categoryId: cat, notes: doc.notes)
+                }
+                if let tag = tagName, !tag.isEmpty {
+                    let tid = try db.findOrCreateTag(name: tag)
+                    try db.addTagToDocument(documentId: id, tagId: tid) // OR IGNORE → idempotent
+                }
+                ok += 1
+            } catch {
+                failed.append(error.localizedDescription)
+            }
+        }
+        refresh()
+        return (ok, failed)
+    }
 
     /// Status setzen; bei `.ok` optional nach `seconds` automatisch zurück auf „Bereit“.
     func setStatus(_ kind: StatusKind, _ text: String, autoIdleAfter seconds: TimeInterval? = nil) {
@@ -212,8 +270,8 @@ final class AppState: ObservableObject {
                 }
                 self.runOCR()
                 self.refresh()
-                if let last = importedIds.last { self.selection = last } // neues Dokument direkt anzeigen
-                else if let dup = duplicates.last, let id = dup.id { self.selection = id } // nur Duplikat: vorhandenes Dokument zeigen
+                if let last = importedIds.last { self.selection = last; self.selectionSet = [last] } // neues Dokument direkt anzeigen
+                else if let dup = duplicates.last, let id = dup.id { self.selection = id; self.selectionSet = [id] } // nur Duplikat: vorhandenes Dokument zeigen
             }
         }
     }
@@ -240,10 +298,10 @@ final class AppState: ObservableObject {
                     self.errorMessage = "Import aus Posteingang fehlgeschlagen — \(failure)"
                 } else if case .imported(let doc) = outcome {
                     self.setStatus(.ok, "Importiert: \(doc.title ?? doc.filename) → \(doc.relativePath)", autoIdleAfter: 6)
-                    if let id = doc.id { self.selection = id }
+                    if let id = doc.id { self.selection = id; self.selectionSet = [id] }
                 } else if case .duplicate(let existing) = outcome {
                     self.setStatus(.warning, "Posteingang: Duplikat „\(existing.title ?? existing.filename)“ bereits im Vault — Datei → _abgelehnt/")
-                    if let id = existing.id { self.selection = id } // vorhandenes Dokument in der Liste markieren
+                    if let id = existing.id { self.selection = id; self.selectionSet = [id] } // vorhandenes Dokument in der Liste markieren
                 } else if case .rejected(let reason) = outcome {
                     self.setStatus(.error, "Posteingang: \(url.lastPathComponent) zurückgewiesen (\(reason)) — Datei → _abgelehnt/")
                 }

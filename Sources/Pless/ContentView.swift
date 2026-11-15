@@ -49,6 +49,10 @@ struct ContentView: View {
             } message: {
                 Text(state.errorMessage ?? "")
             }
+            if state.selectionSet.count > 1 {
+                Divider()
+                BulkActionBar()
+            }
             Divider()
             StatusBarView()
         }
@@ -114,6 +118,55 @@ struct StatusBarView: View {
     }
 }
 
+/// Bulk-Leiste über der Statusleiste: Kategorie und/oder Tag auf die Mehrfachauswahl setzen.
+struct BulkActionBar: View {
+    @EnvironmentObject var state: AppState
+    @State private var categoryId: Int64?
+    @State private var tag = ""
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Label("\(state.selectionSet.count) ausgewählt", systemImage: "checkmark.circle.fill")
+                .font(.caption).foregroundStyle(.tint)
+            Picker("Kategorie", selection: $categoryId) {
+                Text("Kategorie nicht ändern").tag(nil as Int64?)
+                ForEach(state.categories.filter { $0.id != nil }, id: \.id) { c in
+                    Text(c.name).tag(c.id)
+                }
+            }
+            .labelsHidden()
+            .frame(width: 190)
+            TextField("Tag zuweisen…", text: $tag)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 170)
+                .onSubmit(apply)
+            Button("Zuweisen") { apply() }
+                .disabled(categoryId == nil && tag.trimmingCharacters(in: .whitespaces).isEmpty)
+                .help("Kategorie und/oder Tag auf alle ausgewählten Dokumente setzen")
+            Spacer()
+            Button("Alle auswählen") { state.selectAll() }
+                .help("Alle sichtbaren Dokumente auswählen (Cmd+A)")
+            Button("Aufheben") { state.clearSelection() }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private func apply() {
+        let cleanTag = tag.trimmingCharacters(in: .whitespaces)
+        let r = state.bulkAssign(categoryId: categoryId, tagName: cleanTag.isEmpty ? nil : cleanTag)
+        if r.failed.isEmpty {
+            state.setStatus(.ok, "\(r.ok) Dokument(e) aktualisiert (Kategorie/Tag)", autoIdleAfter: 6)
+        } else {
+            state.setStatus(.error, "Bulk: \(r.ok) ok, \(r.failed.count) fehlgeschlagen — \(r.failed.joined(separator: "; "))")
+            state.errorMessage = "Bulk-Operation: \(r.failed.joined(separator: "; "))"
+        }
+        tag = ""
+        categoryId = nil
+    }
+}
+
 /// Dokumentliste als Thumbnail-Gitter, gruppiert nach Jahr/Monat (Datum des Dokuments,
 /// Fallback: Importdatum) mit Trenner-Überschrift pro Monat.
 struct DocumentListView: View {
@@ -152,9 +205,13 @@ struct DocumentListView: View {
                         .padding(.top, g.key == groups.first?.key ? 0 : 8)
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 150, maximum: 210), spacing: 14)], spacing: 14) {
                         ForEach(g.hits, id: \.document.id) { hit in
-                            DocumentCard(hit: hit, selected: state.selection == hit.document.id)
+                            DocumentCard(hit: hit, selected: hit.document.id.map { state.selectionSet.contains($0) } ?? false)
                                 .onTapGesture {
-                                    if let id = hit.document.id { state.selection = id }
+                                    guard let id = hit.document.id else { return }
+                                    let mods = NSEvent.modifierFlags
+                                    state.select(id,
+                                                 additive: mods.contains(.command),
+                                                 range: mods.contains(.shift))
                                 }
                         }
                     }

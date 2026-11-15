@@ -14,6 +14,37 @@ enum MetadataTests {
         MiniTest.test("Metadata: Korrespondent rename/delete (Referenz wird NULL)") { try correspondentManagement() }
         MiniTest.test("Metadata: Tag rename/delete (Cascade auf document_tags)") { try tagRenameDelete() }
         MiniTest.test("Metadata: OCR mit metadata wendet Heuristik an und legt Datei ab") { try ocrAppliesSuggestions() }
+        MiniTest.test("Metadata: Bulk-Muster — Kategorie auf mehrere Docs, andere Felder bleiben; Tag idempotent") { try bulkPattern() }
+    }
+
+    /// Simuliert die Bulk-Operation aus der UI: Kategorie per saveMetadata setzen (Titel/Datum/
+    /// Korrespondent bleiben erhalten), Tag per findOrCreate + addTagToDocument (INSERT OR IGNORE).
+    private static func bulkPattern() throws {
+        let (vault, db, root, srcDir) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let d1 = try ingestOne(db: db, vault: vault, srcDir: srcDir, name: "a.pdf", text: "Inhalt A")
+        let d2 = try ingestOne(db: db, vault: vault, srcDir: srcDir, name: "b.pdf", text: "Inhalt B")
+        let corrId = try db.findOrCreateCorrespondent(name: "Allianz")
+        let catId = try db.findOrCreateCategory(name: "Verträge")
+        let svc = MetadataService(vault: vault, db: db)
+
+        // wie AppState.bulkAssign: Kategorie setzen, vorhandene Felder mitgeben
+        for d in [d1, d2] {
+            let cur = try db.document(byId: d.id!)!
+            _ = try svc.saveMetadata(documentId: d.id!, title: cur.title, documentDate: cur.documentDate,
+                                     correspondentId: corrId, categoryId: catId, notes: cur.notes)
+            let tid = try db.findOrCreateTag(name: "wichtig")
+            try db.addTagToDocument(documentId: d.id!, tagId: tid)
+            try db.addTagToDocument(documentId: d.id!, tagId: tid) // doppelt → OR IGNORE
+        }
+        for d in [d1, d2] {
+            let cur = try db.document(byId: d.id!)!
+            try MiniTest.expectEqual(cur.categoryId, catId)
+            try MiniTest.expectEqual(cur.correspondentId, corrId)
+            try MiniTest.expectEqual(cur.title, d.title) // Titel unverändert
+            try MiniTest.expectEqual(try db.tags(for: d.id!).count, 1) // Tag nur einmal
+        }
+        try MiniTest.expectEqual(try db.tags().count, 1) // findOrCreate legt Tag nur einmal an
     }
 
     // MARK: - Fixtures
