@@ -305,6 +305,7 @@ Kategorien
 | 2026-11-15 | 0797fcf | 8 | UI: Import auto-selektiert, Titelleiste = Vault-Pfad, Detail zeigt Ablagepfad; Watcher-Poll auch ohne kqueue — 61 Tests grün, E2E verifiziert |
 | 2026-11-15 | 83d5e3c | 8 | UI: permanente Statusleiste (idle/busy/ok/error) — App sieht nie „kaputt“ aus |
 | 2026-11-15 | d2ee8f4 | 8 | fix: Drag&Drop auf ganzes Fenster + Drop-Hinweis, loadObject(ofClass:) statt deprecated loadItem, PDF-Dokumenttyp + application(open:) für Dock-Drops — 61 Tests grün |
+| 2026-11-15 | 5317610 | 6 | UI: Thumbnail-Gitter statt Zeilen (Tap selektiert, blauer Rahmen), PDF-Zoom (Anpassen/100 %/±) |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
