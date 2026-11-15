@@ -13,6 +13,7 @@ enum MetadataTests {
         MiniTest.test("Metadata: Kategorie rename/Farbe/Verschachteln/Zyklus/delete") { try categoryManagement() }
         MiniTest.test("Metadata: Korrespondent rename/delete (Referenz wird NULL)") { try correspondentManagement() }
         MiniTest.test("Metadata: Tag rename/delete (Cascade auf document_tags)") { try tagRenameDelete() }
+        MiniTest.test("Metadata: OCR mit metadata wendet Heuristik an und legt Datei ab") { try ocrAppliesSuggestions() }
     }
 
     // MARK: - Fixtures
@@ -186,6 +187,40 @@ enum MetadataTests {
         try MiniTest.expect(try MiniTest.unwrap(try db.document(byId: doc.id!)).correspondentId == nil,
                         "Löschen setzt correspondent_id auf NULL")
         try MiniTest.expect(try db.correspondent(named: "Allianz SE") == nil, "Korrespondent weg")
+    }
+
+    /// Gescanntes PDF (kein Textlayer) landet nach OCR inkl. Heuristik in documents/.
+    private static func ocrAppliesSuggestions() throws {
+        let (vault, db, root, srcDir) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        // gescanntes PDF: Datei in inbox, DB-Eintrag mit ocrDone=false
+        let src = srcDir.appendingPathComponent("scan.pdf")
+        try PDFFixture.writePDF(text: nil, to: src)
+        let staged = try vault.stageIntoInbox(fileAt: src)
+        guard case .imported(let doc) = try IngestService(vault: vault, db: db).process(fileAt: staged) else {
+            throw PlessError.io("Fixture nicht importiert")
+        }
+        try MiniTest.expect(doc.needsReview, "gescannt → needsReview")
+        try MiniTest.expectEqual(doc.relativePath, "inbox/scan.pdf")
+
+        let stadtwerkeId = try db.insertCorrespondent(name: "Stadtwerke")
+        let metadata = MetadataService(vault: vault, db: db)
+        let ocr = OCRService(vault: vault, db: db,
+                             recognizer: FakeTextRecognizer(text: "Stadtwerke Rechnung vom 01.03.2026"),
+                             metadata: metadata)
+        try MiniTest.expectEqual(try ocr.processPending(), 1)
+
+        let re = try MiniTest.unwrap(try db.document(byId: doc.id!))
+        try MiniTest.expect(re.ocrDone, "OCR fertig")
+        try MiniTest.expect(!re.needsReview, "Review erledigt")
+        try MiniTest.expect(re.title?.hasPrefix("Stadtwerke Rechnung") == true, "Titel: \(re.title ?? "nil")")
+        try MiniTest.expectEqual(re.documentDate, "2026-03-01")
+        try MiniTest.expectEqual(re.correspondentId, stadtwerkeId)
+        try MiniTest.expect(re.relativePath.hasPrefix("documents/2026/03/"), "Pfad: \(re.relativePath)")
+        try MiniTest.expect(re.filename.contains("Stadtwerke"), "Datei: \(re.filename)")
+        try MiniTest.expect(FileManager.default.fileExists(
+            atPath: vault.root.appendingPathComponent(re.relativePath).path))
+        try MiniTest.expect(!FileManager.default.fileExists(atPath: staged.path), "Inbox-Datei weg")
     }
 
     private static func tagRenameDelete() throws {

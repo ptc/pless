@@ -5,7 +5,8 @@ import PlessCore
 enum IngestTests {
     static func register() {
         MiniTest.test("Ingest: SHA-256 (bekannter Digest)") { try shaKnown() }
-        MiniTest.test("Ingest: Text-PDF wird importiert (ocrDone, Text in DB, Datei in inbox)") { try textPDFImported() }
+        MiniTest.test("Ingest: Text-PDF wird importiert (ocrDone, Heuristik, Datei nach documents/)") { try textPDFImported() }
+        MiniTest.test("Ingest: Heuristik setzt Datum/Korrespondent/Titel + documents/2026/02") { try textPDFHeuristics() }
         MiniTest.test("Ingest: Duplikat wird erkannt und nach _abgelehnt verschoben") { try duplicateDetected() }
         MiniTest.test("Ingest: ungültige Datei wird rejected und verschoben") { try invalidRejected() }
         MiniTest.test("Ingest: gescanntes PDF → needsReview, ocrDone=false, ocrText=nil") { try scannedPDFNeedsOCR() }
@@ -50,11 +51,35 @@ enum IngestTests {
         try MiniTest.expect(doc.ocrDone)
         try MiniTest.expect(doc.ocrText?.contains("Allianz") == true)
         try MiniTest.expectEqual(doc.pageCount, 1)
-        try MiniTest.expectEqual(doc.relativePath, "inbox/rechnung.pdf")
         try MiniTest.expectEqual(try db.allDocuments().count, 1)
-        // Datei liegt vorerst noch in der Inbox
+        // Phase 9: Heuristik hat zugeschlagen, Datei liegt mit generiertem Namen in documents/YYYY/MM
+        try MiniTest.expectEqual(doc.title, "Rechnung Nr. 42 von der Allianz")
+        try MiniTest.expect(doc.relativePath.hasPrefix("documents/"), "Pfad: \(doc.relativePath)")
+        try MiniTest.expect(doc.filename.contains("Rechnung-Nr-42"), "Datei: \(doc.filename)")
+        try MiniTest.expect(try db.category(named: "Rechnungen") != nil, "Kategorie per Schlüsselwort angelegt")
         try MiniTest.expect(FileManager.default.fileExists(
+            atPath: vault.root.appendingPathComponent(doc.relativePath).path))
+        try MiniTest.expect(!FileManager.default.fileExists(
             atPath: vault.inboxURL.appendingPathComponent("rechnung.pdf").path))
+    }
+
+    private static func textPDFHeuristics() throws {
+        let (vault, db, root, srcDir) = try makeVault()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let corrId = try db.insertCorrespondent(name: "Allianz")
+        let src = srcDir.appendingPathComponent("police.pdf")
+        try PDFFixture.writePDF(text: "Allianz Versicherung\nPolicen-Nr. 99\nvom 14.02.2026", to: src)
+        let staged = try vault.stageIntoInbox(fileAt: src)
+
+        let outcome = try IngestService(vault: vault, db: db).process(fileAt: staged)
+        guard case .imported(let doc) = outcome else {
+            throw TestFailure("erwartet .imported, erhalten \(outcome)")
+        }
+        try MiniTest.expectEqual(doc.documentDate, "2026-02-14")
+        try MiniTest.expectEqual(doc.correspondentId, corrId)
+        try MiniTest.expect(doc.title?.hasPrefix("Allianz Versicherung") == true, "Titel: \(doc.title ?? "nil")")
+        try MiniTest.expect(doc.relativePath.hasPrefix("documents/2026/02/"), "Pfad: \(doc.relativePath)")
+        try MiniTest.expect(doc.filename.contains("Allianz"), "Datei: \(doc.filename)")
     }
 
     private static func duplicateDetected() throws {
