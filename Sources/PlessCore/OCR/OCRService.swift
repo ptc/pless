@@ -5,12 +5,15 @@ public final class OCRService {
     public let vault: Vault
     public let db: Database
     public let recognizer: TextRecognizer
+    /// Optional: nach dem OCR Heuristik anwenden und Datei ablegen (Phase 9).
+    public var metadata: MetadataService?
     private let queue = DispatchQueue(label: "dev.pless.ocr")
 
-    public init(vault: Vault, db: Database, recognizer: TextRecognizer) {
+    public init(vault: Vault, db: Database, recognizer: TextRecognizer, metadata: MetadataService? = nil) {
         self.vault = vault
         self.db = db
         self.recognizer = recognizer
+        self.metadata = metadata
     }
 
     /// Synchron: alle fälligen Dokumente OCRen. Rückgabe: Anzahl bearbeiteter Dokumente.
@@ -23,6 +26,7 @@ public final class OCRService {
             let url = vault.root.appendingPathComponent(doc.relativePath)
             let text = try recognizer.recognizeText(inPDF: url)
             try db.setOCRText(documentId: id, text: text, ocrDone: true)
+            applyMetadataIfPossible(id: id, text: text)
             done += 1
         }
         return done
@@ -40,6 +44,7 @@ public final class OCRService {
                     let url = self.vault.root.appendingPathComponent(doc.relativePath)
                     let text = try self.recognizer.recognizeText(inPDF: url)
                     try self.db.setOCRText(documentId: id, text: text, ocrDone: true)
+                    self.applyMetadataIfPossible(id: id, text: text)
                     done += 1
                     onProgress(done, pending.count)
                 }
@@ -48,5 +53,11 @@ public final class OCRService {
                 completion(.failure(error))
             }
         }
+    }
+
+    /// Heuristik auf erkannten Text anwenden (best effort — OCR-Ergebnis bleibt auch bei Fehler erhalten).
+    private func applyMetadataIfPossible(id: Int64, text: String) {
+        guard let metadata else { return }
+        _ = try? metadata.applySuggestions(documentId: id, text: text)
     }
 }

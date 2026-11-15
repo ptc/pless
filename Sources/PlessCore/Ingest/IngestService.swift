@@ -48,6 +48,11 @@ public struct IngestService: Sendable {
             needsReview: !extraction.hasTextLayer
         )
         doc.id = try db.insert(doc)
+        // Textschicht vorhanden → Heuristik sofort anwenden (Titel/Datum/Korrespondent/Kategorie)
+        // und Datei mit generiertem Namen nach documents/YYYY/MM legen (Phase 9).
+        if extraction.hasTextLayer, let id = doc.id {
+            doc = try MetadataService(vault: vault, db: db).applySuggestions(documentId: id, text: extraction.text)
+        }
         return .imported(doc)
     }
 

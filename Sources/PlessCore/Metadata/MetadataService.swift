@@ -63,6 +63,25 @@ public struct MetadataService: Sendable {
         return doc
     }
 
+    /// Heuristik anwenden: leere Felder (Titel, Datum, Korrespondent, Kategorie) aus dem
+    /// Text erraten und setzen, dann wie saveMetadata speichern (Datei wird umbenannt/verschoben).
+    @discardableResult
+    public func applySuggestions(documentId: Int64, text: String) throws -> Document {
+        guard let doc = try db.document(byId: documentId) else {
+            throw PlessError.notFound("Dokument id=\(documentId) nicht gefunden")
+        }
+        let known = (try? db.correspondents().map { $0.name }) ?? []
+        let s = Heuristics.suggest(from: text, knownCorrespondents: known)
+        let corrId = doc.correspondentId ?? s.correspondentName.flatMap { try? db.findOrCreateCorrespondent(name: $0) }
+        let catId = doc.categoryId ?? s.categoryName.flatMap { try? db.findOrCreateCategory(name: $0) }
+        return try saveMetadata(documentId: documentId,
+                                title: doc.title ?? s.title,
+                                documentDate: doc.documentDate ?? s.documentDate,
+                                correspondentId: corrId,
+                                categoryId: catId,
+                                notes: doc.notes)
+    }
+
     /// `documents/YYYY/MM` aus einem ISO-Datum; ungültig → Monat des heutigen Datums.
     public static func folder(for isoDate: String) -> String {
         let parts = isoDate.split(separator: "-")
