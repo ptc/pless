@@ -116,47 +116,66 @@ final class AppState: ObservableObject {
 
     func importFiles(_ urls: [URL]) {
         guard let vault, let ingest else { return }
-        for url in urls {
-            do {
-                let staged = try vault.stageIntoInbox(fileAt: url)
-                _ = try ingest.process(fileAt: staged)
-            } catch {
-                errorMessage = "Import fehlgeschlagen (\(url.lastPathComponent)): \(error)"
+        // Schweres (SHA-256, PDFKit) nicht auf dem Main-Thread — sonst friert die UI.
+        DispatchQueue.global(qos: .userInitiated).async {
+            var failures: [String] = []
+            for url in urls {
+                do {
+                    let staged = try vault.stageIntoInbox(fileAt: url)
+                    _ = try ingest.process(fileAt: staged)
+                } catch {
+                    failures.append("\(url.lastPathComponent): \(error.localizedDescription)")
+                }
+            }
+            Task { @MainActor in
+                if !failures.isEmpty {
+                    self.errorMessage = "Import fehlgeschlagen — \(failures.joined(separator: "; "))"
+                }
+                self.runOCR()
+                self.refresh()
             }
         }
-        runOCR()
-        refresh()
     }
 
-    /// Datei liegt bereits in inbox/ (Watcher) → direkt in die Pipeline.
+    /// Datei liegt bereits in inbox/ (Watcher) → direkt in die Pipeline (asynchron).
     func ingestInboxFile(_ url: URL) {
         guard let ingest, FileManager.default.fileExists(atPath: url.path) else { return }
-        do {
-            _ = try ingest.process(fileAt: url)
-        } catch {
-            errorMessage = "Import aus Posteingang fehlgeschlagen (\(url.lastPathComponent)): \(error)"
-        }
-        runOCR()
-        refresh()
-    }
-
-    /// Drag & Drop: file-URL-Provider auflösen und als Import behandeln. true = PDFs dabei.
-    @discardableResult
-    func dropFiles(_ providers: [NSItemProvider]) -> Bool {
-        var urls: [URL] = []
-        let group = DispatchGroup()
-        for p in providers {
-            guard p.hasItemConformingToTypeIdentifier("public.file-url") else { continue }
-            group.enter()
-            p.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
-                defer { group.leave() }
-                if let url = item as? URL { urls.append(url) }
+        DispatchQueue.global(qos: .userInitiated).async {
+            var failure: String?
+            do {
+                _ = try ingest.process(fileAt: url)
+            } catch {
+                failure = "\(url.lastPathComponent): \(error.localizedDescription)"
+            }
+            Task { @MainActor in
+                if let failure {
+                    self.errorMessage = "Import aus Posteingang fehlgeschlagen — \(failure)"
+                }
+                self.runOCR()
+                self.refresh()
             }
         }
-        group.wait()
-        let pdfs = urls.filter { $0.pathExtension.lowercased() == "pdf" }
-        guard !pdfs.isEmpty else { return false }
-        importFiles(pdfs)
+    }
+
+    /// Drag & Drop: file-URL-Provider asynchron auflösen (nie group.wait() auf dem Main-Thread —
+    /// sonst Deadlock, wenn die Callbacks über den Main-Runloop kommen) und als Import behandeln.
+    @discardableResult
+    func dropFiles(_ providers: [NSItemProvider]) -> Bool {
+        let fileProviders = providers.filter { $0.hasItemConformingToTypeIdentifier("public.file-url") }
+        guard !fileProviders.isEmpty else { return false }
+        let sink = URLSink()
+        let group = DispatchGroup()
+        for p in fileProviders {
+            group.enter()
+            p.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
+                if let url = item as? URL { sink.add(url) }
+                group.leave()
+            }
+        }
+        group.notify(queue: .main) {
+            let pdfs = sink.urls.filter { $0.pathExtension.lowercased() == "pdf" }
+            if !pdfs.isEmpty { self.importFiles(pdfs) }
+        }
         return true
     }
 
@@ -266,4 +285,12 @@ final class AppState: ObservableObject {
         guard let db, let id = doc.id else { return [] }
         return (try? db.tags(for: id)) ?? []
     }
+}
+
+/// Thread-sicherer Sammler für asynchron aufgelöste Drop-URLs.
+private final class URLSink: @unchecked Sendable {
+    private let lock = NSLock()
+    private var collected: [URL] = []
+    var urls: [URL] { lock.lock(); defer { lock.unlock() }; return collected }
+    func add(_ url: URL) { lock.lock(); defer { lock.unlock() }; collected.append(url) }
 }
