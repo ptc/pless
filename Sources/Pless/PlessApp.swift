@@ -2,9 +2,18 @@ import SwiftUI
 import AppKit
 import PlessCore
 
+/// Nimmt Dateien entgegen, die auf das App-/Dock-Icon gezogen werden („Öffnen mit“ / Dock-Drop).
+final class PlessAppDelegate: NSObject, NSApplicationDelegate {
+    var onOpenFiles: (([URL]) -> Void)?
+    func application(_ application: NSApplication, open urls: [URL]) {
+        onOpenFiles?(urls)
+    }
+}
+
 @main
 struct PlessApp: App {
     @StateObject private var state: AppState
+    @NSApplicationDelegateAdaptor(PlessAppDelegate.self) private var appDelegate
 
     init() {
         let args = CommandLine.arguments
@@ -20,8 +29,12 @@ struct PlessApp: App {
             }
         }
         let settings = SettingsStore()
-        _state = StateObject(wrappedValue: AppState(vaultPath: Self.vaultPath(from: args, settings),
-                                                   settings: settings))
+        let st = AppState(vaultPath: Self.vaultPath(from: args, settings), settings: settings)
+        _state = StateObject(wrappedValue: st)
+        _appDelegate = NSApplicationDelegateAdaptor(PlessAppDelegate.self)
+        appDelegate.onOpenFiles = { urls in
+            st.importFiles(urls.filter { $0.pathExtension.lowercased() == "pdf" })
+        }
     }
 
     static func vaultPath(from args: [String], _ settings: SettingsStore? = nil) -> URL {

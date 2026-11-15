@@ -218,14 +218,15 @@ final class AppState: ObservableObject {
     /// sonst Deadlock, wenn die Callbacks über den Main-Runloop kommen) und als Import behandeln.
     @discardableResult
     func dropFiles(_ providers: [NSItemProvider]) -> Bool {
-        let fileProviders = providers.filter { $0.hasItemConformingToTypeIdentifier("public.file-url") }
+        let fileProviders = providers.filter { $0.canLoadObject(ofClass: URL.self) }
         guard !fileProviders.isEmpty else { return false }
         let sink = URLSink()
         let group = DispatchGroup()
         for p in fileProviders {
             group.enter()
-            p.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
-                if let url = item as? URL { sink.add(url) }
+            // loadObject(ofClass:) — loadItem(forTypeIdentifier:) ist ab macOS 27 deprecated
+            p.loadObject(ofClass: URL.self) { url, _ in
+                if let url { sink.add(url) }
                 group.leave()
             }
         }

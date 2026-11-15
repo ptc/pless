@@ -5,6 +5,7 @@ import PlessCore
 
 struct ContentView: View {
     @EnvironmentObject var state: AppState
+    @State private var dropTargeted = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,9 +20,6 @@ struct ContentView: View {
             .task {
                 // Titelleiste zeigt den aktiven Vault, damit immer klar ist, welcher Ordner beobachtet wird
                 if let w = NSApp.windows.first { w.title = "Pless — \(state.vaultPath.path)" }
-            }
-            .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-                state.dropFiles(providers)
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -53,6 +51,25 @@ struct ContentView: View {
             }
             Divider()
             StatusBarView()
+        }
+        // Drop-Ziel fürs GANZE Fenster (nicht nur Liste) — mit sichtbarem Hinweis beim Dragover
+        .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
+            state.dropFiles(providers)
+        }
+        .overlay {
+            if dropTargeted {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.accentColor.opacity(0.15))
+                        .padding(10)
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 3, dash: [10]))
+                        .padding(10)
+                    Label("PDF hier ablegen zum Importieren", systemImage: "tray.and.arrow.down.fill")
+                        .font(.title2).padding(16)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+                }
+            }
         }
     }
 }
