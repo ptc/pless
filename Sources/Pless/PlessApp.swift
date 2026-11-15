@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import PlessCore
 
 @main
 struct PlessApp: App {
@@ -8,9 +9,15 @@ struct PlessApp: App {
     init() {
         let args = CommandLine.arguments
         if args.count > 1 && args[1] == "mcp" {
-            // MCP-Server über stdio — kommt in Phase 10.
-            FileHandle.standardOutput.write(Data("pless mcp: noch nicht implementiert (Phase 10)\n".utf8))
-            exit(0)
+            // MCP-Server über stdio (JSON-RPC 2.0, eine Nachricht pro Zeile).
+            do {
+                let v = try Vault(root: Self.vaultPath(from: args))
+                let db = try Database(url: v.databaseURL)
+                exit(MCPServer(vault: v, db: db).runStdio())
+            } catch {
+                FileHandle.standardError.write(Data("pless mcp: \(error)\n".utf8))
+                exit(1)
+            }
         }
         _state = StateObject(wrappedValue: AppState(vaultPath: Self.vaultPath(from: args)))
     }
