@@ -70,6 +70,9 @@ final class AppState: ObservableObject {
             // Crash-Recovery vor dem Watcher: DB und Dateisystem abgleichen, damit keine
             // Datei verloren geht, wenn die App mitten im Import abstürzt.
             let recovery = try? RecoveryService(vault: v, db: database).recover()
+            // Veraltete Thumbnails (z. B. nach Orientierungs-Fix) einmalig löschen —
+            // werden beim Anzeigen on demand mit korrekter Orientierung neu gerendert.
+            let removedThumbs = v.invalidateThumbnailsIfOutdated()
             watcher = InboxWatcher(vault: v) { [weak self] url in
                 Task { @MainActor in self?.ingestInboxFile(url) }
             }
@@ -79,6 +82,8 @@ final class AppState: ObservableObject {
             setStatus(.idle, idleText)
             if let r = recovery, r.total > 0 {
                 setStatus(.warning, "Wiederherstellung: \(r.finalized) Dokument(e) finalisiert, \(r.relocated) Pfad(e) korrigiert, \(r.adopted) Datei(en) aus documents/ in den Posteingang übernommen")
+            } else if removedThumbs > 0 {
+                setStatus(.ok, "\(removedThumbs) alte Thumbnail(s) entfernt — werden mit korrekter Orientierung neu gerendert", autoIdleAfter: 8)
             }
         } catch {
             errorMessage = "Vault konnte nicht geöffnet werden: \(error)"

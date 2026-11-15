@@ -10,6 +10,20 @@ enum VaultTests {
         MiniTest.test("Vault: bestehender Vault ohne createIfNeeded") { try existingVaultWithoutCreate() }
         MiniTest.test("Vault: fehlender Vault wirft vaultNotFound") { try missingVaultThrows() }
         MiniTest.test("Vault: eigener Import-Ordner (inboxOverride) wird verwendet") { try inboxOverrideUsed() }
+        MiniTest.test("Vault: veraltete Thumbnails werden einmalig invalidiert (Format-Marker)") { try thumbnailInvalidation() }
+    }
+
+    private static func thumbnailInvalidation() throws {
+        let root = makeTempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let vault = try Vault(root: root)
+        let fm = FileManager.default
+        try Data([1, 2, 3]).write(to: vault.thumbnailsURL.appendingPathComponent("a.png"))
+        try Data([4, 5, 6]).write(to: vault.thumbnailsURL.appendingPathComponent("b.png"))
+        try MiniTest.expectEqual(vault.invalidateThumbnailsIfOutdated(), 2)
+        let rest = (try fm.contentsOfDirectory(atPath: vault.thumbnailsURL.path)).filter { $0.hasSuffix(".png") }
+        try MiniTest.expectEqual(rest.count, 0)
+        try MiniTest.expectEqual(vault.invalidateThumbnailsIfOutdated(), 0) // Marker greift: einmalig
     }
 
     private static func inboxOverrideUsed() throws {

@@ -12,6 +12,28 @@ public struct Vault: Sendable {
     public var rejectedURL: URL { inboxURL.appendingPathComponent("_abgelehnt", isDirectory: true) }
     public var thumbnailsURL: URL { root.appendingPathComponent("thumbnails", isDirectory: true) }
 
+    /// Format-Version der gerenderten Thumbnails. Bei Rendering-Änderungen (z. B. Orientierungs-Fix)
+    /// erhöhen — veraltete Thumbnails werden dann einmalig gelöscht und on demand neu gerendert.
+    public static let thumbnailFormatVersion = 2
+
+    /// Löscht alle Dateien in thumbnails/, wenn der Format-Marker fehlt (einmalig pro Version).
+    /// Liefert die Anzahl entfernter Dateien.
+    @discardableResult
+    public func invalidateThumbnailsIfOutdated() -> Int {
+        let fm = FileManager.default
+        let markerName = ".format-v\(Self.thumbnailFormatVersion)"
+        let marker = thumbnailsURL.appendingPathComponent(markerName)
+        if fm.fileExists(atPath: marker.path) { return 0 }
+        let files = (try? fm.contentsOfDirectory(atPath: thumbnailsURL.path)) ?? []
+        var removed = 0
+        for f in files where f != markerName {
+            try? fm.removeItem(at: thumbnailsURL.appendingPathComponent(f))
+            removed += 1
+        }
+        try? Data().write(to: marker, options: .atomic)
+        return removed
+    }
+
     public init(root: URL, inboxOverride: URL? = nil, createIfNeeded: Bool = true) throws {
         self.root = root
         self.inboxOverride = inboxOverride
