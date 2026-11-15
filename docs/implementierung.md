@@ -207,9 +207,9 @@ Kategorien
 - [x] Tests
 
 ### Phase 2 — Naming Engine
-- [ ] Template-Renderer `{date}_{correspondent}_{title}` + Sanitizer
-- [ ] Kollisionsauflösung (`-2`, `-3`, …)
-- [ ] Tests
+- [x] Template-Renderer `{date}_{correspondent}_{title}` + Sanitizer (Umlaute, Sonderzeichen, Längenlimit)
+- [x] Kollisionsauflösung (`-2`, `-3`, …)
+- [x] Tests
 
 ### Phase 3 — Ingest
 - [ ] Import (Datei → `inbox/`), SHA-256-Dedup
@@ -241,7 +241,7 @@ Kategorien
 ### Phase 8 — Import-Wege
 - [ ] Import-Ordner: definierter Ordner (Default `<vault>/inbox`, konfigurierbar), Watch via DispatchSource; neue Dateien laufen automatisch in die Pipeline und werden aus dem Ordner in den Vault verschoben
 - [ ] Direkt in die App laden: Drag & Drop auf Fenster/Liste + Menü „Ablage > Importieren…“ (NSOpenPanel, Mehrfachauswahl) → gleicher Ingest-Weg über `inbox/`
-- [ ] Apple-Teilen: Share Extension (Target `PlessShare`, ActivationRule für PDFs) schreibt via App Group (shared container + gemeinsame UserDefaults) nach `<vault>/inbox/`; Pipeline übernimmt. Hinweis: Extension erst in signiertem .app produktiv — Dev-Test über `inbox/`
+- [ ] Apple-Teilen: Share Extension (Target `PlessShare`, ActivationRule für PDFs) schreibt via App Group (shared container + gemeinsame UserDefaults) nach `<vault>/inbox/`; Pipeline übernimmt. Hinweis: Extension erst in signiertem .app produktiv (kommt mit Xcode/Signing später) — Dev-Test über `inbox/`
 
 ### Phase 9 — Metadaten-Vorschläge (Heuristik)
 - [ ] Datum erkennen (deutsche Formate wie `14.02.2026`)
@@ -272,9 +272,11 @@ Kategorien
 | 2026-11-15 | 6c37c03 | 0 | SwiftPM-Skeleton + MiniTest-Runner (CLT: kein XCTest/Testing-Makros) |
 | 2026-11-15 | f863bcf | 1 | Core: Models, Vault, SQLite-Schema V1 + CRUD |
 | 2026-11-15 | 0481f96 | 1 | Tests: Vault + Database (10 grün) |
+| 2026-11-15 | b927464 | 2 | Naming Engine: Template-Renderer + Sanitizer + Kollision |
+| 2026-11-15 | 7d9c134 | 2 | Naming-Tests (15 gesamt grün) |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
 - OCR `accurate` vs. `fast` konfigurierbar
 - Kategorie-Vorschlag durch die angebundene KI (MCP-Roundtrip)
-- App Group + Signing für die Share Extension erst mit Xcode/Packaging nötig (CLT baut nur Dev-Binary); Quick Look, Menu-Bar-Extra, Export: später
+- Xcode wird später zu Hause installiert — dann .app-Packaging + Signing (Share Extension, App Group) und optional XCTest/Swift Testing statt MiniTest; bis dahin CLT-only. Quick Look, Menu-Bar-Extra, Export: später
