@@ -104,14 +104,21 @@ struct StatusBarView: View {
     }
 }
 
+/// Dokumentliste als Thumbnail-Gitter (Karten mit Vorschau, Titel, Korrespondent/Datum).
 struct DocumentListView: View {
     @EnvironmentObject var state: AppState
 
     var body: some View {
-        List(selection: Binding(get: { state.selection }, set: { state.selection = $0 })) {
-            ForEach(state.hits, id: \.document.id) { hit in
-                DocumentRow(hit: hit).tag(hit.document.id)
+        ScrollView {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150, maximum: 210), spacing: 14)], spacing: 14) {
+                ForEach(state.hits, id: \.document.id) { hit in
+                    DocumentCard(hit: hit, selected: state.selection == hit.document.id)
+                        .onTapGesture {
+                            if let id = hit.document.id { state.selection = id }
+                        }
+                }
             }
+            .padding(12)
         }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             state.dropFiles(providers)
@@ -131,32 +138,43 @@ struct DocumentListView: View {
     }
 }
 
-struct DocumentRow: View {
+struct DocumentCard: View {
     @EnvironmentObject var state: AppState
     let hit: SearchHit
+    let selected: Bool
 
     var body: some View {
         let doc = hit.document
-        HStack(spacing: 10) {
-            if let vault = state.vault {
-                ThumbnailView(doc: doc, vault: vault)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(doc.title ?? doc.filename).lineLimit(1)
-                HStack(spacing: 6) {
-                    let corr = state.nameOfCorrespondent(doc.correspondentId)
-                    if !corr.isEmpty { Text(corr) }
-                    if let d = doc.documentDate { Text(d) }
-                    if doc.needsReview && !doc.ocrDone {
-                        Label("OCR", systemImage: "doc.text.magnifyingglass")
-                            .foregroundStyle(.orange)
-                    }
+        VStack(alignment: .leading, spacing: 6) {
+            ZStack(alignment: .topTrailing) {
+                if let vault = state.vault {
+                    ThumbnailView(doc: doc, vault: vault, width: nil, height: 170)
+                } else {
+                    Image(systemName: "doc.text").resizable().aspectRatio(contentMode: .fit)
+                        .foregroundStyle(.secondary).frame(height: 170)
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+                if doc.needsReview && !doc.ocrDone {
+                    Label("OCR", systemImage: "doc.text.magnifyingglass")
+                        .font(.caption2).padding(4)
+                        .background(.orange.opacity(0.9), in: Capsule())
+                        .foregroundStyle(.white).padding(4)
+                }
             }
+            Text(doc.title ?? doc.filename).font(.caption).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 6) {
+                let corr = state.nameOfCorrespondent(doc.correspondentId)
+                if !corr.isEmpty { Text(corr) }
+                if let d = doc.documentDate { Text(d) }
+            }
+            .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
         }
-        .padding(.vertical, 2)
+        .padding(8)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 2.5)
+        }
+        .contentShape(Rectangle())
     }
 }

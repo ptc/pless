@@ -5,6 +5,8 @@ import PlessCore
 
 struct DetailView: View {
     @EnvironmentObject var state: AppState
+    @State private var pdfAutoFit = true     // true = automatisch an Fenster anpassen
+    @State private var pdfZoom: CGFloat = 1.0 // 1.0 = 100 % (volle Größe)
 
     var doc: PlessCore.Document? {
         state.hits.first { $0.document.id == state.selection }?.document
@@ -13,7 +15,34 @@ struct DetailView: View {
     var body: some View {
         if let doc, let vault = state.vault {
             VStack(spacing: 0) {
-                PDFViewRepresentable(url: vault.root.appendingPathComponent(doc.relativePath))
+                // Zoom-Leiste: Anpassen (auto) / 100 % (volle Größe) / Stufen
+                HStack(spacing: 8) {
+                    Button {
+                        pdfAutoFit = true
+                        pdfZoom = 1.0
+                    } label: { Label("Anpassen", systemImage: "arrow.up.left.and.arrow.down.right") }
+                    Button {
+                        pdfAutoFit = false
+                        pdfZoom = max(0.25, pdfZoom / 1.25)
+                    } label: { Image(systemName: "minus.magnifyingglass") }
+                    Text("\(Int(pdfZoom * 100)) %").font(.caption).frame(width: 44)
+                    Button {
+                        pdfAutoFit = false
+                        pdfZoom = min(8, pdfZoom * 1.25)
+                    } label: { Image(systemName: "plus.magnifyingglass") }
+                    Button("100 %") {
+                        pdfAutoFit = false
+                        pdfZoom = 1.0
+                    }
+                    Spacer()
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                Divider()
+                PDFViewRepresentable(url: vault.root.appendingPathComponent(doc.relativePath),
+                                     autoFit: $pdfAutoFit, zoom: $pdfZoom)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Divider()
                 if state.isEditing {
@@ -26,13 +55,15 @@ struct DetailView: View {
             }
         } else {
             ContentUnavailableView("Dokument wählen", systemImage: "doc.text",
-                                   description: Text("Links in der Liste ein PDF auswählen."))
+                                   description: Text("In der Übersicht ein PDF auswählen."))
         }
     }
 }
 
 struct PDFViewRepresentable: NSViewRepresentable {
     let url: URL
+    @Binding var autoFit: Bool   // true → autoScales (an Fenster anpassen)
+    @Binding var zoom: CGFloat   // scaleFactor; bei autoFit=1.0 = automatisch
 
     func makeNSView(context: Context) -> PDFView {
         let v = PDFView()
@@ -45,12 +76,16 @@ struct PDFViewRepresentable: NSViewRepresentable {
         if nsView.document?.documentURL != url {
             nsView.document = PDFDocument(url: url)
         }
+        nsView.autoScales = autoFit
+        nsView.scaleFactor = zoom
     }
 }
 
 struct ThumbnailView: View {
     let doc: PlessCore.Document
     let vault: Vault
+    var width: CGFloat? = 44
+    var height: CGFloat = 56
     @State private var image: NSImage?
 
     var body: some View {
@@ -62,7 +97,7 @@ struct ThumbnailView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(width: 44, height: 56)
+        .frame(width: width, height: height)
         .background(Color.secondary.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 4))
         .task { load() }

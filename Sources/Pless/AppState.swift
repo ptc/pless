@@ -92,6 +92,7 @@ final class AppState: ObservableObject {
             if let sel = selection, !hits.contains(where: { $0.document.id == sel }) {
                 selection = hits.first?.document.id
             }
+            if selection == nil { selection = hits.first?.document.id } // erstes Dokument vorselektieren
         } catch {
             errorMessage = "Aktualisieren fehlgeschlagen: \(error)"
         }
