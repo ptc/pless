@@ -222,6 +222,16 @@ struct DocumentListView: View {
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             state.dropFiles(providers)
         }
+        // Kategorie/Tag aus der Sidebar auf die Mehrfachauswahl ziehen (Listenfläche)
+        .onDrop(of: [.plainText], isTargeted: nil) { providers in
+            guard let first = state.selectionSet.first, let p = providers.first else { return false }
+            p.loadObject(ofClass: NSString.self) { obj, _ in
+                if let s = (obj as? NSString) as String? {
+                    DispatchQueue.main.async { state.dropAssign(s, on: first) }
+                }
+            }
+            return true
+        }
         .overlay {
             if state.hits.isEmpty {
                 ContentUnavailableView {
@@ -241,6 +251,7 @@ struct DocumentCard: View {
     @EnvironmentObject var state: AppState
     let hit: SearchHit
     let selected: Bool
+    @State private var dropTargeted = false
 
     var body: some View {
         let doc = hit.document
@@ -273,6 +284,23 @@ struct DocumentCard: View {
         .overlay {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 2.5)
+        }
+        // Kategorie/Tag aus der Sidebar auf diese Karte ziehen → Zuweisung (Mehrfachauswahl,
+        // wenn die Karte selektiert ist, sonst nur diese Karte)
+        .onDrop(of: [.plainText], isTargeted: $dropTargeted) { providers in
+            guard let id = doc.id, let p = providers.first else { return false }
+            p.loadObject(ofClass: NSString.self) { obj, _ in
+                if let s = (obj as? NSString) as String? {
+                    DispatchQueue.main.async { state.dropAssign(s, on: id) }
+                }
+            }
+            return true
+        }
+        .overlay {
+            if dropTargeted {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 3, dash: [8]))
+            }
         }
         .contentShape(Rectangle())
     }

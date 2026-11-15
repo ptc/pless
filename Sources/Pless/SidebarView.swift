@@ -94,6 +94,11 @@ struct SidebarView: View {
             Circle().fill(Color(hex: node.color) ?? .accentColor).frame(width: 8, height: 8)
         }
         .tag(SidebarSelection.category(node.name))
+        .onDrag {
+            guard let id = node.id else { return NSItemProvider() }
+            // Drag-Payload fürs Zuweisen auf Dokumente im Gitter
+            return NSItemProvider(object: "pless/category/\(id)" as NSString)
+        }
         .contextMenu {
             Button("Umbenennen…") {
                 guard let id = node.id,
@@ -143,6 +148,10 @@ struct SidebarView: View {
             Circle().fill(Color(hex: tag.color) ?? .accentColor).frame(width: 8, height: 8)
         }
         .tag(SidebarSelection.tag(tag.name))
+        .onDrag {
+            // Drag-Payload fürs Zuweisen auf Dokumente im Gitter
+            NSItemProvider(object: "pless/tag/\(tag.name)" as NSString)
+        }
         .contextMenu {
             Button("Umbenennen…") {
                 if let n = Prompts.askText(title: "Tag umbenennen", message: "Neuer Name", defaultValue: tag.name) {

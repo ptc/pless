@@ -150,14 +150,41 @@ final class AppState: ObservableObject {
     func clearSelection() { selectionSet = [] }
 
     /// Bulk: Kategorie und/oder Tag auf alle ausgewählten Dokumente setzen.
+    @discardableResult
+    func bulkAssign(categoryId: Int64?, tagName: String?) -> (ok: Int, failed: [String]) {
+        bulkAssign(ids: selectionSet, categoryId: categoryId, tagName: tagName)
+    }
+
+    /// Drag & Drop aus der Sidebar: Payload „pless/category/<id>“ oder „pless/tag/<name>“.
+    /// Zielmenge: die Mehrfachauswahl, wenn das Ziel-Dokument selektiert ist, sonst nur dieses.
+    func dropAssign(_ payload: String, on docId: Int64) {
+        let targets: Set<Int64> = (!selectionSet.isEmpty && selectionSet.contains(docId)) ? selectionSet : [docId]
+        if payload.hasPrefix("pless/category/"), let id = Int64(payload.dropFirst("pless/category/".count)) {
+            let name = categories.first { $0.id == id }?.name ?? "?"
+            let r = bulkAssign(ids: targets, categoryId: id, tagName: nil)
+            setStatus(r.failed.isEmpty ? .ok : .error,
+                      "Kategorie „\(name)“ auf \(r.ok) Dokument(e) gesetzt" +
+                      (r.failed.isEmpty ? "" : " — \(r.failed.count) fehlgeschlagen"),
+                      autoIdleAfter: r.failed.isEmpty ? 6 : nil)
+        } else if payload.hasPrefix("pless/tag/") {
+            let name = String(payload.dropFirst("pless/tag/".count))
+            let r = bulkAssign(ids: targets, categoryId: nil, tagName: name)
+            setStatus(r.failed.isEmpty ? .ok : .error,
+                      "Tag „\(name)“ auf \(r.ok) Dokument(e) gesetzt" +
+                      (r.failed.isEmpty ? "" : " — \(r.failed.count) fehlgeschlagen"),
+                      autoIdleAfter: r.failed.isEmpty ? 6 : nil)
+        }
+    }
+
+    /// Bulk: Kategorie und/oder Tag auf eine Dokumentmenge setzen.
     /// Kategorie wird über saveMetadata gesetzt (andere Felder bleiben erhalten, Datei wird
     /// ggf. umbenannt, wenn das Template {category} enthält); Tag per findOrCreate + INSERT OR IGNORE.
     @discardableResult
-    func bulkAssign(categoryId: Int64?, tagName: String?) -> (ok: Int, failed: [String]) {
+    func bulkAssign(ids: Set<Int64>, categoryId: Int64?, tagName: String?) -> (ok: Int, failed: [String]) {
         guard let db, let metadata else { return (0, ["kein Vault geladen"]) }
         var ok = 0
         var failed: [String] = []
-        for id in selectionSet.sorted() {
+        for id in ids.sorted() {
             do {
                 if let cat = categoryId {
                     guard let doc = try db.document(byId: id) else { continue }
