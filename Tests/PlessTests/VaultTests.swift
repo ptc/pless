@@ -9,6 +9,25 @@ enum VaultTests {
         MiniTest.test("Vault: documentsFolder legt YYYY/MM an") { try documentsFolderCreatesYearMonth() }
         MiniTest.test("Vault: bestehender Vault ohne createIfNeeded") { try existingVaultWithoutCreate() }
         MiniTest.test("Vault: fehlender Vault wirft vaultNotFound") { try missingVaultThrows() }
+        MiniTest.test("Vault: eigener Import-Ordner (inboxOverride) wird verwendet") { try inboxOverrideUsed() }
+    }
+
+    private static func inboxOverrideUsed() throws {
+        let root = makeTempDir()
+        let custom = makeTempDir()
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: custom)
+        }
+        let vault = try Vault(root: root, inboxOverride: custom)
+        try MiniTest.expectEqual(vault.inboxURL.path, custom.path)
+        try MiniTest.expect(vault.rejectedURL.path.hasPrefix(custom.path), "_abgelehnt unter dem eigenen Ordner")
+        try MiniTest.expect(FileManager.default.fileExists(atPath: custom.path), "eigener Ordner wurde angelegt")
+        // stageIntoInbox landet im eigenen Ordner
+        let src = root.appendingPathComponent("x.pdf")
+        try Data("pdf".utf8).write(to: src)
+        let staged = try vault.stageIntoInbox(fileAt: src)
+        try MiniTest.expect(staged.path.hasPrefix(custom.path), "staging im Override: \(staged.path)")
     }
 
     private static func makeTempDir() -> URL {
