@@ -315,6 +315,7 @@ Kategorien
 | 2026-11-15 | e160160 | 6 | fix: Import-Race (doppelt gemeldete Posteingang-Datei → duplicateSHA256 als harter Fehler) — process() serialisiert, Race → .duplicate, in-flight-Schutz in AppState, lesbare PlessError-Texte — 70 Tests grün |
 | 2026-11-15 | 007eba2 | 6 | feat: Bulk-Operationen — Mehrfachauswahl im Gitter (Klick / Cmd+Klick / Shift-Bereich / Cmd+A) + Leiste mit Kategorie-Picker und Tag-Feld für alle ausgewählten Dokumente — 71 Tests grün |
 | 2026-11-15 | eefa908 | 6 | feat: Kategorie/Tag per Drag & Drop aus der Sidebar aufs Gitter ziehen (Mehrfachauswahl wird als Zielmenge genommen, wenn die Karte selektiert ist) — 71 Tests grün |
+| 2026-11-15 | 78baf86 | 6 | fix: Kategorie-Aufklapp-Pfeil (>) nur noch bei echten Unterkategorien sichtbar — 71 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
