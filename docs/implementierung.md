@@ -319,6 +319,7 @@ Kategorien
 | 2026-11-15 | 569ea10 | 6 | feat: Sidebar-Drag über der Liste highlightet alle selektierten Karten (gestrichelt); Drop weist Kategorie/Tag der ganzen Mehrfachauswahl zu — 71 Tests grün |
 | 2026-11-15 | b41b82e | 6 | feat: Zähler-Badge hinter jeder Kategorie in der Sidebar (inkl. Unterkategorien, 0 ausgeblendet) — 72 Tests grün |
 | 2026-11-15 | ab34885 | 6 | feat: mehrere Datums-Vorschläge als Chips im Metadaten-Editor (extractDates); OCR-Text-Panel in der Vorschau (markierbar) — 73 Tests grün |
+| 2026-11-15 | 54a2a82 | 6 | feat: Bearbeiten/Fertig/Abbrechen in der Detail-Vorschau; Edit-Modus sperrt Selektionswechsel (Details bleiben stabil) — 73 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
