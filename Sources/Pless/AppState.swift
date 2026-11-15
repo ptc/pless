@@ -11,7 +11,7 @@ enum SidebarSelection: Hashable {
 }
 
 /// Zustand der Statusleiste — die App sieht nie „kaputt“ aus, sondern zeigt immer, was läuft.
-enum StatusKind { case idle, busy, ok, error }
+enum StatusKind { case idle, busy, ok, warning, error }
 
 /// Formular-Entwurf für den Edit-Modus (Phase 7).
 @MainActor
@@ -159,6 +159,7 @@ final class AppState: ObservableObject {
         // Schweres (SHA-256, PDFKit) nicht auf dem Main-Thread — sonst friert die UI.
         DispatchQueue.global(qos: .userInitiated).async {
             var failures: [String] = []
+            var duplicates: [Document] = []
             var importedIds: [Int64] = []
             var lastDoc: Document?
             for (i, url) in urls.enumerated() {
@@ -167,9 +168,14 @@ final class AppState: ObservableObject {
                 }
                 do {
                     let staged = try vault.stageIntoInbox(fileAt: url)
-                    if case .imported(let doc) = try ingest.process(fileAt: staged) {
+                    switch try ingest.process(fileAt: staged) {
+                    case .imported(let doc):
                         if let id = doc.id { importedIds.append(id) }
                         lastDoc = doc
+                    case .duplicate(let existing):
+                        duplicates.append(existing)
+                    case .rejected(let reason):
+                        failures.append("\(url.lastPathComponent): \(reason)")
                     }
                 } catch {
                     failures.append("\(url.lastPathComponent): \(error.localizedDescription)")
@@ -179,12 +185,18 @@ final class AppState: ObservableObject {
                 if !failures.isEmpty {
                     self.setStatus(.error, "Import fehlgeschlagen — \(failures.joined(separator: "; "))")
                     self.errorMessage = "Import fehlgeschlagen — \(failures.joined(separator: "; "))"
+                } else if let dup = duplicates.last {
+                    var text = "Duplikat: „\(dup.title ?? dup.filename)“ ist bereits im Vault"
+                    if let doc = lastDoc { text = "Importiert: \(doc.title ?? doc.filename) · " + text }
+                    text += " — nicht erneut importiert (Datei → _abgelehnt/)"
+                    self.setStatus(.warning, text)
                 } else if let doc = lastDoc {
                     self.setStatus(.ok, "Importiert: \(doc.title ?? doc.filename) → \(doc.relativePath)", autoIdleAfter: 6)
                 }
                 self.runOCR()
                 self.refresh()
                 if let last = importedIds.last { self.selection = last } // neues Dokument direkt anzeigen
+                else if let dup = duplicates.last, let id = dup.id { self.selection = id } // nur Duplikat: vorhandenes Dokument zeigen
             }
         }
     }
@@ -208,6 +220,11 @@ final class AppState: ObservableObject {
                 } else if case .imported(let doc) = outcome {
                     self.setStatus(.ok, "Importiert: \(doc.title ?? doc.filename) → \(doc.relativePath)", autoIdleAfter: 6)
                     if let id = doc.id { self.selection = id }
+                } else if case .duplicate(let existing) = outcome {
+                    self.setStatus(.warning, "Posteingang: Duplikat „\(existing.title ?? existing.filename)“ bereits im Vault — Datei → _abgelehnt/")
+                    if let id = existing.id { self.selection = id } // vorhandenes Dokument in der Liste markieren
+                } else if case .rejected(let reason) = outcome {
+                    self.setStatus(.error, "Posteingang: \(url.lastPathComponent) zurückgewiesen (\(reason)) — Datei → _abgelehnt/")
                 }
                 self.runOCR()
                 self.refresh()

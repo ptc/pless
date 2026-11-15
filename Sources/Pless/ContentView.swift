@@ -87,12 +87,15 @@ struct StatusBarView: View {
                 ProgressView().scaleEffect(0.55)
             case .ok:
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            case .warning:
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
             case .error:
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
             }
             Text(state.statusText)
                 .font(.caption)
-                .foregroundStyle(state.statusKind == .error ? .red : .secondary)
+                .foregroundStyle(state.statusKind == .error ? .red
+                                : state.statusKind == .warning ? .orange : .secondary)
                 .lineLimit(1)
             Spacer()
             Text("\(state.hits.count) Dokument(e) · Posteingang: \(state.inboxCount)")
