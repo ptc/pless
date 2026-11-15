@@ -307,6 +307,7 @@ Kategorien
 | 2026-11-15 | d2ee8f4 | 8 | fix: Drag&Drop auf ganzes Fenster + Drop-Hinweis, loadObject(ofClass:) statt deprecated loadItem, PDF-Dokumenttyp + application(open:) für Dock-Drops — 61 Tests grün |
 | 2026-11-15 | 5317610 | 6 | UI: Thumbnail-Gitter statt Zeilen (Tap selektiert, blauer Rahmen), PDF-Zoom (Anpassen/100 %/±) |
 | 2026-11-15 | 00da931 | 6 | UI: Gitter gruppiert nach Jahr/Monat mit Trenner-Überschriften; PDF-Vorschau default „volle skalierte Höhe“ + Modus-Picker (Anpassen/Höhe/100 %) — 61 Tests grün |
+| 2026-11-15 | 07a3018 | 6 | UI: Doubletten-Hinweis beim Import — neuer Status `.warning` (orange) in der Statusleiste; Duplikat (SHA-256) wird nicht erneut importiert, Datei → `_abgelehnt/`, vorhandenes Dokument wird selektiert — 61 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
