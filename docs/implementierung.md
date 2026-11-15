@@ -300,6 +300,7 @@ Kategorien
 | 2026-11-15 | 26305d7 | 11 | fix: Settings-Sheet per „Fertig“/Esc schließbar |
 | 2026-11-15 | 195db64 | 11 | fix: Settings „Schließen“-Button + Auto-Save-Hinweis; make-app.sh baut vor dem Kopieren |
 | 2026-11-15 | 168d1d0 | 8 | fix: Drag&Drop/Ingest asynchron (kein Main-Thread-Deadlock mehr) — E2E verifiziert |
+| 2026-11-15 | 369a141 | 8 | fix: InboxWatcher + Rename-Events + Poll-Fallback (2 s); Sidebar zeigt Vault-/Posteingang-Pfad — 61 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
