@@ -8,6 +8,7 @@ APP="$ROOT/dist/Pless.app"
 STAGE="$ROOT/.build/app-stage/Pless.app"
 
 echo "==> Release-Build"
+swift build --package-path "$ROOT" -c release
 BIN_DIR="$(swift build --package-path "$ROOT" -c release --show-bin-path)"
 BIN="$BIN_DIR/Pless"
 [ -x "$BIN" ] || { echo "Binary nicht gefunden: $BIN" >&2; exit 1; }

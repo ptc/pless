@@ -10,8 +10,11 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
+                Text("Änderungen werden sofort gespeichert.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button("Fertig") { dismiss() }
+                Button("Schließen") { dismiss() }
+                    .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.cancelAction)
             }
             .padding(.horizontal)
