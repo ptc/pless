@@ -7,7 +7,52 @@ enum OCRTests {
         MiniTest.test("OCR: pending Dokumente werden per Fake-Recognizer abgearbeitet") { try fakeOCR() }
         MiniTest.test("OCR: keine pending Dokumente → 0") { try nothingPending() }
         MiniTest.test("OCR: async mit Fortschritt (done, total)") { try asyncOCR() }
+        MiniTest.test("OCR: cancel() stoppt async-Verarbeitung vorzeitig, Rest bleibt pending") { try cancelStopsAsync() }
+        MiniTest.test("OCR: processAsync(documentId:) — manueller Einzelstart") { try singleDocAsync() }
         MiniTest.test("OCR: VisionTextRecognizer konstruierbar (de+en, fast/accurate)") { visionInit() }
+    }
+
+    /// Langsamer Recognizer, damit cancel() zwischen zwei Dokumenten greifen kann.
+    private final class SlowRecognizer: TextRecognizer {
+        let delay: UInt32
+        init(delay: UInt32 = 1) { self.delay = delay }
+        func recognizeText(inPDF url: URL) throws -> String {
+            sleep(delay)
+            return "langsam erkannt"
+        }
+    }
+
+    private static func cancelStopsAsync() throws {
+        let (vault, db, root) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        for _ in 0..<3 { _ = try insertPendingDoc(vault: vault, db: db) }
+        let svc = OCRService(vault: vault, db: db, recognizer: SlowRecognizer())
+        let sem = DispatchSemaphore(value: 0)
+        var result: Result<Int, Error>?
+        svc.processPendingAsync(onProgress: { done, _ in
+            if done == 1 { svc.cancel() } // nach dem ersten Dokument abbrechen
+        }, completion: { result = $0; sem.signal() })
+        try MiniTest.expectEqual(sem.wait(timeout: .now() + 15), .success)
+        guard case .success(let done) = result else { throw TestFailure("erwartet .success, erhalten \(String(describing: result))") }
+        try MiniTest.expect(done == 1, "cancel nach 1 → done=\(done)")
+        try MiniTest.expect(!svc.isRunning)
+        try MiniTest.expectEqual(try db.documentsNeedingOCR().count, 2) // Rest bleibt „OCR offen"
+    }
+
+    private static func singleDocAsync() throws {
+        let (vault, db, root) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let doc = try insertPendingDoc(vault: vault, db: db)
+        let svc = OCRService(vault: vault, db: db, recognizer: FakeTextRecognizer(text: "manuell erkannt"))
+        let sem = DispatchSemaphore(value: 0)
+        var result: Result<Void, Error>?
+        svc.processAsync(documentId: doc.id!) { result = $0; sem.signal() }
+        try MiniTest.expectEqual(sem.wait(timeout: .now() + 5), .success)
+        guard case .success = result else { throw TestFailure("fehlgeschlagen: \(String(describing: result))") }
+        let updated = try db.document(byUUID: doc.uuid)
+        try MiniTest.expectEqual(updated?.ocrText, "manuell erkannt")
+        try MiniTest.expect(updated?.ocrDone == true)
+        try MiniTest.expect(!svc.isRunning)
     }
 
     private static func makeEnv() throws -> (vault: Vault, db: Database, root: URL) {

@@ -17,8 +17,8 @@ public enum PDFRendering {
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
             return nil
         }
-        ctx.translateBy(x: 0, y: CGFloat(h))
-        ctx.scaleBy(x: scale, y: -scale)
+        // Bitmap-Kontext (Ursprung unten links, y wächst nach oben — wie PDF): kein Flip nötig.
+        ctx.scaleBy(x: scale, y: scale)
         page.draw(with: .mediaBox, to: ctx)
         return ctx.makeImage()
     }

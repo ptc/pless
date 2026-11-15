@@ -97,6 +97,13 @@ struct StatusBarView: View {
                 .foregroundStyle(state.statusKind == .error ? .red
                                 : state.statusKind == .warning ? .orange : .secondary)
                 .lineLimit(1)
+            if state.ocrRunning, state.statusKind == .busy {
+                Button("Abbrechen") { state.cancelOCR() }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .help("Laufenden OCR-Durchlauf abbrechen")
+            }
             Spacer()
             Text("\(state.hits.count) Dokument(e) · Posteingang: \(state.inboxCount)")
                 .font(.caption).foregroundStyle(.secondary)

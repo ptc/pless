@@ -39,6 +39,8 @@ final class AppState: ObservableObject {
     @Published var isEditing = false
     @Published var draft: MetadataDraft?
     @Published var inboxCount = 0
+    @Published var ocrRunning = false
+    private var ocrCancelled = false
 
     private(set) var vault: Vault?
     private(set) var db: Database?
@@ -262,18 +264,54 @@ final class AppState: ObservableObject {
     }
 
     func runOCR() {
-        guard let ocr else { return }
+        guard let ocr, !ocr.isRunning else { return }
+        ocrRunning = true
         ocr.processPendingAsync(onProgress: { done, total in
             Task { @MainActor in self.setStatus(.busy, "OCR \(done)/\(total)…") }
         }, completion: { result in
             Task { @MainActor in
-                if case .failure(let e) = result {
+                self.ocrRunning = false
+                switch result {
+                case .success(let done):
+                    if self.ocrCancelled {
+                        self.setStatus(.warning, "OCR abgebrochen (\(done) erledigt) — offen gebliebene Dokumente in der Vorschau manuell starten")
+                    }
+                case .failure(let e):
+                    self.setStatus(.error, "OCR fehlgeschlagen: \(e)")
+                    self.errorMessage = "OCR fehlgeschlagen: \(e)"
+                }
+                self.ocrCancelled = false
+                self.refresh()
+            }
+        })
+    }
+
+    /// Bricht den laufenden OCR-Durchlauf ab (Statusleiste „Abbrechen“).
+    func cancelOCR() {
+        ocrCancelled = true
+        ocr?.cancel()
+        setStatus(.warning, "OCR wird abgebrochen…")
+    }
+
+    /// Startet OCR manuell für ein einzelnes Dokument (Vorschau: „OCR starten“ bei OCR-offen).
+    func startOCR(for documentId: Int64) {
+        guard let ocr, !ocr.isRunning else { return }
+        let title = hits.first { $0.document.id == documentId }?.document.title
+        ocrRunning = true
+        setStatus(.busy, "OCR läuft für „\(title ?? "Dokument")“…")
+        ocr.processAsync(documentId: documentId) { result in
+            Task { @MainActor in
+                self.ocrRunning = false
+                switch result {
+                case .success:
+                    self.setStatus(.ok, "OCR abgeschlossen: „\(title ?? "Dokument")“ — Text ist indexiert", autoIdleAfter: 6)
+                case .failure(let e):
                     self.setStatus(.error, "OCR fehlgeschlagen: \(e)")
                     self.errorMessage = "OCR fehlgeschlagen: \(e)"
                 }
                 self.refresh()
             }
-        })
+        }
     }
 
     // MARK: - Edit-Modus (Phase 7)

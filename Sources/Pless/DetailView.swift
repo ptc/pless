@@ -37,6 +37,13 @@ struct DetailView: View {
                         pdfMode = .full
                         pdfZoom = min(8, pdfZoom * 1.25)
                     } label: { Image(systemName: "plus.magnifyingglass") }
+                    if !doc.ocrDone {
+                        Button {
+                            if let id = doc.id { state.startOCR(for: id) }
+                        } label: { Label("OCR starten", systemImage: "text.viewfinder") }
+                        .disabled(state.ocrRunning)
+                        .help("OCR für dieses Dokument jetzt ausführen (Status „OCR offen“)")
+                    }
                     Spacer()
                 }
                 .buttonStyle(.borderless)
