@@ -130,6 +130,14 @@ struct MetadataEditView: View {
                         .background(Color.secondary.opacity(0.08))
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
+
+                HStack {
+                    Spacer()
+                    Button("Abbrechen") { state.cancelEditing() }
+                    Button("Fertig — speichern") { state.saveEditing() }
+                        .buttonStyle(.borderedProminent)
+                        .help("Speichern (Datei wird ggf. umbenannt)")
+                }
             }
             .padding()
         }

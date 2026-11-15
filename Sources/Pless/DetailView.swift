@@ -53,23 +53,6 @@ struct DetailView: View {
                         .help("OCR-Text ein-/ausblenden — der Text ist markierbar/kopierbar")
                     }
                     Spacer()
-                    // Bearbeiten direkt in der Detail-Vorschau
-                    if state.isEditing {
-                        Button { state.saveEditing() } label: {
-                            Label("Fertig", systemImage: "checkmark.circle.fill")
-                        }
-                        .help("Speichern (Datei wird ggf. umbenannt)")
-                        Button { state.cancelEditing() } label: {
-                            Label("Abbrechen", systemImage: "xmark.circle")
-                        }
-                        .help("Änderungen verwerfen")
-                    } else {
-                        Button { state.beginEditing() } label: {
-                            Label("Bearbeiten", systemImage: "pencil")
-                        }
-                        .disabled(state.selection == nil)
-                        .help("Metadaten bearbeiten")
-                    }
                 }
                 .buttonStyle(.borderless)
                 .controlSize(.small)
@@ -240,12 +223,43 @@ struct MetadataSummary: View {
                     }
                 }
             }
+            // Datums-Vorschläge aus dem Dokumenttext (auch ohne Edit-Modus sichtbar);
+            // Klick übernimmt das Datum direkt im Edit-Modus
+            if !dateSuggestions.isEmpty {
+                HStack(spacing: 6) {
+                    Text("Datum-Vorschläge:").font(.caption2).foregroundStyle(.secondary)
+                    ForEach(dateSuggestions, id: \.self) { d in
+                        Button(state.displayDate(d)) {
+                            state.beginEditing()
+                            state.draft?.date = d
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                        .tint(d == doc.documentDate ? .secondary : .accentColor)
+                        .help("Dieses Datum übernehmen (öffnet den Edit-Modus)")
+                    }
+                }
+            }
             HStack {
                 Button("Im Finder zeigen") { reveal() }
                 Spacer()
+                Button { state.beginEditing() } label: {
+                    Label("Bearbeiten", systemImage: "pencil")
+                }
+                .disabled(state.selection == nil)
+                .help("Metadaten bearbeiten (unten in den Details)")
             }
         }
         .padding()
+    }
+
+    /// Alle Datums-Vorkommen im Dokumenttext (ISO), für die Vorschlags-Chips.
+    private var dateSuggestions: [String] {
+        guard let text = doc.ocrText, !text.isEmpty else { return [] }
+        let all = Heuristics.extractDates(from: text)
+        // nur anzeigen, wenn es mehr als das bereits gesetzte Datum gibt
+        if all.count > 1 || (all.count == 1 && all[0] != doc.documentDate) { return all }
+        return []
     }
 
     private func row(_ label: String, _ value: String) -> some View {
