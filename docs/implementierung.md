@@ -9,7 +9,7 @@ Kein Cloud, Single User.
 
 | Thema | Entscheidung | Begründung |
 |---|---|---|
-| Stack | Swift 6.4 + SwiftPM, nur Command Line Tools (kein Xcode nötig) | vorhandenes Setup; `swift build` / `swift test` reichen |
+| Stack | Swift 6.4 + SwiftPM; Xcode 27.2 installiert & aktiv (volle Toolchain, kein sudo) | `swift build` / `swift run` reichen; XCTest/Swift Testing optional später |
 | Dependencies | keine externen Pakete | CLT/offline-sicher; SQLite via `import SQLite3`, MCP selbst implementiert |
 | UI | SwiftUI + AppKit-Hybrid, reiner Code (keine Storyboards), SF Symbols, UI auf Deutsch | modern, schlicht, Dark Mode inklusive |
 | Ablage | ein Vault-Ordner (Default `~/Documents/Pless`), `pless.db` liegt im Vault | „ein Ort", portabel, alles lokal |
@@ -224,10 +224,10 @@ Kategorien
 - [x] Tests (inkl. Trigger-Sync nach UPDATE)
 
 ### Phase 6 — App-Shell (SwiftUI)
-- [ ] `@main` App, 3-Spalten-Layout (Sidebar / Liste / Detail)
-- [ ] Dokumentliste mit Suchfeld
-- [ ] PDF-Viewer (PDFView via NSViewRepresentable)
-- [ ] Thumbnails in der Liste
+- [x] `@main` App, 3-Spalten-Layout (Sidebar / Liste / Detail)
+- [x] Dokumentliste mit Suchfeld
+- [x] PDF-Viewer (PDFView via NSViewRepresentable)
+- [x] Thumbnails in der Liste (Cache unter `thumbnails/`)
 
 ### Phase 7 — Metadaten-Editor
 - [ ] Vorschau/Detail: Metadaten read-only; Edit-Modus erst per Klick auf „Bearbeiten“ aktivieren; „Fertig“ speichert + benennt Datei ggf. um
@@ -277,9 +277,12 @@ Kategorien
 | 2026-11-15 | 1d34600 | 4 | OCR-Tests (Fake, sync/async) — 24 gesamt grün |
 | 2026-11-15 | dcc6e5b | 5 | FTS5-Index (Migration V2 + Trigger) + Such-API mit Filtern |
 | 2026-11-15 | 49cc0d8 | 5 | Search-Tests — 29 gesamt grün |
+| 2026-11-15 | f451196 | 6 | Core: PDF-Rendering & Thumbnails, tags(for:), onlyNeedsReview-Filter |
+| 2026-11-15 | b91cc3f | 6 | Thumbnail-Tests + PDFFixture — 32 gesamt grün |
+| 2026-11-15 | 0e68b63 | 6 | App-Shell (SwiftUI): @main, 3 Spalten, Liste+Suche, PDF-Viewer, Thumbnails |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
 - OCR `accurate` vs. `fast` konfigurierbar
 - Kategorie-Vorschlag durch die angebundene KI (MCP-Roundtrip)
-- Xcode wird später zu Hause installiert — dann .app-Packaging + Signing (Share Extension, App Group) und optional XCTest/Swift Testing statt MiniTest; bis dahin CLT-only. Quick Look, Menu-Bar-Extra, Export: später
+- Xcode 27.2 ist installiert (`xcode-select` → `/Applications/Xcode.app`) — volle Toolchain aktiv. Noch offen: .app-Packaging + Signing (Share Extension, App Group, Phase 8) und optional XCTest/Swift Testing statt MiniTest. Quick Look, Menu-Bar-Extra, Export: später

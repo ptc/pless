@@ -12,12 +12,12 @@ Analytics, keine externen Services.
 
 ## Umgebung & Kommandos
 
-- Aktuell nur Command Line Tools aktiv (Swift 6.4); **Xcode wird später zu Hause installiert**. Alles läuft über SwiftPM:
+- **Xcode 27.2 ist installiert und aktiv** (`xcode-select` → `/Applications/Xcode.app`, Swift 6.4.2 — volle Toolchain inkl. AppKit/SwiftUI/PDFKit/Vision, kein sudo nötig; nur falls `xcode-select` mal nicht auf Xcode zeigt: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift ...`). Alles läuft über SwiftPM:
   - Build: `swift build --package-path /Users/ptc/dev/ppless`
   - Tests: `swift run --package-path /Users/ptc/dev/ppless PlessTests` (MiniTest-Runner, Exit-Code 0 = grün)
   - Run: `swift run --package-path /Users/ptc/dev/ppless Pless`
   - MCP-Server (stdio): `swift run --package-path /Users/ptc/dev/ppless Pless mcp --vault <pfad>`
-  - Sobald Xcode da ist: volle Toolchain ohne sudo via `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift ...` (XCTest/Swift Testing, Signing, .app-Packaging für die Share Extension). Bis dahin CLT + MiniTest.
+  - .app-Packaging + Signing (Share Extension, App Group) kommt mit Xcode — noch offen. Tests bleiben MiniTest (XCTest/Swift Testing optional später).
 - **Keine externen Swift-Pakete.** SQLite direkt via `import SQLite3` (FTS5 ist
   in der System-SQLite enthalten), MCP als eigene JSON-RPC-2.0-Implementierung
   über stdio.
