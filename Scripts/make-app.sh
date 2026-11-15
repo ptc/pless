@@ -43,6 +43,8 @@ cat > "$STAGE/Contents/Info.plist" <<'XML'
 	<true/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
+	<key>CFBundleIconFile</key>
+	<string>pless</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -62,6 +64,13 @@ cat > "$STAGE/Contents/Info.plist" <<'XML'
 </plist>
 XML
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
+
+echo "==> Icon generieren (pless.icns via Scripts/make-icon.swift + iconutil)"
+mkdir -p "$STAGE/Contents/Resources"
+ICONSET="$ROOT/.build/icon/pless.iconset"
+rm -rf "$ICONSET"
+swift "$ROOT/Scripts/make-icon.swift" "$ICONSET"
+iconutil -c icns "$ICONSET" -o "$STAGE/Contents/Resources/pless.icns"
 
 mkdir -p "$ROOT/dist"
 if [ -d "$APP" ]; then rm -rf "$APP"; fi
