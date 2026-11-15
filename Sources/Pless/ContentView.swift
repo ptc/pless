@@ -69,7 +69,7 @@ struct DocumentListView: View {
                           systemImage: state.searchText.isEmpty ? "doc.text" : "magnifyingglass")
                 } description: {
                     Text(state.searchText.isEmpty
-                         ? "PDFs per Drag & Drop, über „Ablage > Importieren…“ oder über den Import-Ordner in den Vault legen."
+                         ? "PDFs per Drag & Drop, über „Ablage > Importieren…“ oder in den Posteingang legen: \(state.vault?.inboxURL.path ?? "<Vault>/inbox")"
                          : "Die Suche „\(state.searchText)“ hat nichts gefunden — Filter in der Sidebar prüfen.")
                 }
             }

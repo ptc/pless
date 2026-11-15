@@ -6,15 +6,19 @@ import Foundation
 public final class InboxWatcher: @unchecked Sendable {
     public let vault: Vault
     public let onNewFile: @Sendable (URL) -> Void
+    /// Poll-Intervall als Fallback, falls kqueue-Events verpasst werden (z. B. Rename per Finder).
+    public let pollInterval: TimeInterval
 
     private let queue = DispatchQueue(label: "dev.pless.inboxwatch")
     private var source: DispatchSourceFileSystemObject?
     private var timer: DispatchSourceTimer?
+    private var poll: DispatchSourceTimer?
     private var reported = Set<String>()
 
-    public init(vault: Vault, onNewFile: @escaping @Sendable (URL) -> Void) {
+    public init(vault: Vault, onNewFile: @escaping @Sendable (URL) -> Void, pollInterval: TimeInterval = 2.0) {
         self.vault = vault
         self.onNewFile = onNewFile
+        self.pollInterval = pollInterval
     }
 
     public func start() throws {
@@ -22,11 +26,19 @@ public final class InboxWatcher: @unchecked Sendable {
         guard fd >= 0 else {
             throw PlessError.io("inbox nicht beobachtbar: \(vault.inboxURL.path)")
         }
-        let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd, eventMask: .write, queue: queue)
+        // write/delete/rename: deckt direktes Schreiben UND temp+rename (Finder) ab
+        let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd,
+                                                            eventMask: [.write, .delete, .rename], queue: queue)
         src.setEventHandler { [weak self] in self?.scheduleScan() }
         src.setCancelHandler { close(fd) }
         src.resume()
         source = src
+        // Fallback: regelmäßiges Poll, damit keine Datei liegen bleibt
+        let p = DispatchSource.makeTimerSource(queue: queue)
+        p.scheduleRepeating(deadline: .now() + pollInterval, interval: pollInterval)
+        p.setEventHandler { [weak self] in self?.scanNow() }
+        p.resume()
+        poll = p
     }
 
     public func stop() {
@@ -34,6 +46,8 @@ public final class InboxWatcher: @unchecked Sendable {
         source = nil
         timer?.cancel()
         timer = nil
+        poll?.cancel()
+        poll = nil
     }
 
     deinit { stop() }
@@ -46,7 +60,7 @@ public final class InboxWatcher: @unchecked Sendable {
     private func scheduleScan() {
         timer?.cancel()
         let t = DispatchSource.makeTimerSource(queue: queue)
-        t.schedule(deadline: .now() + 0.5)
+        t.schedule(deadline: .now() + 0.3)
         t.setEventHandler { [weak self] in self?.scanNow() }
         t.resume()
         timer = t

@@ -8,6 +8,7 @@ enum InboxWatcherTests {
         MiniTest.test("InboxWatcher: _abgelehnt/ wird ignoriert") { try rejectedIgnored() }
         MiniTest.test("InboxWatcher: stop() beendet die Meldungen") { try stopWorks() }
         MiniTest.test("InboxWatcher: scan() meldet vorhandene PDFs genau einmal") { try scanOnce() }
+        MiniTest.test("InboxWatcher: Rename in die Inbox (Finder: temp + umbenennen) wird erkannt") { try renameDetected() }
     }
 
     private static func makeVault() throws -> (vault: Vault, root: URL) {
@@ -67,6 +68,22 @@ enum InboxWatcherTests {
         try writeDummyPDF("nach-stop.pdf", into: vault.inboxURL)
         let fired = waitFor(1.5) { !got.value.isEmpty }
         try MiniTest.expect(!fired, "nach stop() darf nichts mehr gemeldet werden")
+    }
+
+    private static func renameDetected() throws {
+        let (vault, root) = try makeVault()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let got = URLBox()
+        let watcher = InboxWatcher(vault: vault, pollInterval: 0.2) { url in got.append(url) }
+        try watcher.start()
+        defer { watcher.stop() }
+
+        // Finder-style: erst Temp-Datei in die Inbox, dann per Rename auf .pdf umbenennen
+        try PDFFixture.writePDF(text: "Rename-Test", to: vault.inboxURL.appendingPathComponent(".tmp-partial"))
+        try FileManager.default.moveItem(at: vault.inboxURL.appendingPathComponent(".tmp-partial"),
+                                         to: vault.inboxURL.appendingPathComponent("neu.pdf"))
+        let ok = waitFor(4) { got.value.contains { $0.lastPathComponent == "neu.pdf" } }
+        try MiniTest.expect(ok, "Rename nicht erkannt: \(got.value.map { $0.lastPathComponent })")
     }
 
     private static func scanOnce() throws {

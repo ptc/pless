@@ -41,6 +41,12 @@ struct SidebarView: View {
                     correspondentRow(c)
                 }
             }
+            Section("Vault") {
+                Text(state.vaultPath.path)
+                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                Text("Posteingang: \(state.vault?.inboxURL.path ?? "—")")
+                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            }
         }
         .listStyle(.sidebar)
         .onChange(of: state.sidebarSelection) { _ in state.refresh() }
