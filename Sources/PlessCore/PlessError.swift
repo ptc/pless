@@ -6,4 +6,5 @@ public enum PlessError: Error, Equatable {
     case database(String)
     case duplicateSHA256(String)
     case notFound(String)
+    case invalidDocument(String)
 }
