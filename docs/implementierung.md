@@ -53,7 +53,8 @@ pless/
 
 ```sql
 correspondents(id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL);
-categories(id INTEGER PRIMARY KEY, name TEXT NOT NULL, parent_id INTEGER REFERENCES categories(id), color TEXT, UNIQUE(name, parent_id));
+categories(id INTEGER PRIMARY KEY, name TEXT NOT NULL, parent_id INTEGER REFERENCES categories(id), color TEXT);
+-- eindeutiger Name pro Ebene: CREATE UNIQUE INDEX ON categories(name, COALESCE(parent_id, 0))
 tags(id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, color TEXT);
 
 documents(
@@ -196,14 +197,14 @@ Kategorien
 ### Phase 0 — Setup
 - [x] SwiftPM-Package + Framework-Probe kompiliert (`swift build`)
 - [x] Erster Test grün (`swift run PlessTests`, MiniTest)
-- [ ] git init, `.gitignore`, erste Commits
+- [x] git init, `.gitignore`, erste Commits
 - [x] `AGENTS.md` + dieses Dokument
 
 ### Phase 1 — Core: Datenmodell + Vault + SQLite-Schema
-- [ ] Models: Document, Tag, Correspondent, Category (mit `parent_id` für Hierarchie)
-- [ ] Vault: Ordner anlegen, atomare Dateiablage, Pfadverwaltung
-- [ ] SQLite-Schema + Migrationen (`pless.db` im Vault)
-- [ ] Tests
+- [x] Models: Document, Tag, Correspondent, Category (mit `parent_id` für Hierarchie)
+- [x] Vault: Ordner anlegen, atomare Dateiablage, Pfadverwaltung
+- [x] SQLite-Schema + Migrationen (`pless.db` im Vault, `user_version`)
+- [x] Tests
 
 ### Phase 2 — Naming Engine
 - [ ] Template-Renderer `{date}_{correspondent}_{title}` + Sanitizer
@@ -267,7 +268,10 @@ Kategorien
 
 | Datum | Commit | Phase | Feature |
 |---|---|---|---|
-| — | — | 0 | nur Planung; Doku angelegt, noch keine Commits |
+| 2026-11-15 | ce00c6b | 0 | Doku committed: AGENTS.md, Plan, README, .gitignore |
+| 2026-11-15 | 6c37c03 | 0 | SwiftPM-Skeleton + MiniTest-Runner (CLT: kein XCTest/Testing-Makros) |
+| 2026-11-15 | f863bcf | 1 | Core: Models, Vault, SQLite-Schema V1 + CRUD |
+| 2026-11-15 | 0481f96 | 1 | Tests: Vault + Database (10 grün) |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
