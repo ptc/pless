@@ -171,6 +171,8 @@ struct BulkActionBar: View {
 /// Fallback: Importdatum) mit Trenner-Überschrift pro Monat.
 struct DocumentListView: View {
     @EnvironmentObject var state: AppState
+    /// Sidebar-Drag (Kategorie/Tag) über der Liste aktiv → alle selektierten Karten gestrichelt
+    @State private var sidebarDropTargeted = false
 
     /// Gruppierung: key "yyyy-MM" → (key, „Februar 2026“, Treffer), absteigend sortiert.
     private var groups: [(key: String, label: String, hits: [SearchHit])] {
@@ -205,7 +207,9 @@ struct DocumentListView: View {
                         .padding(.top, g.key == groups.first?.key ? 0 : 8)
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 150, maximum: 210), spacing: 14)], spacing: 14) {
                         ForEach(g.hits, id: \.document.id) { hit in
-                            DocumentCard(hit: hit, selected: hit.document.id.map { state.selectionSet.contains($0) } ?? false)
+                            DocumentCard(hit: hit,
+                                         selected: hit.document.id.map { state.selectionSet.contains($0) } ?? false,
+                                         bulkHighlight: sidebarDropTargeted)
                                 .onTapGesture {
                                     guard let id = hit.document.id else { return }
                                     let mods = NSEvent.modifierFlags
@@ -223,7 +227,7 @@ struct DocumentListView: View {
             state.dropFiles(providers)
         }
         // Kategorie/Tag aus der Sidebar auf die Mehrfachauswahl ziehen (Listenfläche)
-        .onDrop(of: [.plainText], isTargeted: nil) { providers in
+        .onDrop(of: [.plainText], isTargeted: $sidebarDropTargeted) { providers in
             guard let first = state.selectionSet.first, let p = providers.first else { return false }
             p.loadObject(ofClass: NSString.self) { obj, _ in
                 if let s = (obj as? NSString) as String? {
@@ -251,6 +255,8 @@ struct DocumentCard: View {
     @EnvironmentObject var state: AppState
     let hit: SearchHit
     let selected: Bool
+    /// Sidebar-Drag über der Liste → alle selektierten Karten zeigen den gestrichelten Rahmen
+    var bulkHighlight: Bool = false
     @State private var dropTargeted = false
 
     var body: some View {
@@ -297,7 +303,7 @@ struct DocumentCard: View {
             return true
         }
         .overlay {
-            if dropTargeted {
+            if dropTargeted || (bulkHighlight && selected) {
                 RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 3, dash: [8]))
             }
