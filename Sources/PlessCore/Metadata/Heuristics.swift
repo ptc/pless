@@ -34,15 +34,34 @@ public enum Heuristics {
     /// Datum erkennen: ISO `2026-02-14` oder deutsch `14.02.2026` / `14.02.26` (z. B. „vom 14.02.2026“).
     /// Liefert das erste gültige Datum als yyyy-MM-dd, sonst nil.
     public static func extractDate(from text: String) -> String? {
-        if let m = firstMatch(of: #"\b(20\d{2})-(\d{2})-(\d{2})\b"#, in: text, groups: 3) {
-            if let d = validDate(y: Int(m[0])!, m: Int(m[1])!, d: Int(m[2])!) { return d }
+        extractDates(from: text).first
+    }
+
+    /// Alle gültigen Datums-Vorkommen im Text (ISO + deutsch gemischt), Duplikate entfernt,
+    /// in Reihenfolge des Auftretens — als Vorschläge zur Auswahl im Editor.
+    public static func extractDates(from text: String) -> [String] {
+        guard let re = try? NSRegularExpression(
+            pattern: #"\b(20\d{2})-(\d{2})-(\d{2})\b|\b(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})\b"#) else { return [] }
+        var out: [String] = []
+        var seen = Set<String>()
+        for m in re.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+            func group(_ i: Int) -> String? {
+                let r = m.range(at: i)
+                guard r.location != NSNotFound, let range = Range(r, in: text) else { return nil }
+                return String(text[range])
+            }
+            let d: String?
+            if m.range(at: 1).location != NSNotFound { // ISO-Alternative
+                d = validDate(y: Int(group(1)!)!, m: Int(group(2)!)!, d: Int(group(3)!)!)
+            } else {                                    // deutsch
+                guard let dd = group(4), let mm = group(5), let yy = group(6) else { continue }
+                var y = Int(yy)!
+                if yy.count == 2 { y += 2000 }
+                d = validDate(y: y, m: Int(mm)!, d: Int(dd)!)
+            }
+            if let d, !seen.contains(d) { seen.insert(d); out.append(d) }
         }
-        if let m = firstMatch(of: #"\b(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})\b"#, in: text, groups: 3) {
-            var y = Int(m[2])!
-            if m[2].count == 2 { y += 2000 }
-            if let d = validDate(y: y, m: Int(m[1])!, d: Int(m[0])!) { return d }
-        }
-        return nil
+        return out
     }
 
     /// Korrespondent: bekannter Name kommt im Text vor (case-insensitive, Wortgrenzen).

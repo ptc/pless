@@ -10,6 +10,7 @@ struct DetailView: View {
     @EnvironmentObject var state: AppState
     @State private var pdfMode: PDFMode = .height  // Default: ganze skalierte Höhe
     @State private var pdfZoom: CGFloat = 1.0      // nur in .full wirksam (1.0 = 100 %)
+    @State private var showOCRText = true           // OCR-Text-Panel (markierbar) ein-/ausblenden
 
     var doc: PlessCore.Document? {
         state.hits.first { $0.document.id == state.selection }?.document
@@ -44,6 +45,13 @@ struct DetailView: View {
                         .disabled(state.ocrRunning)
                         .help("OCR für dieses Dokument jetzt ausführen (Status „OCR offen“)")
                     }
+                    if doc.ocrText != nil {
+                        Button { showOCRText.toggle() } label: {
+                            Label("OCR-Text", systemImage: "text.alignleft")
+                                .foregroundStyle(showOCRText ? Color.accentColor : .secondary)
+                        }
+                        .help("OCR-Text ein-/ausblenden — der Text ist markierbar/kopierbar")
+                    }
                     Spacer()
                 }
                 .buttonStyle(.borderless)
@@ -54,6 +62,30 @@ struct DetailView: View {
                 PDFViewRepresentable(url: vault.root.appendingPathComponent(doc.relativePath),
                                      mode: $pdfMode, zoom: $pdfZoom)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // OCR-Text (bei gescannten PDFs liegt der Text nur in der DB, nicht im PDF selbst)
+                // als markierbares, read-only Textfeld — Text kann ausgewählt und kopiert werden.
+                if showOCRText, let text = doc.ocrText, !text.isEmpty {
+                    Divider()
+                    VStack(spacing: 2) {
+                        HStack {
+                            Text("OCR-Text").font(.caption).foregroundStyle(.secondary)
+                            Spacer()
+                            Button { showOCRText = false } label: {
+                                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.borderless)
+                            .help("OCR-Text ausblenden")
+                        }
+                        .padding(.horizontal, 8)
+                        TextEditor(text: .constant(text))
+                            .font(.caption)
+                            .scrollContentBackground(.hidden)
+                            .padding(.horizontal, 8)
+                            .frame(height: 110)
+                    }
+                    .padding(.vertical, 2)
+                    .background(Color(nsColor: .windowBackgroundColor))
+                }
                 Divider()
                 if state.isEditing {
                     MetadataEditView(doc: doc)

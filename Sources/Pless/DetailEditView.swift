@@ -8,6 +8,12 @@ struct MetadataEditView: View {
     let doc: PlessCore.Document
     @State private var newTag = ""
 
+    /// Alle im Dokumenttext gefundenen Datums-Vorkommen (ISO + deutsch), als yyyy-MM-dd.
+    private var dateSuggestions: [String] {
+        guard let text = doc.ocrText, !text.isEmpty else { return [] }
+        return Heuristics.extractDates(from: text)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
@@ -22,6 +28,23 @@ struct MetadataEditView: View {
                         Text("Datum").foregroundStyle(.secondary)
                         TextField("yyyy-MM-dd", text: bind(\.date, ""))
                             .textFieldStyle(.roundedBorder).frame(width: 110)
+                    }
+                    // Datums-Vorschläge aus dem OCR-/Textschicht-Text: jedes Datum anwählbar
+                    if !dateSuggestions.isEmpty {
+                        GridRow {
+                            Text("Vorschläge").foregroundStyle(.secondary)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 6) {
+                                    ForEach(dateSuggestions, id: \.self) { d in
+                                        Button(d) { state.draft?.date = d }
+                                            .buttonStyle(.bordered)
+                                            .controlSize(.small)
+                                            .tint(state.draft?.date == d ? .accentColor : .secondary)
+                                            .help("Datum übernehmen")
+                                    }
+                                }
+                            }
+                        }
                     }
                     GridRow {
                         Text("Korrespondent").foregroundStyle(.secondary)

@@ -5,6 +5,7 @@ import PlessCore
 enum HeuristicsTests {
     static func register() {
         MiniTest.test("Heuristik: Datum (dd.mm.yyyy, dd.mm.yy, ISO, ungültig)") { try dates() }
+        MiniTest.test("Heuristik: alle Datums-Vorschläge (mehrere, dedupliziert, Reihenfolge)") { try datesAll() }
         MiniTest.test("Heuristik: Korrespondent matchen (case-insensitive, längster gewinnt)") { try correspondent() }
         MiniTest.test("Heuristik: Titel = erste sinnvolle Zeile") { try title() }
         MiniTest.test("Heuristik: Kategorie per Schlüsselwort") { try category() }
@@ -18,6 +19,16 @@ enum HeuristicsTests {
         try MiniTest.expectEqual(Heuristics.extractDate(from: "31.02.2026"), nil)   // ungültig
         try MiniTest.expectEqual(Heuristics.extractDate(from: "32.13.2026"), nil)   // ungültig
         try MiniTest.expectEqual(Heuristics.extractDate(from: "kein Datum hier"), nil)
+    }
+
+    private static func datesAll() throws {
+        // mehrere Datums-Vorkommen: alle, dedupliziert, in Reihenfolge, ISO + deutsch gemischt
+        try MiniTest.expectEqual(
+            Heuristics.extractDates(from: "Rechnung vom 14.02.2026, gültig bis 2026-12-24, vom 14.02.2026 erneut"),
+            ["2026-02-14", "2026-12-24"])
+        try MiniTest.expectEqual(Heuristics.extractDates(from: "01.03.26 und 2026-03-01"), ["2026-03-01"])
+        try MiniTest.expectEqual(Heuristics.extractDates(from: "31.02.2026 ungültig, 05.06.2026 ok"), ["2026-06-05"])
+        try MiniTest.expectEqual(Heuristics.extractDates(from: "kein Datum"), [])
     }
 
     private static func correspondent() throws {
