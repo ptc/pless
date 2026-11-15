@@ -87,8 +87,15 @@ struct SidebarView: View {
         NSWorkspace.shared.open(url)
     }
 
+    /// Dokumentanzahl inkl. aller Unterkategorien (für das Badge).
+    private func countFor(_ node: CatNode) -> Int {
+        let own = node.id.flatMap { state.categoryCounts[$0] } ?? 0
+        return own + (node.children ?? []).reduce(0) { $0 + countFor($1) }
+    }
+
+    @ViewBuilder
     private func categoryRow(_ node: CatNode) -> some View {
-        Label {
+        let base = Label {
             Text(node.name)
         } icon: {
             Circle().fill(Color(hex: node.color) ?? .accentColor).frame(width: 8, height: 8)
@@ -99,7 +106,8 @@ struct SidebarView: View {
             // Drag-Payload fürs Zuweisen auf Dokumente im Gitter
             return NSItemProvider(object: "pless/category/\(id)" as NSString)
         }
-        .contextMenu {
+        let count = countFor(node)
+        let row = base.contextMenu {
             Button("Umbenennen…") {
                 guard let id = node.id,
                       let n = Prompts.askText(title: "Kategorie umbenennen", message: "Neuer Name", defaultValue: node.name) else { return }
@@ -138,6 +146,11 @@ struct SidebarView: View {
                     if let id = node.id { state.deleteCategory(id: id) }
                 }
             }
+        }
+        if count > 0 {
+            row.badge(count)
+        } else {
+            row
         }
     }
 

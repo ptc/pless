@@ -9,6 +9,27 @@ enum DatabaseTests {
         MiniTest.test("DB: doppelte sha256 wirft duplicateSHA256") { try duplicateSHAThrows() }
         MiniTest.test("DB: allDocuments liefert alle Dokumente") { try allDocumentsReturnsAll() }
         MiniTest.test("DB: Correspondent/Category/Tag Roundtrip (inkl. Hierarchie)") { try entityRoundtrip() }
+        MiniTest.test("DB: categoryDocumentCounts zählt Dokumente pro Kategorie") { try categoryCountsTest() }
+    }
+
+    private static func categoryCountsTest() throws {
+        let (db, root) = try makeDatabase()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let catA = try db.insertCategory(name: "A")
+        let catB = try db.insertCategory(name: "B")
+        var d1 = sampleDocument()
+        d1.categoryId = catA
+        var d2 = sampleDocument()
+        d2.categoryId = catA
+        var d3 = sampleDocument()
+        d3.categoryId = catB
+        _ = try db.insert(d1)
+        _ = try db.insert(d2)
+        _ = try db.insert(d3)
+        let counts = try db.categoryDocumentCounts()
+        try MiniTest.expectEqual(counts[catA], 2)
+        try MiniTest.expectEqual(counts[catB], 1)
+        try MiniTest.expectEqual(counts.count, 2)
     }
 
     private static func makeDatabase() throws -> (db: Database, root: URL) {

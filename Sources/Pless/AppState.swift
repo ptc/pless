@@ -36,6 +36,8 @@ final class AppState: ObservableObject {
     @Published var statusKind: StatusKind = .idle
     @Published var statusText = "Bereit"
     @Published var categories: [PlessCore.Category] = []
+    /// Dokumente pro Kategorie-ID (für das Zähler-Badge in der Sidebar)
+    @Published var categoryCounts: [Int64: Int] = [:]
     @Published var tags: [Tag] = []
     @Published var correspondents: [Correspondent] = []
     @Published var isEditing = false
@@ -106,6 +108,7 @@ final class AppState: ObservableObject {
         do {
             hits = try db.search(currentFilter())
             categories = try db.categories()
+            categoryCounts = try db.categoryDocumentCounts()
             tags = try db.tags()
             correspondents = try db.correspondents()
             if let sel = selection, !hits.contains(where: { $0.document.id == sel }) {
