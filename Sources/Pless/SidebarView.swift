@@ -11,7 +11,9 @@ struct SidebarView: View {
             get: { state.sidebarSelection },
             set: { state.sidebarSelection = $0 ?? .all })) {
             Section("Bibliothek") {
-                Label("Alle Dokumente", systemImage: "tray.full").tag(SidebarSelection.all)
+                Label("Alle Dokumente", systemImage: "tray.full")
+                    .badge(state.hits.count)
+                    .tag(SidebarSelection.all)
                 Label("OCR ausstehend", systemImage: "doc.text.magnifyingglass").tag(SidebarSelection.pendingOCR)
                 Label("Posteingang", systemImage: "tray.arrow.down")
                     .badge(state.inboxCount)

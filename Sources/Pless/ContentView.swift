@@ -15,6 +15,10 @@ struct ContentView: View {
             DetailView()
         }
         .navigationSplitViewStyle(.balanced)
+        .task {
+            // Titelleiste zeigt den aktiven Vault, damit immer klar ist, welcher Ordner beobachtet wird
+            if let w = NSApp.windows.first { w.title = "Pless — \(state.vaultPath.path)" }
+        }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             state.dropFiles(providers)
         }

@@ -96,6 +96,7 @@ struct MetadataSummary: View {
             Text(doc.title ?? doc.filename).font(.headline).lineLimit(1)
             Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 4) {
                 row("Datei", doc.filename)
+                row("Im Vault", doc.relativePath)
                 row("Datum", doc.documentDate ?? "—")
                 row("Korrespondent", state.nameOfCorrespondent(doc.correspondentId).isEmpty ? "—" : state.nameOfCorrespondent(doc.correspondentId))
                 row("Kategorie", state.nameOfCategory(doc.categoryId).isEmpty ? "—" : state.nameOfCategory(doc.categoryId))

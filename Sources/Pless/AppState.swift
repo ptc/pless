@@ -135,10 +135,13 @@ final class AppState: ObservableObject {
         // Schweres (SHA-256, PDFKit) nicht auf dem Main-Thread — sonst friert die UI.
         DispatchQueue.global(qos: .userInitiated).async {
             var failures: [String] = []
+            var importedIds: [Int64] = []
             for url in urls {
                 do {
                     let staged = try vault.stageIntoInbox(fileAt: url)
-                    _ = try ingest.process(fileAt: staged)
+                    if case .imported(let doc) = try ingest.process(fileAt: staged), let id = doc.id {
+                        importedIds.append(id)
+                    }
                 } catch {
                     failures.append("\(url.lastPathComponent): \(error.localizedDescription)")
                 }
@@ -147,9 +150,10 @@ final class AppState: ObservableObject {
                 if !failures.isEmpty {
                     self.errorMessage = "Import fehlgeschlagen — \(failures.joined(separator: "; "))"
                 }
-                self.statusMessage = failures.isEmpty ? "\(urls.count) Dokument(e) importiert" : nil
+                self.statusMessage = failures.isEmpty ? "\(importedIds.count) Dokument(e) importiert" : nil
                 self.runOCR()
                 self.refresh()
+                if let last = importedIds.last { self.selection = last } // neues Dokument direkt anzeigen
             }
         }
     }
@@ -160,8 +164,9 @@ final class AppState: ObservableObject {
         statusMessage = "Importiere \(url.lastPathComponent)…"
         DispatchQueue.global(qos: .userInitiated).async {
             var failure: String?
+            var outcome: IngestOutcome?
             do {
-                _ = try ingest.process(fileAt: url)
+                outcome = try ingest.process(fileAt: url)
             } catch {
                 failure = "\(url.lastPathComponent): \(error.localizedDescription)"
             }
@@ -172,6 +177,7 @@ final class AppState: ObservableObject {
                 self.statusMessage = nil
                 self.runOCR()
                 self.refresh()
+                if case .imported(let doc)? = outcome, let id = doc.id { self.selection = id }
             }
         }
     }

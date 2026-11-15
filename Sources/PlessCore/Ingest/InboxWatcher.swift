@@ -22,10 +22,10 @@ public final class InboxWatcher: @unchecked Sendable {
     }
 
     public func start() throws {
+        // Poll IMMER starten — auch wenn das kqueue-Handle nicht aufgeht, bleibt nichts liegen.
+        startPolling()
         let fd = open(vault.inboxURL.path, O_EVTONLY)
-        guard fd >= 0 else {
-            throw PlessError.io("inbox nicht beobachtbar: \(vault.inboxURL.path)")
-        }
+        guard fd >= 0 else { return } // Poll allein reicht als Fallback
         // write/delete/rename: deckt direktes Schreiben UND temp+rename (Finder) ab
         let src = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd,
                                                             eventMask: [.write, .delete, .rename], queue: queue)
@@ -33,7 +33,10 @@ public final class InboxWatcher: @unchecked Sendable {
         src.setCancelHandler { close(fd) }
         src.resume()
         source = src
-        // Fallback: regelmäßiges Poll, damit keine Datei liegen bleibt
+    }
+
+    private func startPolling() {
+        poll?.cancel()
         let p = DispatchSource.makeTimerSource(queue: queue)
         p.scheduleRepeating(deadline: .now() + pollInterval, interval: pollInterval)
         p.setEventHandler { [weak self] in self?.scanNow() }
