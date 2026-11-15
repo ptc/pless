@@ -230,10 +230,10 @@ Kategorien
 - [x] Thumbnails in der Liste (Cache unter `thumbnails/`)
 
 ### Phase 7 — Metadaten-Editor
-- [ ] Vorschau/Detail: Metadaten read-only; Edit-Modus erst per Klick auf „Bearbeiten“ aktivieren; „Fertig“ speichert + benennt Datei ggf. um
-- [ ] Detail: Titel, Datum, Korrespondent, Kategorie, Tags, Notizen
-- [ ] Verwaltung: Kategorien (anlegen, umbenennen, Farbe, verschachteln), Tags, Korrespondenten
-- [ ] Umbenennen der Datei nach Template
+- [x] Vorschau/Detail: Metadaten read-only; Edit-Modus erst per Klick auf „Bearbeiten“ (Stift in Toolbar); „Fertig“ speichert + benennt Datei ggf. um
+- [x] Detail: Titel, Datum, Korrespondent, Kategorie, Tags, Notizen
+- [x] Verwaltung: Kategorien (anlegen, umbenennen, Farbe, verschachteln — Sidebar-Baum + Kontextmenü), Tags, Korrespondenten
+- [x] Umbenennen der Datei nach Template (inkl. Erst-Ablage aus `inbox/` nach `documents/YYYY/MM/`, Kollision `-2`…)
 
 ### Phase 8 — Import-Wege
 - [ ] Import-Ordner: definierter Ordner (Default `<vault>/inbox`, konfigurierbar), Watch via DispatchSource; neue Dateien laufen automatisch in die Pipeline und werden aus dem Ordner in den Vault verschoben
@@ -280,6 +280,9 @@ Kategorien
 | 2026-11-15 | f451196 | 6 | Core: PDF-Rendering & Thumbnails, tags(for:), onlyNeedsReview-Filter |
 | 2026-11-15 | b91cc3f | 6 | Thumbnail-Tests + PDFFixture — 32 gesamt grün |
 | 2026-11-15 | 0e68b63 | 6 | App-Shell (SwiftUI): @main, 3 Spalten, Liste+Suche, PDF-Viewer, Thumbnails |
+| 2026-11-15 | 32a3d8d | 7 | Core: MetadataService (Speichern + Umbenennen nach Template + Datei-Umzug), Entity-CRUD, moveDocumentFile |
+| 2026-11-15 | 7bd94e1 | 7 | Metadata-Tests — 41 gesamt grün |
+| 2026-11-15 | 31a3ac2 | 7 | UI: Metadaten-Editor (Bearbeiten/Fertig), Felder+Tags, Verwaltung in Sidebar (Baum, Farben, Kontextmenüs) |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
