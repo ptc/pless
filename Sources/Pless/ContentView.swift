@@ -23,23 +23,12 @@ struct ContentView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 8) {
-                        if state.isEditing {
-                            Button { state.saveEditing() } label: { Image(systemName: "checkmark.circle.fill") }
-                                .help("Fertig — speichern (Datei wird ggf. umbenannt)")
-                            Button { state.cancelEditing() } label: { Image(systemName: "xmark.circle") }
-                                .help("Abbrechen")
-                        } else {
-                            Button { state.beginEditing() } label: { Image(systemName: "pencil") }
-                                .help("Bearbeiten")
-                                .disabled(state.selection == nil)
-                        }
-                        TextField("Suchen…", text: Binding(
-                            get: { state.searchText },
-                            set: { state.searchText = $0; state.refresh() }))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 200)
-                    }
+                    // Bearbeiten/Fertig liegt in der Detail-Vorschau (DetailView-Toolbar)
+                    TextField("Suchen…", text: Binding(
+                        get: { state.searchText },
+                        set: { state.searchText = $0; state.refresh() }))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 200)
                 }
             }
             .alert("Hinweis", isPresented: Binding(
@@ -211,7 +200,7 @@ struct DocumentListView: View {
                                          selected: hit.document.id.map { state.selectionSet.contains($0) } ?? false,
                                          bulkHighlight: sidebarDropTargeted)
                                 .onTapGesture {
-                                    guard let id = hit.document.id else { return }
+                                    guard let id = hit.document.id, !state.isEditing else { return }
                                     let mods = NSEvent.modifierFlags
                                     state.select(id,
                                                  additive: mods.contains(.command),

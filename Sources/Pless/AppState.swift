@@ -111,10 +111,13 @@ final class AppState: ObservableObject {
             categoryCounts = try db.categoryDocumentCounts()
             tags = try db.tags()
             correspondents = try db.correspondents()
-            if let sel = selection, !hits.contains(where: { $0.document.id == sel }) {
-                selection = hits.first?.document.id
+            if !isEditing {
+                // im Edit-Modus die Auswahl nicht anfassen (Detailansicht bleibt stabil)
+                if let sel = selection, !hits.contains(where: { $0.document.id == sel }) {
+                    selection = hits.first?.document.id
+                }
+                if selection == nil { selection = hits.first?.document.id } // erstes Dokument vorselektieren
             }
-            if selection == nil { selection = hits.first?.document.id } // erstes Dokument vorselektieren
             selectionSet = selectionSet.intersection(Set(hits.compactMap { $0.document.id }))
         } catch {
             errorMessage = "Aktualisieren fehlgeschlagen: \(error)"
@@ -128,7 +131,12 @@ final class AppState: ObservableObject {
     // MARK: - Mehrfachauswahl & Bulk
 
     /// Auswahl im Gitter: normal = nur diese, additive (Cmd) = umschalten, range (Shift) = Bereich.
+    /// Im Edit-Modus gesperrt — sonst würde sich die Detailansicht mitten im Bearbeiten ändern.
     func select(_ id: Int64, additive: Bool = false, range: Bool = false) {
+        if isEditing {
+            setStatus(.warning, "Im Edit-Modus — bitte erst „Fertig“ oder „Abbrechen“")
+            return
+        }
         if range, let anchor = selection,
            let a = hits.firstIndex(where: { $0.document.id == anchor }),
            let b = hits.firstIndex(where: { $0.document.id == id }) {
@@ -146,11 +154,23 @@ final class AppState: ObservableObject {
     }
 
     func selectAll() {
+        if isEditing { return }
         selectionSet = Set(hits.compactMap { $0.document.id })
         selection = hits.first?.document.id
     }
 
-    func clearSelection() { selectionSet = [] }
+    func clearSelection() {
+        if isEditing { return }
+        selectionSet = []
+    }
+
+    /// Das aktuell ausgewählte Dokument — auch wenn es durch den Sidebar-Filter nicht in
+    /// hits ist (z. B. während des Editierens), damit die Detailansicht stabil bleibt.
+    var selectedDoc: Document? {
+        if let d = hits.first(where: { $0.document.id == selection })?.document { return d }
+        guard let db, let selection else { return nil }
+        return try? db.document(byId: selection)
+    }
 
     /// Bulk: Kategorie und/oder Tag auf alle ausgewählten Dokumente setzen.
     @discardableResult
@@ -420,7 +440,7 @@ final class AppState: ObservableObject {
 
     func beginEditing() {
         guard let id = selection,
-              let doc = hits.first(where: { $0.document.id == id })?.document,
+              let doc = selectedDoc,
               let db else { return }
         let d = MetadataDraft()
         d.title = doc.title ?? ""

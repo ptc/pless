@@ -13,7 +13,7 @@ struct DetailView: View {
     @State private var showOCRText = true           // OCR-Text-Panel (markierbar) ein-/ausblenden
 
     var doc: PlessCore.Document? {
-        state.hits.first { $0.document.id == state.selection }?.document
+        state.selectedDoc
     }
 
     var body: some View {
@@ -53,6 +53,23 @@ struct DetailView: View {
                         .help("OCR-Text ein-/ausblenden — der Text ist markierbar/kopierbar")
                     }
                     Spacer()
+                    // Bearbeiten direkt in der Detail-Vorschau
+                    if state.isEditing {
+                        Button { state.saveEditing() } label: {
+                            Label("Fertig", systemImage: "checkmark.circle.fill")
+                        }
+                        .help("Speichern (Datei wird ggf. umbenannt)")
+                        Button { state.cancelEditing() } label: {
+                            Label("Abbrechen", systemImage: "xmark.circle")
+                        }
+                        .help("Änderungen verwerfen")
+                    } else {
+                        Button { state.beginEditing() } label: {
+                            Label("Bearbeiten", systemImage: "pencil")
+                        }
+                        .disabled(state.selection == nil)
+                        .help("Metadaten bearbeiten")
+                    }
                 }
                 .buttonStyle(.borderless)
                 .controlSize(.small)
