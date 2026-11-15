@@ -81,11 +81,8 @@ document_tags(
   PRIMARY KEY (document_id, tag_id)
 );
 
--- FTS5 (external content), Synchronisation über Trigger
-documents_fts USING fts5(
-  title, ocr_text, correspondent,
-  content='documents', content_rowid='id', tokenize='unicode61'
-);
+-- FTS5 (eigene Kopie — 'correspondent' ist keine Spalte von documents), Sync über Trigger (Migration V2)
+documents_fts USING fts5(title, ocr_text, correspondent, tokenize='unicode61');
 ```
 
 ## Ingest-Pipeline
@@ -222,9 +219,9 @@ Kategorien
 - [x] Tests (Fake-Recognizer, sync + async)
 
 ### Phase 5 — Index & Suche
-- [ ] FTS5-Index + Trigger über Dokumente
-- [ ] Such-API: Volltext + Filter (Tag / Korrespondent / Kategorie / Datum)
-- [ ] Tests
+- [x] FTS5-Index `documents_fts(title, ocr_text, correspondent)` + Trigger (Migration V2, `user_version=2`)
+- [x] Such-API: Volltext (bm25 + Snippet « ») + Filter (Tag / Korrespondent / Kategorie / Datum) + Limit/Offset
+- [x] Tests (inkl. Trigger-Sync nach UPDATE)
 
 ### Phase 6 — App-Shell (SwiftUI)
 - [ ] `@main` App, 3-Spalten-Layout (Sidebar / Liste / Detail)
@@ -278,6 +275,8 @@ Kategorien
 | 2026-11-15 | 368d123 | 3 | Ingest-Tests mit Fixture-PDFs (20 gesamt grün) |
 | 2026-11-15 | 3c601e3 | 4 | OCR: TextRecognizer-Protocol, VisionTextRecognizer, OCRService-Queue |
 | 2026-11-15 | 1d34600 | 4 | OCR-Tests (Fake, sync/async) — 24 gesamt grün |
+| 2026-11-15 | dcc6e5b | 5 | FTS5-Index (Migration V2 + Trigger) + Such-API mit Filtern |
+| 2026-11-15 | 49cc0d8 | 5 | Search-Tests — 29 gesamt grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
