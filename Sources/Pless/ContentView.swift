@@ -62,6 +62,18 @@ struct DocumentListView: View {
                 DocumentRow(hit: hit).tag(hit.document.id)
             }
         }
+        .overlay {
+            if state.hits.isEmpty {
+                ContentUnavailableView {
+                    Label(state.searchText.isEmpty ? "Keine Dokumente" : "Keine Treffer",
+                          systemImage: state.searchText.isEmpty ? "doc.text" : "magnifyingglass")
+                } description: {
+                    Text(state.searchText.isEmpty
+                         ? "PDFs per Drag & Drop, über „Ablage > Importieren…“ oder über den Import-Ordner in den Vault legen."
+                         : "Die Suche „\(state.searchText)“ hat nichts gefunden — Filter in der Sidebar prüfen.")
+                }
+            }
+        }
     }
 }
 

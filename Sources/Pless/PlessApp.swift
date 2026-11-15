@@ -19,12 +19,17 @@ struct PlessApp: App {
                 exit(1)
             }
         }
-        _state = StateObject(wrappedValue: AppState(vaultPath: Self.vaultPath(from: args)))
+        let settings = SettingsStore()
+        _state = StateObject(wrappedValue: AppState(vaultPath: Self.vaultPath(from: args, settings),
+                                                   settings: settings))
     }
 
-    static func vaultPath(from args: [String]) -> URL {
+    static func vaultPath(from args: [String], _ settings: SettingsStore? = nil) -> URL {
         if let i = args.firstIndex(of: "--vault"), i + 1 < args.count {
             return URL(fileURLWithPath: (args[i + 1] as NSString).expandingTildeInPath)
+        }
+        if let path = settings?.vaultPath, !path.isEmpty {
+            return URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)
         }
         return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Documents/Pless", isDirectory: true)
@@ -34,11 +39,21 @@ struct PlessApp: App {
         WindowGroup {
             ContentView().environmentObject(state)
                 .frame(minWidth: 960, minHeight: 600)
+                .sheet(isPresented: Binding(
+                    get: { state.showSettings },
+                    set: { state.showSettings = $0 })) {
+                    SettingsView(settings: state.settings)
+                        .frame(width: 560, height: 520)
+                }
         }
         .commands {
             CommandMenu("Ablage") {
                 Button("Importieren…") { importPanel() }
                     .keyboardShortcut("I", modifiers: .command)
+            }
+            CommandGroup(replacing: .appSettings) {
+                Button("Einstellungen…") { state.showSettings = true }
+                    .keyboardShortcut(",", modifiers: .command)
             }
         }
     }

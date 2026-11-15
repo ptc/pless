@@ -43,17 +43,23 @@ final class AppState: ObservableObject {
     private var watcher: InboxWatcher?
 
     let vaultPath: URL
+    let settings: SettingsStore
+    @Published var showSettings = false
 
-    init(vaultPath: URL) {
+    init(vaultPath: URL, settings: SettingsStore) {
         self.vaultPath = vaultPath
+        self.settings = settings
         do {
-            let v = try Vault(root: vaultPath)
+            let v = try Vault(root: vaultPath, inboxOverride: settings.inboxOverride())
             let database = try Database(url: v.databaseURL)
             vault = v
             db = database
             ingest = IngestService(vault: v, db: database)
-            metadata = MetadataService(vault: v, db: database)
-            ocr = OCRService(vault: v, db: database, recognizer: VisionTextRecognizer(), metadata: metadata)
+            metadata = MetadataService(vault: v, db: database, template: settings.namingTemplate)
+            let langs = Array(settings.ocrLanguages).sorted()
+            ocr = OCRService(vault: v, db: database,
+                             recognizer: VisionTextRecognizer(languages: langs.isEmpty ? ["de-DE", "en-US"] : langs),
+                             metadata: metadata)
             watcher = InboxWatcher(vault: v) { [weak self] url in
                 Task { @MainActor in self?.ingestInboxFile(url) }
             }
