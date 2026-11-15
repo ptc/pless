@@ -5,4 +5,5 @@ func registerAllTests() {
     VaultTests.register()
     DatabaseTests.register()
     NamingTests.register()
+    IngestTests.register()
 }
