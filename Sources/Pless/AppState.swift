@@ -52,8 +52,8 @@ final class AppState: ObservableObject {
             vault = v
             db = database
             ingest = IngestService(vault: v, db: database)
-            ocr = OCRService(vault: v, db: database, recognizer: VisionTextRecognizer())
             metadata = MetadataService(vault: v, db: database)
+            ocr = OCRService(vault: v, db: database, recognizer: VisionTextRecognizer(), metadata: metadata)
             watcher = InboxWatcher(vault: v) { [weak self] url in
                 Task { @MainActor in self?.ingestInboxFile(url) }
             }
