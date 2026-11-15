@@ -4,7 +4,7 @@ import PlessCore
 
 enum DatabaseTests {
     static func register() {
-        MiniTest.test("DB: Migration V1 legt Tabellen an (user_version=1)") { try createsSchemaV1() }
+        MiniTest.test("DB: Migration legt Schema an (user_version=2, FTS5 inkl.)") { try createsSchema() }
         MiniTest.test("DB: Document insert + fetch byUUID/bySHA256") { try insertAndFetch() }
         MiniTest.test("DB: doppelte sha256 wirft duplicateSHA256") { try duplicateSHAThrows() }
         MiniTest.test("DB: allDocuments liefert alle Dokumente") { try allDocumentsReturnsAll() }
@@ -24,15 +24,17 @@ enum DatabaseTests {
                  title: "Testrechnung", documentDate: "2026-11-15", pageCount: 3, ocrDone: true)
     }
 
-    private static func createsSchemaV1() throws {
+    private static func createsSchema() throws {
         let (db, root) = try makeDatabase()
         defer { try? FileManager.default.removeItem(at: root) }
-        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 1)
+        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 2)
         try MiniTest.expectEqual(
             try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='documents';"), 1)
         try MiniTest.expectEqual(
             try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('correspondents','categories','tags','document_tags');"),
             4)
+        try MiniTest.expectEqual(
+            try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='documents_fts';"), 1)
     }
 
     private static func insertAndFetch() throws {

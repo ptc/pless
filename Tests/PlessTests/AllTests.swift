@@ -7,4 +7,5 @@ func registerAllTests() {
     NamingTests.register()
     IngestTests.register()
     OCRTests.register()
+    SearchTests.register()
 }
