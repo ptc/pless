@@ -298,6 +298,8 @@ Kategorien
 | 2026-11-15 | 9e62662 | 12 | Docs: README + Phase 10/11/12 abgehakt |
 | 2026-11-15 | a5be7e9 | 12 | build: Scripts/make-app.sh → dist/Pless.app (Release, ad-hoc signiert) |
 | 2026-11-15 | 26305d7 | 11 | fix: Settings-Sheet per „Fertig“/Esc schließbar |
+| 2026-11-15 | 195db64 | 11 | fix: Settings „Schließen“-Button + Auto-Save-Hinweis; make-app.sh baut vor dem Kopieren |
+| 2026-11-15 | 168d1d0 | 8 | fix: Drag&Drop/Ingest asynchron (kein Main-Thread-Deadlock mehr) — E2E verifiziert |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
