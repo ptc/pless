@@ -15,6 +15,16 @@ swift run   --package-path /Users/ptc/dev/ppless Pless --vault <pfad>  # App mit
 swift run   --package-path /Users/ptc/dev/ppless Pless mcp --vault <pfad>  # MCP-Server (stdio)
 ```
 
+## App-Bundle (.app)
+
+```bash
+bash Scripts/make-app.sh        # Release-Build + Bundle + ad-hoc-Signing → dist/Pless.app
+open dist/Pless.app             # starten (oder nach /Applications kopieren)
+```
+
+`dist/` liegt nicht im git. Ad-hoc signiert — reicht lokal; für Verteilung außerhalb
+dieses Macs braucht es später ein Developer-ID-Signing (Xcode-Projekt).
+
 ## Vault-Layout (alles liegt in einem Ordner, Default `~/Documents/Pless`)
 
 ```

@@ -17,6 +17,7 @@ Analytics, keine externen Services.
   - Tests: `swift run --package-path /Users/ptc/dev/ppless PlessTests` (MiniTest-Runner, Exit-Code 0 = grün)
   - Run: `swift run --package-path /Users/ptc/dev/ppless Pless`
   - MCP-Server (stdio): `swift run --package-path /Users/ptc/dev/ppless Pless mcp --vault <pfad>`
+  - App-Bundle: `bash /Users/ptc/dev/ppless/Scripts/make-app.sh` → `dist/Pless.app` (Release, ad-hoc signiert; `dist/` gitignored)
   - .app-Packaging + Signing (Share Extension, App Group) kommt mit Xcode — noch offen. Tests bleiben MiniTest (XCTest/Swift Testing optional später).
 - **Keine externen Swift-Pakete.** SQLite direkt via `import SQLite3` (FTS5 ist
   in der System-SQLite enthalten), MCP als eigene JSON-RPC-2.0-Implementierung

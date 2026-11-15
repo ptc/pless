@@ -295,9 +295,11 @@ Kategorien
 | 2026-11-15 | 5a3470e | 11 | Core: Vault mit eigenem Import-Ordner (inboxOverride) |
 | 2026-11-15 | f28358f | 11 | Vault inboxOverride-Test — 60 gesamt grün |
 | 2026-11-15 | 5bd4302 | 11 | UI: Settings (Cmd+,) + Empty States |
+| 2026-11-15 | 9e62662 | 12 | Docs: README + Phase 10/11/12 abgehakt |
+| 2026-11-15 | a5be7e9 | 12 | build: Scripts/make-app.sh → dist/Pless.app (Release, ad-hoc signiert) |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
 - OCR `accurate` vs. `fast` konfigurierbar
 - Kategorie-Vorschlag durch die angebundene KI (MCP-Roundtrip)
-- Xcode 27.2 ist installiert (`xcode-select` → `/Applications/Xcode.app`) — volle Toolchain aktiv. Noch offen: .app-Packaging + Signing (Share Extension, App Group, Phase 8) und optional XCTest/Swift Testing statt MiniTest. Quick Look, Menu-Bar-Extra, Export: später
+- Xcode 27.2 ist installiert (`xcode-select` → `/Applications/Xcode.app`) — volle Toolchain aktiv. `.app`-Packaging ist da: `Scripts/make-app.sh` → `dist/Pless.app` (ad-hoc signiert). Noch offen: Developer-ID-Signing + Share Extension/App Group (braucht Xcode-Projekt, Phase 8) und optional XCTest/Swift Testing statt MiniTest. Quick Look, Menu-Bar-Extra, Export: später
