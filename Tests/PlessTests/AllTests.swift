@@ -6,4 +6,5 @@ func registerAllTests() {
     DatabaseTests.register()
     NamingTests.register()
     IngestTests.register()
+    OCRTests.register()
 }

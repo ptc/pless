@@ -1,0 +1,74 @@
+import Foundation
+import MiniTest
+import PlessCore
+
+enum OCRTests {
+    static func register() {
+        MiniTest.test("OCR: pending Dokumente werden per Fake-Recognizer abgearbeitet") { try fakeOCR() }
+        MiniTest.test("OCR: keine pending Dokumente → 0") { try nothingPending() }
+        MiniTest.test("OCR: async mit Fortschritt (done, total)") { try asyncOCR() }
+        MiniTest.test("OCR: VisionTextRecognizer konstruierbar (de+en, fast/accurate)") { visionInit() }
+    }
+
+    private static func makeEnv() throws -> (vault: Vault, db: Database, root: URL) {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pless-ocr-\(UUID().uuidString)", isDirectory: true)
+        let vault = try Vault(root: root)
+        return (vault, try Database(url: vault.databaseURL), root)
+    }
+
+    /// Dokument mit ocrDone=false anlegen (Datei in inbox, Inhalt egal für den Fake).
+    private static func insertPendingDoc(vault: Vault, db: Database) throws -> Document {
+        let name = "scan-\(UUID().uuidString).pdf"
+        try Data("pdf".utf8).write(to: vault.inboxURL.appendingPathComponent(name))
+        var doc = Document(uuid: UUID().uuidString, sha256: "sha-\(UUID().uuidString)",
+                           filename: name, relativePath: "inbox/\(name)",
+                           pageCount: 1, ocrDone: false, needsReview: true)
+        doc.id = try db.insert(doc)
+        return doc
+    }
+
+    private static func fakeOCR() throws {
+        let (vault, db, root) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let doc = try insertPendingDoc(vault: vault, db: db)
+
+        let svc = OCRService(vault: vault, db: db, recognizer: FakeTextRecognizer(text: "erkannter Text 123"))
+        try MiniTest.expectEqual(try svc.processPending(), 1)
+
+        let updated = try db.document(byUUID: doc.uuid)
+        try MiniTest.expectEqual(updated?.ocrText, "erkannter Text 123")
+        try MiniTest.expect(updated?.ocrDone == true)
+        try MiniTest.expect(updated?.needsReview == false)
+        // danach nichts mehr pending
+        try MiniTest.expectEqual(try svc.processPending(), 0)
+    }
+
+    private static func nothingPending() throws {
+        let (vault, db, root) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let svc = OCRService(vault: vault, db: db, recognizer: FakeTextRecognizer(text: "x"))
+        try MiniTest.expectEqual(try svc.processPending(), 0)
+    }
+
+    private static func asyncOCR() throws {
+        let (vault, db, root) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        _ = try insertPendingDoc(vault: vault, db: db)
+
+        let svc = OCRService(vault: vault, db: db, recognizer: FakeTextRecognizer(text: "async"))
+        let sem = DispatchSemaphore(value: 0)
+        var progress: [(Int, Int)] = []
+        var result: Result<Int, Error>?
+        svc.processPendingAsync(onProgress: { progress.append(($0, $1)) },
+                                completion: { result = $0; sem.signal() })
+        sem.wait()
+        try MiniTest.expectEqual(try result!.get(), 1)
+        try MiniTest.expect(progress.count == 1 && progress[0] == (1, 1))
+    }
+
+    private static func visionInit() {
+        _ = VisionTextRecognizer()
+        _ = VisionTextRecognizer(languages: ["de-DE"], recognitionLevel: .fast)
+    }
+}
