@@ -1,13 +1,11 @@
 import Foundation
-import PlessCore
 
-// Entry point. Without arguments: launch the GUI app.
-// With `mcp`: run as MCP server over stdio (for local AI assistants).
+// Einstiegspunkt.
+// Ohne Argumente: GUI-App (ab Phase 6).
+// `pless mcp --vault <pfad>`: MCP-Server über stdio (ab Phase 10).
 let arguments = CommandLine.arguments
 if arguments.count > 1, arguments[1] == "mcp" {
-    print(Probe.ok()) // placeholder until the MCP server lands
-    FileHandle.standardOutput.write("pless mcp: not implemented yet\n".data(using: .utf8)!)
+    FileHandle.standardOutput.write(Data("pless mcp: noch nicht implementiert\n".utf8))
 } else {
-    print(Probe.ok())
-    print("pless gui: not implemented yet")
+    FileHandle.standardOutput.write(Data("pless gui: noch nicht implementiert\n".utf8))
 }
