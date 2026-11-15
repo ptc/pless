@@ -199,6 +199,22 @@ public final class Database {
         try fetchDocuments("SELECT \(Self.documentColumns) FROM documents WHERE sha256 = ? AND deleted_at IS NULL", [sha256]).first
     }
 
+    /// Alle Dokumente, die noch OCR brauchen (nicht gelöscht).
+    public func documentsNeedingOCR() throws -> [Document] {
+        try fetchDocuments("SELECT \(Self.documentColumns) FROM documents WHERE ocr_done = 0 AND deleted_at IS NULL ORDER BY added_at, id")
+    }
+
+    public func setOCRText(documentId: Int64, text: String, ocrDone: Bool) throws {
+        let stmt = try prepare("UPDATE documents SET ocr_text = ?, ocr_done = ?, needs_review = 0 WHERE id = ?")
+        defer { sqlite3_finalize(stmt) }
+        bind(stmt, 1, text)
+        bind(stmt, 2, ocrDone)
+        bind(stmt, 3, documentId)
+        guard sqlite3_step(stmt) == SQLITE_DONE else {
+            throw PlessError.database("setOCRText: \(errMsg())")
+        }
+    }
+
     @discardableResult
     public func insert(_ d: Document) throws -> Int64 {
         let stmt = try prepare("""
