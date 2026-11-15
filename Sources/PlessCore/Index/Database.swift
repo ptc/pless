@@ -58,19 +58,50 @@ public final class Database {
         return sqlite3_column_int64(stmt, 0)
     }
 
-    private func errMsg() -> String {
+    func errMsg() -> String {
         String(cString: sqlite3_errmsg(handle))
     }
 
     // MARK: - Migrationen
 
-    private func migrate() throws {
+    func migrate() throws {
         let version = try scalarInt("PRAGMA user_version;")
         if version < 1 { try applyV1() }
-        // weitere Migrationen hier anhängen: if version < 2 { try applyV2() }
+        if version < 2 { try applyV2() }
+        // weitere Migrationen hier anhängen: if version < 3 { try applyV3() }
     }
 
-    private func applyV1() throws {
+    /// V2: FTS5-Volltextindex über Titel + OCR-Text + Korrespondent, per Trigger synchron gehalten.
+    func applyV2() throws {
+        try execute("""
+        BEGIN;
+        CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(
+          title, ocr_text, correspondent, tokenize='unicode61'
+        );
+        INSERT INTO documents_fts(rowid, title, ocr_text, correspondent)
+          SELECT id, title, ocr_text,
+                 COALESCE((SELECT c.name FROM correspondents c WHERE c.id = documents.correspondent_id), '')
+          FROM documents;
+        CREATE TRIGGER IF NOT EXISTS documents_ai AFTER INSERT ON documents BEGIN
+          INSERT INTO documents_fts(rowid, title, ocr_text, correspondent)
+          VALUES (new.id, new.title, new.ocr_text,
+                  COALESCE((SELECT c.name FROM correspondents c WHERE c.id = new.correspondent_id), ''));
+        END;
+        CREATE TRIGGER IF NOT EXISTS documents_ad AFTER DELETE ON documents BEGIN
+          DELETE FROM documents_fts WHERE rowid = old.id;
+        END;
+        CREATE TRIGGER IF NOT EXISTS documents_au AFTER UPDATE ON documents BEGIN
+          DELETE FROM documents_fts WHERE rowid = old.id;
+          INSERT INTO documents_fts(rowid, title, ocr_text, correspondent)
+          VALUES (new.id, new.title, new.ocr_text,
+                  COALESCE((SELECT c.name FROM correspondents c WHERE c.id = new.correspondent_id), ''));
+        END;
+        PRAGMA user_version = 2;
+        COMMIT;
+        """)
+    }
+
+    func applyV1() throws {
         try execute("""
         BEGIN;
         CREATE TABLE IF NOT EXISTS correspondents(
@@ -122,35 +153,35 @@ public final class Database {
 
     // MARK: - Binden / Spalten
 
-    private func bind(_ stmt: OpaquePointer, _ i: Int32, _ v: String?) {
+    func bind(_ stmt: OpaquePointer, _ i: Int32, _ v: String?) {
         if let v { sqlite3_bind_text(stmt, i, v, -1, kSQLiteTransient) } else { sqlite3_bind_null(stmt, i) }
     }
-    private func bind(_ stmt: OpaquePointer, _ i: Int32, _ v: Int64?) {
+    func bind(_ stmt: OpaquePointer, _ i: Int32, _ v: Int64?) {
         if let v { sqlite3_bind_int64(stmt, i, v) } else { sqlite3_bind_null(stmt, i) }
     }
-    private func bind(_ stmt: OpaquePointer, _ i: Int32, _ v: Int) {
+    func bind(_ stmt: OpaquePointer, _ i: Int32, _ v: Int) {
         sqlite3_bind_int64(stmt, i, Int64(v))
     }
-    private func bind(_ stmt: OpaquePointer, _ i: Int32, _ v: Bool) {
+    func bind(_ stmt: OpaquePointer, _ i: Int32, _ v: Bool) {
         sqlite3_bind_int(stmt, i, v ? 1 : 0)
     }
 
-    private func colText(_ s: OpaquePointer, _ i: Int32) -> String? {
+    func colText(_ s: OpaquePointer, _ i: Int32) -> String? {
         guard let c = sqlite3_column_text(s, i) else { return nil }
         return String(cString: c)
     }
-    private func colInt(_ s: OpaquePointer, _ i: Int32) -> Int64 {
+    func colInt(_ s: OpaquePointer, _ i: Int32) -> Int64 {
         sqlite3_column_int64(s, i)
     }
-    private func colOptInt(_ s: OpaquePointer, _ i: Int32) -> Int64? {
+    func colOptInt(_ s: OpaquePointer, _ i: Int32) -> Int64? {
         sqlite3_column_type(s, i) == SQLITE_NULL ? nil : sqlite3_column_int64(s, i)
     }
 
     // MARK: - Documents
 
-    private static let documentColumns = "id, uuid, sha256, filename, relative_path, title, correspondent_id, category_id, document_date, added_at, page_count, ocr_text, ocr_done, needs_review, notes, deleted_at"
+    static let documentColumns = "id, uuid, sha256, filename, relative_path, title, correspondent_id, category_id, document_date, added_at, page_count, ocr_text, ocr_done, needs_review, notes, deleted_at"
 
-    private func mapDocument(_ s: OpaquePointer) -> Document {
+    func mapDocument(_ s: OpaquePointer) -> Document {
         Document(
             id: colInt(s, 0),
             uuid: colText(s, 1) ?? "",
@@ -171,7 +202,7 @@ public final class Database {
         )
     }
 
-    private func fetchDocuments(_ sql: String, _ binds: [String] = []) throws -> [Document] {
+    func fetchDocuments(_ sql: String, _ binds: [String] = []) throws -> [Document] {
         let stmt = try prepare(sql)
         defer { sqlite3_finalize(stmt) }
         for (i, b) in binds.enumerated() {
@@ -249,7 +280,7 @@ public final class Database {
 
     // MARK: - Einfache Entitäten (Correspondent / Category / Tag)
 
-    private func stepInsert(_ stmt: OpaquePointer) throws -> Int64 {
+    func stepInsert(_ stmt: OpaquePointer) throws -> Int64 {
         let rc = sqlite3_step(stmt)
         guard rc == SQLITE_DONE else { throw PlessError.database("insert: \(errMsg())") }
         return sqlite3_last_insert_rowid(handle)
