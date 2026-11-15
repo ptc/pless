@@ -10,6 +10,9 @@ enum SidebarSelection: Hashable {
     case tag(String)
 }
 
+/// Zustand der Statusleiste — die App sieht nie „kaputt“ aus, sondern zeigt immer, was läuft.
+enum StatusKind { case idle, busy, ok, error }
+
 /// Formular-Entwurf für den Edit-Modus (Phase 7).
 @MainActor
 final class MetadataDraft: ObservableObject {
@@ -28,14 +31,14 @@ final class AppState: ObservableObject {
     @Published var searchText: String = ""
     @Published var sidebarSelection: SidebarSelection = .all
     @Published var errorMessage: String?
-    @Published var ocrProgress: String?
+    @Published var statusKind: StatusKind = .idle
+    @Published var statusText = "Bereit"
     @Published var categories: [PlessCore.Category] = []
     @Published var tags: [Tag] = []
     @Published var correspondents: [Correspondent] = []
     @Published var isEditing = false
     @Published var draft: MetadataDraft?
     @Published var inboxCount = 0
-    @Published var statusMessage: String?
 
     private(set) var vault: Vault?
     private(set) var db: Database?
@@ -68,8 +71,10 @@ final class AppState: ObservableObject {
             try? watcher?.start()
             watcher?.scan() // bereits liegende Dateien nach Start aufgreifen
             refresh()
+            setStatus(.idle, idleText)
         } catch {
             errorMessage = "Vault konnte nicht geöffnet werden: \(error)"
+            setStatus(.error, "Vault konnte nicht geöffnet werden: \(error)")
         }
     }
 
@@ -91,6 +96,21 @@ final class AppState: ObservableObject {
             errorMessage = "Aktualisieren fehlgeschlagen: \(error)"
         }
         updateInboxCount()
+        if statusKind == .idle { statusText = idleText }
+    }
+
+    var idleText: String { "Bereit — \(hits.count) Dokument(e) im Vault · Posteingang: \(inboxCount)" }
+
+    /// Status setzen; bei `.ok` optional nach `seconds` automatisch zurück auf „Bereit“.
+    func setStatus(_ kind: StatusKind, _ text: String, autoIdleAfter seconds: TimeInterval? = nil) {
+        statusKind = kind
+        statusText = text
+        if let seconds {
+            DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
+                guard let self, self.statusKind == .ok else { return }
+                self.setStatus(.idle, self.idleText)
+            }
+        }
     }
 
     /// Anzahl der PDFs, die aktuell im Posteingang liegen (Badge in der Sidebar).
@@ -132,15 +152,23 @@ final class AppState: ObservableObject {
 
     func importFiles(_ urls: [URL]) {
         guard let vault, let ingest else { return }
+        setStatus(.busy, urls.count == 1
+                ? "Importiere \(urls[0].lastPathComponent)…"
+                : "Importiere \(urls.count) Dateien…")
         // Schweres (SHA-256, PDFKit) nicht auf dem Main-Thread — sonst friert die UI.
         DispatchQueue.global(qos: .userInitiated).async {
             var failures: [String] = []
             var importedIds: [Int64] = []
-            for url in urls {
+            var lastDoc: Document?
+            for (i, url) in urls.enumerated() {
+                Task { @MainActor in
+                    self.setStatus(.busy, "Importiere \(i + 1)/\(urls.count): \(url.lastPathComponent)…")
+                }
                 do {
                     let staged = try vault.stageIntoInbox(fileAt: url)
-                    if case .imported(let doc) = try ingest.process(fileAt: staged), let id = doc.id {
-                        importedIds.append(id)
+                    if case .imported(let doc) = try ingest.process(fileAt: staged) {
+                        if let id = doc.id { importedIds.append(id) }
+                        lastDoc = doc
                     }
                 } catch {
                     failures.append("\(url.lastPathComponent): \(error.localizedDescription)")
@@ -148,9 +176,11 @@ final class AppState: ObservableObject {
             }
             Task { @MainActor in
                 if !failures.isEmpty {
+                    self.setStatus(.error, "Import fehlgeschlagen — \(failures.joined(separator: "; "))")
                     self.errorMessage = "Import fehlgeschlagen — \(failures.joined(separator: "; "))"
+                } else if let doc = lastDoc {
+                    self.setStatus(.ok, "Importiert: \(doc.title ?? doc.filename) → \(doc.relativePath)", autoIdleAfter: 6)
                 }
-                self.statusMessage = failures.isEmpty ? "\(importedIds.count) Dokument(e) importiert" : nil
                 self.runOCR()
                 self.refresh()
                 if let last = importedIds.last { self.selection = last } // neues Dokument direkt anzeigen
@@ -161,7 +191,7 @@ final class AppState: ObservableObject {
     /// Datei liegt bereits in inbox/ (Watcher) → direkt in die Pipeline (asynchron).
     func ingestInboxFile(_ url: URL) {
         guard let ingest, FileManager.default.fileExists(atPath: url.path) else { return }
-        statusMessage = "Importiere \(url.lastPathComponent)…"
+        setStatus(.busy, "Posteingang: \(url.lastPathComponent) erkannt — importiere…")
         DispatchQueue.global(qos: .userInitiated).async {
             var failure: String?
             var outcome: IngestOutcome?
@@ -172,12 +202,14 @@ final class AppState: ObservableObject {
             }
             Task { @MainActor in
                 if let failure {
+                    self.setStatus(.error, "Import aus Posteingang fehlgeschlagen — \(failure)")
                     self.errorMessage = "Import aus Posteingang fehlgeschlagen — \(failure)"
+                } else if case .imported(let doc) = outcome {
+                    self.setStatus(.ok, "Importiert: \(doc.title ?? doc.filename) → \(doc.relativePath)", autoIdleAfter: 6)
+                    if let id = doc.id { self.selection = id }
                 }
-                self.statusMessage = nil
                 self.runOCR()
                 self.refresh()
-                if case .imported(let doc)? = outcome, let id = doc.id { self.selection = id }
             }
         }
     }
@@ -207,11 +239,13 @@ final class AppState: ObservableObject {
     func runOCR() {
         guard let ocr else { return }
         ocr.processPendingAsync(onProgress: { done, total in
-            Task { @MainActor in self.ocrProgress = "OCR \(done)/\(total)" }
+            Task { @MainActor in self.setStatus(.busy, "OCR \(done)/\(total)…") }
         }, completion: { result in
             Task { @MainActor in
-                self.ocrProgress = nil
-                if case .failure(let e) = result { self.errorMessage = "OCR fehlgeschlagen: \(e)" }
+                if case .failure(let e) = result {
+                    self.setStatus(.error, "OCR fehlgeschlagen: \(e)")
+                    self.errorMessage = "OCR fehlgeschlagen: \(e)"
+                }
                 self.refresh()
             }
         })

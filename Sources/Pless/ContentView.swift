@@ -7,56 +7,83 @@ struct ContentView: View {
     @EnvironmentObject var state: AppState
 
     var body: some View {
-        NavigationSplitView {
-            SidebarView()
-        } content: {
-            DocumentListView()
-        } detail: {
-            DetailView()
-        }
-        .navigationSplitViewStyle(.balanced)
-        .task {
-            // Titelleiste zeigt den aktiven Vault, damit immer klar ist, welcher Ordner beobachtet wird
-            if let w = NSApp.windows.first { w.title = "Pless — \(state.vaultPath.path)" }
-        }
-        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            state.dropFiles(providers)
-        }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 8) {
-                    if state.isEditing {
-                        Button { state.saveEditing() } label: { Image(systemName: "checkmark.circle.fill") }
-                            .help("Fertig — speichern (Datei wird ggf. umbenannt)")
-                        Button { state.cancelEditing() } label: { Image(systemName: "xmark.circle") }
-                            .help("Abbrechen")
-                    } else {
-                        Button { state.beginEditing() } label: { Image(systemName: "pencil") }
-                            .help("Bearbeiten")
-                            .disabled(state.selection == nil)
+        VStack(spacing: 0) {
+            NavigationSplitView {
+                SidebarView()
+            } content: {
+                DocumentListView()
+            } detail: {
+                DetailView()
+            }
+            .navigationSplitViewStyle(.balanced)
+            .task {
+                // Titelleiste zeigt den aktiven Vault, damit immer klar ist, welcher Ordner beobachtet wird
+                if let w = NSApp.windows.first { w.title = "Pless — \(state.vaultPath.path)" }
+            }
+            .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+                state.dropFiles(providers)
+            }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    HStack(spacing: 8) {
+                        if state.isEditing {
+                            Button { state.saveEditing() } label: { Image(systemName: "checkmark.circle.fill") }
+                                .help("Fertig — speichern (Datei wird ggf. umbenannt)")
+                            Button { state.cancelEditing() } label: { Image(systemName: "xmark.circle") }
+                                .help("Abbrechen")
+                        } else {
+                            Button { state.beginEditing() } label: { Image(systemName: "pencil") }
+                                .help("Bearbeiten")
+                                .disabled(state.selection == nil)
+                        }
+                        TextField("Suchen…", text: Binding(
+                            get: { state.searchText },
+                            set: { state.searchText = $0; state.refresh() }))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 200)
                     }
-                    if let p = state.ocrProgress {
-                        ProgressView().scaleEffect(0.7)
-                        Text(p).font(.caption).foregroundStyle(.secondary)
-                    }
-                    if let s = state.statusMessage {
-                        Text(s).font(.caption).foregroundStyle(.secondary)
-                    }
-                    TextField("Suchen…", text: Binding(
-                        get: { state.searchText },
-                        set: { state.searchText = $0; state.refresh() }))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 200)
                 }
             }
+            .alert("Hinweis", isPresented: Binding(
+                get: { state.errorMessage != nil },
+                set: { if !$0 { state.errorMessage = nil } })) {
+                Button("OK") { state.errorMessage = nil }
+            } message: {
+                Text(state.errorMessage ?? "")
+            }
+            Divider()
+            StatusBarView()
         }
-        .alert("Hinweis", isPresented: Binding(
-            get: { state.errorMessage != nil },
-            set: { if !$0 { state.errorMessage = nil } })) {
-            Button("OK") { state.errorMessage = nil }
-        } message: {
-            Text(state.errorMessage ?? "")
+    }
+}
+
+/// Permanente Statusleiste unten: zeigt jederzeit, was die App tut — nie leer/„kaputt“.
+struct StatusBarView: View {
+    @EnvironmentObject var state: AppState
+
+    var body: some View {
+        HStack(spacing: 6) {
+            switch state.statusKind {
+            case .idle:
+                Image(systemName: "circle.fill").font(.system(size: 6)).foregroundStyle(.secondary)
+            case .busy:
+                ProgressView().scaleEffect(0.55)
+            case .ok:
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            case .error:
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
+            }
+            Text(state.statusText)
+                .font(.caption)
+                .foregroundStyle(state.statusKind == .error ? .red : .secondary)
+                .lineLimit(1)
+            Spacer()
+            Text("\(state.hits.count) Dokument(e) · Posteingang: \(state.inboxCount)")
+                .font(.caption).foregroundStyle(.secondary)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 3)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 }
 
