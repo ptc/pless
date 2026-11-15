@@ -20,29 +20,13 @@ public final class VisionTextRecognizer: TextRecognizer {
         }
         var pages: [String] = []
         for i in 0..<pdf.pageCount {
-            guard let page = pdf.page(at: i), let image = render(page: page) else { continue }
+            guard let page = pdf.page(at: i) else { continue }
+            // 200 dpi: Seitenbreite in Punkt * 200/72
+            let targetWidth = page.bounds(for: .mediaBox).width / 72.0 * 200
+            guard let image = PDFRendering.cgImage(of: page, targetWidth: targetWidth) else { continue }
             pages.append(try recognize(image: image))
         }
         return pages.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// Rendert eine PDF-Seite per CoreGraphics in ein CGImage (funktioniert headless).
-    func render(page: PDFPage, dpi: CGFloat = 200) -> CGImage? {
-        let bounds = page.bounds(for: .mediaBox)
-        let scale = dpi / 72.0
-        let width = Int(bounds.width * scale)
-        let height = Int(bounds.height * scale)
-        let space = CGColorSpaceCreateDeviceRGB()
-        guard width > 0, height > 0,
-              let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
-                                  bytesPerRow: 0, space: space,
-                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
-            return nil
-        }
-        ctx.translateBy(x: 0, y: CGFloat(height))
-        ctx.scaleBy(x: scale, y: -scale)
-        page.draw(with: .mediaBox, to: ctx)
-        return ctx.makeImage()
     }
 
     func recognize(image: CGImage) throws -> String {

@@ -8,18 +8,20 @@ public struct SearchFilter: Sendable, Equatable {
     public var category: String?
     public var fromDate: String?       // yyyy-MM-dd inklusive
     public var toDate: String?         // yyyy-MM-dd inklusive
+    public var onlyNeedsReview: Bool   // nur Dokumente mit offenem OCR/Review
     public var limit: Int
     public var offset: Int
 
     public init(query: String? = nil, tag: String? = nil, correspondent: String? = nil,
                 category: String? = nil, fromDate: String? = nil, toDate: String? = nil,
-                limit: Int = 50, offset: Int = 0) {
+                onlyNeedsReview: Bool = false, limit: Int = 50, offset: Int = 0) {
         self.query = query
         self.tag = tag
         self.correspondent = correspondent
         self.category = category
         self.fromDate = fromDate
         self.toDate = toDate
+        self.onlyNeedsReview = onlyNeedsReview
         self.limit = limit
         self.offset = offset
     }
@@ -58,6 +60,7 @@ extension Database {
         }
         if let from = filter.fromDate { clauses.append("d.document_date >= ?"); binds.append(.s(from)) }
         if let to = filter.toDate { clauses.append("d.document_date <= ?"); binds.append(.s(to)) }
+        if filter.onlyNeedsReview { clauses.append("d.needs_review = 1") }
 
         let cols = "d.id, d.uuid, d.sha256, d.filename, d.relative_path, d.title, d.correspondent_id, d.category_id, d.document_date, d.added_at, d.page_count, d.ocr_text, d.ocr_done, d.needs_review, d.notes, d.deleted_at"
         let match = Self.ftsQuery(filter.query ?? "")

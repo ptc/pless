@@ -9,6 +9,7 @@ enum SearchTests {
         MiniTest.test("Search: Filter Kategorie/Korrespondent/Tag/Datum") { try filtersWork() }
         MiniTest.test("Search: ohne Query liefern Filter alle Treffer") { try noQueryReturnsFiltered() }
         MiniTest.test("Search: FTS bleibt nach UPDATE synchron (Trigger)") { try ftsSyncOnUpdate() }
+        MiniTest.test("Search: onlyNeedsReview filtert OCR-offene Dokumente") { try needsReviewFilter() }
     }
 
     // MARK: - Fixtures
@@ -81,6 +82,19 @@ enum SearchTests {
         defer { try? FileManager.default.removeItem(at: root) }
         try MiniTest.expectEqual(try db.search(SearchFilter()).count, 2)
         try MiniTest.expectEqual(try db.search(SearchFilter(limit: 1)).count, 1)
+    }
+
+    private static func needsReviewFilter() throws {
+        let (_, db, root, _, _) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        // beide Fixtures haben ocrDone=true → keiner needsReview
+        try MiniTest.expectEqual(try db.search(SearchFilter(onlyNeedsReview: true)).count, 0)
+        var d3 = Document(uuid: UUID().uuidString, sha256: "sha3-\(UUID().uuidString)",
+                          filename: "scan.pdf", relativePath: "inbox/scan.pdf",
+                          pageCount: 1, ocrDone: false, needsReview: true)
+        d3.id = try db.insert(d3)
+        let hits = try db.search(SearchFilter(onlyNeedsReview: true))
+        try MiniTest.expectEqual(hits.map(\.document.uuid), [d3.uuid])
     }
 
     private static func ftsSyncOnUpdate() throws {

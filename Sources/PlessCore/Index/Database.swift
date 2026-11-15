@@ -334,6 +334,18 @@ public final class Database {
         return try stepInsert(stmt)
     }
 
+    /// Alle Tags eines Dokuments.
+    public func tags(for documentId: Int64) throws -> [Tag] {
+        let stmt = try prepare("SELECT t.id, t.name, t.color FROM tags t JOIN document_tags dt ON dt.tag_id = t.id WHERE dt.document_id = ? ORDER BY t.name")
+        defer { sqlite3_finalize(stmt) }
+        bind(stmt, 1, documentId)
+        var out: [Tag] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            out.append(Tag(id: colInt(stmt, 0), name: colText(stmt, 1) ?? "", color: colText(stmt, 2)))
+        }
+        return out
+    }
+
     public func tags() throws -> [Tag] {
         let stmt = try prepare("SELECT id, name, color FROM tags ORDER BY name")
         defer { sqlite3_finalize(stmt) }
