@@ -55,6 +55,19 @@ struct SettingsView: View {
                 Text("Platzhalter: {date} {correspondent} {category} {title} {tags}")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section("Anzeige") {
+                LabeledContent("Datumsformat") {
+                    Picker("Datumsformat", selection: $settings.dateFormat) {
+                        Text("Deutsch (dd.MM.yyyy)").tag("dd.MM.yyyy")
+                        Text("ISO (yyyy-MM-dd)").tag("yyyy-MM-dd")
+                        Text("US (MM/dd/yyyy)").tag("MM/dd/yyyy")
+                    }
+                    .labelsHidden()
+                    .frame(width: 200)
+                }
+                Text("Betrifft Anzeige in Liste, Details und Bearbeitungsmodus — gespeichert wird immer ISO (yyyy-MM-dd).")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section("OCR (on-device, Vision)") {
                 Toggle("Deutsch (de-DE)", isOn: langBinding("de-DE"))
                 Toggle("Englisch (en-US)", isOn: langBinding("en-US"))

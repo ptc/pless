@@ -269,7 +269,7 @@ struct DocumentCard: View {
             HStack(spacing: 6) {
                 let corr = state.nameOfCorrespondent(doc.correspondentId)
                 if !corr.isEmpty { Text(corr) }
-                if let d = doc.documentDate { Text(d) }
+                if let d = doc.documentDate { Text(state.displayDate(d)) }
             }
             .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
         }

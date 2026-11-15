@@ -9,6 +9,7 @@ enum SettingsKey {
     static let ocrLanguages = "ocrLanguages"
     static let customInboxEnabled = "customInboxEnabled"
     static let customInboxPath = "customInboxPath"
+    static let dateFormat = "dateFormat"
 }
 
 @MainActor
@@ -28,6 +29,10 @@ final class SettingsStore: ObservableObject {
     @Published var customInboxPath: String {
         didSet { save() }
     }
+    /// Anzeigeformat für Datumsfelder (DB bleibt ISO yyyy-MM-dd); Default deutsch.
+    @Published var dateFormat: String {
+        didSet { save() }
+    }
 
     private let defaults: UserDefaults
 
@@ -39,6 +44,7 @@ final class SettingsStore: ObservableObject {
         self.ocrLanguages = Set(defaults.stringArray(forKey: SettingsKey.ocrLanguages) ?? ["de-DE", "en-US"])
         self.customInboxEnabled = defaults.bool(forKey: SettingsKey.customInboxEnabled)
         self.customInboxPath = defaults.string(forKey: SettingsKey.customInboxPath) ?? ""
+        self.dateFormat = defaults.string(forKey: SettingsKey.dateFormat) ?? "dd.MM.yyyy"
     }
 
     func save() {
@@ -47,6 +53,7 @@ final class SettingsStore: ObservableObject {
         defaults.set(Array(ocrLanguages).sorted(), forKey: SettingsKey.ocrLanguages)
         defaults.set(customInboxEnabled, forKey: SettingsKey.customInboxEnabled)
         defaults.set(customInboxPath, forKey: SettingsKey.customInboxPath)
+        defaults.set(dateFormat, forKey: SettingsKey.dateFormat)
     }
 
     /// Import-Ordner: eigener Pfad (falls aktiviert) oder Default `<vault>/inbox`.

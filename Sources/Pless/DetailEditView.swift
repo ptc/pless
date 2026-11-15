@@ -26,17 +26,20 @@ struct MetadataEditView: View {
                     }
                     GridRow {
                         Text("Datum").foregroundStyle(.secondary)
-                        TextField("yyyy-MM-dd", text: bind(\.date, ""))
+                        // Anzeige im eingestellten Format; Eingabe darf ISO oder Anzeigeformat sein
+                        TextField(state.settings.dateFormat, text: Binding(
+                            get: { state.displayDate(state.draft?.date) },
+                            set: { state.draft?.date = DateDisplay.parse($0, pattern: state.settings.dateFormat) ?? $0 }))
                             .textFieldStyle(.roundedBorder).frame(width: 110)
                     }
-                    // Datums-Vorschläge aus dem OCR-/Textschicht-Text: jedes Datum anwählbar
+                    // Datums-Vorschläge aus dem OCR-/Textschicht-Text: jedes Datum anwählbar (im Anzeigeformat)
                     if !dateSuggestions.isEmpty {
                         GridRow {
                             Text("Vorschläge").foregroundStyle(.secondary)
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 6) {
                                     ForEach(dateSuggestions, id: \.self) { d in
-                                        Button(d) { state.draft?.date = d }
+                                        Button(state.displayDate(d)) { state.draft?.date = d }
                                             .buttonStyle(.bordered)
                                             .controlSize(.small)
                                             .tint(state.draft?.date == d ? .accentColor : .secondary)

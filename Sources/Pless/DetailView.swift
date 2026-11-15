@@ -225,7 +225,7 @@ struct MetadataSummary: View {
             Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 4) {
                 row("Datei", doc.filename)
                 row("Im Vault", doc.relativePath)
-                row("Datum", doc.documentDate ?? "—")
+                row("Datum", doc.documentDate.map { state.displayDate($0) } ?? "—")
                 row("Korrespondent", state.nameOfCorrespondent(doc.correspondentId).isEmpty ? "—" : state.nameOfCorrespondent(doc.correspondentId))
                 row("Kategorie", state.nameOfCategory(doc.categoryId).isEmpty ? "—" : state.nameOfCategory(doc.categoryId))
                 row("Seiten", "\(doc.pageCount)")

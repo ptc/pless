@@ -128,6 +128,11 @@ final class AppState: ObservableObject {
 
     var idleText: String { "Bereit — \(hits.count) Dokument(e) im Vault · Posteingang: \(inboxCount)" }
 
+    /// ISO-Datum (yyyy-MM-dd aus der DB) → Anzeigeformat aus den Einstellungen.
+    func displayDate(_ iso: String?) -> String {
+        DateDisplay.format(iso: iso, pattern: settings.dateFormat)
+    }
+
     // MARK: - Mehrfachauswahl & Bulk
 
     /// Auswahl im Gitter: normal = nur diese, additive (Cmd) = umschalten, range (Shift) = Bereich.
@@ -462,14 +467,12 @@ final class AppState: ObservableObject {
     func saveEditing() {
         guard let draft, let id = selection, let db, let metadata else { return }
         if !draft.date.isEmpty {
-            let f = DateFormatter()
-            f.locale = Locale(identifier: "en_US_POSIX")
-            f.dateFormat = "yyyy-MM-dd"
-            f.isLenient = false
-            guard f.date(from: draft.date) != nil else {
-                errorMessage = "Datum ungültig — bitte Format yyyy-MM-dd verwenden"
+            // Eingabe im Anzeigeformat (z. B. dd.MM.yyyy) oder ISO → intern ISO speichern
+            guard let iso = DateDisplay.parse(draft.date, pattern: settings.dateFormat) else {
+                errorMessage = "Datum ungültig — bitte Format \(settings.dateFormat) verwenden"
                 return
             }
+            draft.date = iso
         }
         do {
             // Tags vor dem Speichern synchronisieren, damit {tags} im Namensschema greift
