@@ -9,4 +9,5 @@ func registerAllTests() {
     OCRTests.register()
     SearchTests.register()
     ThumbnailTests.register()
+    MetadataTests.register()
 }
