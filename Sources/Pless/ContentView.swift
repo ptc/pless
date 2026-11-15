@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 import PlessCore
 
 struct ContentView: View {
@@ -14,6 +15,9 @@ struct ContentView: View {
             DetailView()
         }
         .navigationSplitViewStyle(.balanced)
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            state.dropFiles(providers)
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 HStack(spacing: 8) {

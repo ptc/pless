@@ -40,6 +40,7 @@ final class AppState: ObservableObject {
     private(set) var ingest: IngestService?
     private(set) var ocr: OCRService?
     private(set) var metadata: MetadataService?
+    private var watcher: InboxWatcher?
 
     let vaultPath: URL
 
@@ -53,10 +54,19 @@ final class AppState: ObservableObject {
             ingest = IngestService(vault: v, db: database)
             ocr = OCRService(vault: v, db: database, recognizer: VisionTextRecognizer())
             metadata = MetadataService(vault: v, db: database)
+            watcher = InboxWatcher(vault: v) { [weak self] url in
+                Task { @MainActor in self?.ingestInboxFile(url) }
+            }
+            try? watcher?.start()
+            watcher?.scan() // bereits liegende Dateien nach Start aufgreifen
             refresh()
         } catch {
             errorMessage = "Vault konnte nicht geöffnet werden: \(error)"
         }
+    }
+
+    deinit {
+        watcher?.stop()
     }
 
     func refresh() {
@@ -110,6 +120,38 @@ final class AppState: ObservableObject {
         }
         runOCR()
         refresh()
+    }
+
+    /// Datei liegt bereits in inbox/ (Watcher) → direkt in die Pipeline.
+    func ingestInboxFile(_ url: URL) {
+        guard let ingest, FileManager.default.fileExists(atPath: url.path) else { return }
+        do {
+            _ = try ingest.process(fileAt: url)
+        } catch {
+            errorMessage = "Import aus Posteingang fehlgeschlagen (\(url.lastPathComponent)): \(error)"
+        }
+        runOCR()
+        refresh()
+    }
+
+    /// Drag & Drop: file-URL-Provider auflösen und als Import behandeln. true = PDFs dabei.
+    @discardableResult
+    func dropFiles(_ providers: [NSItemProvider]) -> Bool {
+        var urls: [URL] = []
+        let group = DispatchGroup()
+        for p in providers {
+            guard p.hasItemConformingToTypeIdentifier("public.file-url") else { continue }
+            group.enter()
+            p.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
+                defer { group.leave() }
+                if let url = item as? URL { urls.append(url) }
+            }
+        }
+        group.wait()
+        let pdfs = urls.filter { $0.pathExtension.lowercased() == "pdf" }
+        guard !pdfs.isEmpty else { return false }
+        importFiles(pdfs)
+        return true
     }
 
     func runOCR() {
