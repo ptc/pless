@@ -5,9 +5,18 @@ import PlessCore
 /// Einstellungen (Cmd+,): Vault-Pfad, Import-Ordner, Namensschema + Live-Vorschau, OCR-Sprachen, MCP-Snippet.
 struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        Form {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Button("Fertig") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+            Form {
             Section("Vault") {
                 LabeledContent("Pfad") {
                     HStack {
@@ -60,6 +69,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+        }
     }
 
     private var preview: String {
