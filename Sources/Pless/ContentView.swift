@@ -35,6 +35,9 @@ struct ContentView: View {
                         ProgressView().scaleEffect(0.7)
                         Text(p).font(.caption).foregroundStyle(.secondary)
                     }
+                    if let s = state.statusMessage {
+                        Text(s).font(.caption).foregroundStyle(.secondary)
+                    }
                     TextField("Suchen…", text: Binding(
                         get: { state.searchText },
                         set: { state.searchText = $0; state.refresh() }))
@@ -61,6 +64,9 @@ struct DocumentListView: View {
             ForEach(state.hits, id: \.document.id) { hit in
                 DocumentRow(hit: hit).tag(hit.document.id)
             }
+        }
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            state.dropFiles(providers)
         }
         .overlay {
             if state.hits.isEmpty {

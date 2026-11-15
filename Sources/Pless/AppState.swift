@@ -34,6 +34,8 @@ final class AppState: ObservableObject {
     @Published var correspondents: [Correspondent] = []
     @Published var isEditing = false
     @Published var draft: MetadataDraft?
+    @Published var inboxCount = 0
+    @Published var statusMessage: String?
 
     private(set) var vault: Vault?
     private(set) var db: Database?
@@ -88,6 +90,20 @@ final class AppState: ObservableObject {
         } catch {
             errorMessage = "Aktualisieren fehlgeschlagen: \(error)"
         }
+        updateInboxCount()
+    }
+
+    /// Anzahl der PDFs, die aktuell im Posteingang liegen (Badge in der Sidebar).
+    func updateInboxCount() {
+        guard let vault else { return }
+        inboxCount = (try? FileManager.default.contentsOfDirectory(atPath: vault.inboxURL.path))?
+            .filter { $0.lowercased().hasSuffix(".pdf") }.count ?? 0
+    }
+
+    /// Manuelles Scannen des Posteingangs (Menü/Sidebar).
+    func scanInbox() {
+        watcher?.scan()
+        updateInboxCount()
     }
 
     /// Führt eine schreibende Aktion aus, fängt Fehler als Alert ab und aktualisiert die UI.
@@ -131,6 +147,7 @@ final class AppState: ObservableObject {
                 if !failures.isEmpty {
                     self.errorMessage = "Import fehlgeschlagen — \(failures.joined(separator: "; "))"
                 }
+                self.statusMessage = failures.isEmpty ? "\(urls.count) Dokument(e) importiert" : nil
                 self.runOCR()
                 self.refresh()
             }
@@ -140,6 +157,7 @@ final class AppState: ObservableObject {
     /// Datei liegt bereits in inbox/ (Watcher) → direkt in die Pipeline (asynchron).
     func ingestInboxFile(_ url: URL) {
         guard let ingest, FileManager.default.fileExists(atPath: url.path) else { return }
+        statusMessage = "Importiere \(url.lastPathComponent)…"
         DispatchQueue.global(qos: .userInitiated).async {
             var failure: String?
             do {
@@ -151,6 +169,7 @@ final class AppState: ObservableObject {
                 if let failure {
                     self.errorMessage = "Import aus Posteingang fehlgeschlagen — \(failure)"
                 }
+                self.statusMessage = nil
                 self.runOCR()
                 self.refresh()
             }

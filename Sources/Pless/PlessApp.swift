@@ -50,6 +50,7 @@ struct PlessApp: App {
             CommandMenu("Ablage") {
                 Button("Importieren…") { importPanel() }
                     .keyboardShortcut("I", modifiers: .command)
+                Button("Posteingang jetzt scannen") { state.scanInbox() }
             }
             CommandGroup(replacing: .appSettings) {
                 Button("Einstellungen…") { state.showSettings = true }

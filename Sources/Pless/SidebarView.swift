@@ -13,6 +13,13 @@ struct SidebarView: View {
             Section("Bibliothek") {
                 Label("Alle Dokumente", systemImage: "tray.full").tag(SidebarSelection.all)
                 Label("OCR ausstehend", systemImage: "doc.text.magnifyingglass").tag(SidebarSelection.pendingOCR)
+                Label("Posteingang", systemImage: "tray.arrow.down")
+                    .badge(state.inboxCount)
+                    .tag(SidebarSelection.all)
+                    .contextMenu {
+                        Button("Jetzt scannen") { state.scanInbox() }
+                    }
+                    .onTapGesture { state.scanInbox() }
             }
             Section(header: sectionHeader("Kategorien") {
                 if let name = Prompts.askText(title: "Neue Kategorie", message: "Name") {
