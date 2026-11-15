@@ -3,15 +3,18 @@ import Foundation
 /// Der Vault: ein Ordner, der alles enthält (pless.db, documents/, inbox/, thumbnails/).
 public struct Vault: Sendable {
     public let root: URL
+    /// Optionaler eigener Import-Ordner (Settings); Default: `<root>/inbox`.
+    public let inboxOverride: URL?
 
     public var databaseURL: URL { root.appendingPathComponent("pless.db", isDirectory: false) }
     public var documentsURL: URL { root.appendingPathComponent("documents", isDirectory: true) }
-    public var inboxURL: URL { root.appendingPathComponent("inbox", isDirectory: true) }
+    public var inboxURL: URL { inboxOverride ?? root.appendingPathComponent("inbox", isDirectory: true) }
     public var rejectedURL: URL { inboxURL.appendingPathComponent("_abgelehnt", isDirectory: true) }
     public var thumbnailsURL: URL { root.appendingPathComponent("thumbnails", isDirectory: true) }
 
-    public init(root: URL, createIfNeeded: Bool = true) throws {
+    public init(root: URL, inboxOverride: URL? = nil, createIfNeeded: Bool = true) throws {
         self.root = root
+        self.inboxOverride = inboxOverride
         let fm = FileManager.default
         if createIfNeeded {
             for dir in [root, documentsURL, inboxURL, rejectedURL, thumbnailsURL] {
