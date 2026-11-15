@@ -17,6 +17,16 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 HStack(spacing: 8) {
+                    if state.isEditing {
+                        Button { state.saveEditing() } label: { Image(systemName: "checkmark.circle.fill") }
+                            .help("Fertig — speichern (Datei wird ggf. umbenannt)")
+                        Button { state.cancelEditing() } label: { Image(systemName: "xmark.circle") }
+                            .help("Abbrechen")
+                    } else {
+                        Button { state.beginEditing() } label: { Image(systemName: "pencil") }
+                            .help("Bearbeiten")
+                            .disabled(state.selection == nil)
+                    }
                     if let p = state.ocrProgress {
                         ProgressView().scaleEffect(0.7)
                         Text(p).font(.caption).foregroundStyle(.secondary)
@@ -36,49 +46,6 @@ struct ContentView: View {
         } message: {
             Text(state.errorMessage ?? "")
         }
-    }
-}
-
-struct SidebarView: View {
-    @EnvironmentObject var state: AppState
-
-    var body: some View {
-        List(selection: Binding(
-            get: { state.sidebarSelection },
-            set: { state.sidebarSelection = $0 ?? .all })) {
-            Section("Bibliothek") {
-                Label("Alle Dokumente", systemImage: "tray.full").tag(SidebarSelection.all)
-                Label("OCR ausstehend", systemImage: "doc.text.magnifyingglass").tag(SidebarSelection.pendingOCR)
-            }
-            if let db = state.db {
-                let cats = (try? db.categories()) ?? []
-                if !cats.isEmpty {
-                    Section("Kategorien") {
-                        ForEach(cats, id: \.id) {
-                            Label($0.name, systemImage: "folder").tag(SidebarSelection.category($0.name))
-                        }
-                    }
-                }
-                let tags = (try? db.tags()) ?? []
-                if !tags.isEmpty {
-                    Section("Tags") {
-                        ForEach(tags, id: \.id) {
-                            Label($0.name, systemImage: "tag").tag(SidebarSelection.tag($0.name))
-                        }
-                    }
-                }
-                let corrs = (try? db.correspondents()) ?? []
-                if !corrs.isEmpty {
-                    Section("Korrespondenten") {
-                        ForEach(corrs, id: \.id) {
-                            Label($0.name, systemImage: "person").tag(SidebarSelection.correspondent($0.name))
-                        }
-                    }
-                }
-            }
-        }
-        .listStyle(.sidebar)
-        .onChange(of: state.sidebarSelection) { _ in state.refresh() }
     }
 }
 

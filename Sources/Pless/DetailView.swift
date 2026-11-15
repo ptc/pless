@@ -16,8 +16,13 @@ struct DetailView: View {
                 PDFViewRepresentable(url: vault.root.appendingPathComponent(doc.relativePath))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Divider()
-                MetadataSummary(doc: doc)
-                    .frame(height: 210)
+                if state.isEditing {
+                    MetadataEditView(doc: doc)
+                        .frame(height: 300)
+                } else {
+                    MetadataSummary(doc: doc)
+                        .frame(height: 210)
+                }
             }
         } else {
             ContentUnavailableView("Dokument wählen", systemImage: "doc.text",

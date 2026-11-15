@@ -10,6 +10,17 @@ enum SidebarSelection: Hashable {
     case tag(String)
 }
 
+/// Formular-Entwurf für den Edit-Modus (Phase 7).
+@MainActor
+final class MetadataDraft: ObservableObject {
+    @Published var title = ""
+    @Published var date = ""              // yyyy-MM-dd
+    @Published var correspondentId: Int64?
+    @Published var categoryId: Int64?
+    @Published var notes = ""
+    @Published var tagNames: [String] = []
+}
+
 @MainActor
 final class AppState: ObservableObject {
     @Published var hits: [SearchHit] = []
@@ -18,11 +29,17 @@ final class AppState: ObservableObject {
     @Published var sidebarSelection: SidebarSelection = .all
     @Published var errorMessage: String?
     @Published var ocrProgress: String?
+    @Published var categories: [PlessCore.Category] = []
+    @Published var tags: [Tag] = []
+    @Published var correspondents: [Correspondent] = []
+    @Published var isEditing = false
+    @Published var draft: MetadataDraft?
 
     private(set) var vault: Vault?
     private(set) var db: Database?
     private(set) var ingest: IngestService?
     private(set) var ocr: OCRService?
+    private(set) var metadata: MetadataService?
 
     let vaultPath: URL
 
@@ -35,6 +52,7 @@ final class AppState: ObservableObject {
             db = database
             ingest = IngestService(vault: v, db: database)
             ocr = OCRService(vault: v, db: database, recognizer: VisionTextRecognizer())
+            metadata = MetadataService(vault: v, db: database)
             refresh()
         } catch {
             errorMessage = "Vault konnte nicht geöffnet werden: \(error)"
@@ -45,11 +63,24 @@ final class AppState: ObservableObject {
         guard let db else { return }
         do {
             hits = try db.search(currentFilter())
+            categories = try db.categories()
+            tags = try db.tags()
+            correspondents = try db.correspondents()
             if let sel = selection, !hits.contains(where: { $0.document.id == sel }) {
                 selection = hits.first?.document.id
             }
         } catch {
-            errorMessage = "Suche fehlgeschlagen: \(error)"
+            errorMessage = "Aktualisieren fehlgeschlagen: \(error)"
+        }
+    }
+
+    /// Führt eine schreibende Aktion aus, fängt Fehler als Alert ab und aktualisiert die UI.
+    func run(_ body: () throws -> Void) {
+        do {
+            try body()
+            refresh()
+        } catch {
+            errorMessage = "\(error)"
         }
     }
 
@@ -64,6 +95,8 @@ final class AppState: ObservableObject {
         }
         return f
     }
+
+    // MARK: - Import & OCR
 
     func importFiles(_ urls: [URL]) {
         guard let vault, let ingest else { return }
@@ -92,14 +125,93 @@ final class AppState: ObservableObject {
         })
     }
 
+    // MARK: - Edit-Modus (Phase 7)
+
+    func beginEditing() {
+        guard let id = selection,
+              let doc = hits.first(where: { $0.document.id == id })?.document,
+              let db else { return }
+        let d = MetadataDraft()
+        d.title = doc.title ?? ""
+        d.date = doc.documentDate ?? ""
+        d.correspondentId = doc.correspondentId
+        d.categoryId = doc.categoryId
+        d.notes = doc.notes ?? ""
+        d.tagNames = ((try? db.tags(for: id)) ?? []).map { $0.name }
+        draft = d
+        isEditing = true
+    }
+
+    func cancelEditing() {
+        isEditing = false
+        draft = nil
+    }
+
+    /// „Fertig“: Tags synchronisieren, Metadaten speichern (Datei wird ggf. umbenannt), UI aktualisieren.
+    func saveEditing() {
+        guard let draft, let id = selection, let db, let metadata else { return }
+        if !draft.date.isEmpty {
+            let f = DateFormatter()
+            f.locale = Locale(identifier: "en_US_POSIX")
+            f.dateFormat = "yyyy-MM-dd"
+            f.isLenient = false
+            guard f.date(from: draft.date) != nil else {
+                errorMessage = "Datum ungültig — bitte Format yyyy-MM-dd verwenden"
+                return
+            }
+        }
+        do {
+            // Tags vor dem Speichern synchronisieren, damit {tags} im Namensschema greift
+            let current = (try? db.tags(for: id)) ?? []
+            for name in draft.tagNames where !current.contains(where: { $0.name == name }) {
+                let tagId = try db.findOrCreateTag(name: name)
+                try db.addTagToDocument(documentId: id, tagId: tagId)
+            }
+            for t in current where !draft.tagNames.contains(t.name) {
+                guard let tid = t.id else { continue }
+                try db.removeTagFromDocument(documentId: id, tagId: tid)
+            }
+            _ = try metadata.saveMetadata(
+                documentId: id,
+                title: draft.title.isEmpty ? nil : draft.title,
+                documentDate: draft.date.isEmpty ? nil : draft.date,
+                correspondentId: draft.correspondentId,
+                categoryId: draft.categoryId,
+                notes: draft.notes.isEmpty ? nil : draft.notes)
+            isEditing = false
+            self.draft = nil
+            refresh()
+        } catch {
+            errorMessage = "Speichern fehlgeschlagen: \(error)"
+        }
+    }
+
+    // MARK: - Verwaltung: Korrespondenten / Kategorien / Tags
+
+    func addCorrespondent(name: String) { run { try db?.findOrCreateCorrespondent(name: name) } }
+    func renameCorrespondent(id: Int64, newName: String) { run { try db?.renameCorrespondent(id: id, newName: newName) } }
+    func deleteCorrespondent(id: Int64) { run { try db?.deleteCorrespondent(id: id) } }
+
+    func addCategory(name: String, parentId: Int64? = nil) { run { try db?.findOrCreateCategory(name: name, parentId: parentId) } }
+    func updateCategory(id: Int64, name: String, parentId: Int64?, color: String?) {
+        run { try db?.updateCategory(id: id, name: name, parentId: parentId, color: color) }
+    }
+    func deleteCategory(id: Int64) { run { try db?.deleteCategory(id: id) } }
+
+    func addTag(name: String) { run { try db?.findOrCreateTag(name: name) } }
+    func updateTag(id: Int64, name: String, color: String?) { run { try db?.updateTag(id: id, name: name, color: color) } }
+    func deleteTag(id: Int64) { run { try db?.deleteTag(id: id) } }
+
+    // MARK: - Anzeige-Helfer
+
     func nameOfCorrespondent(_ id: Int64?) -> String {
-        guard let id, let db else { return "" }
-        return (try? db.correspondents().first { $0.id == id }?.name) ?? ""
+        guard let id else { return "" }
+        return correspondents.first { $0.id == id }?.name ?? ""
     }
 
     func nameOfCategory(_ id: Int64?) -> String {
-        guard let id, let db else { return "" }
-        return (try? db.categories().first { $0.id == id }?.name) ?? ""
+        guard let id else { return "" }
+        return categories.first { $0.id == id }?.name ?? ""
     }
 
     func tagsOf(_ doc: Document) -> [Tag] {

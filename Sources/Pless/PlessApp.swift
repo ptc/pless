@@ -26,6 +26,7 @@ struct PlessApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView().environmentObject(state)
+                .frame(minWidth: 960, minHeight: 600)
         }
         .commands {
             CommandMenu("Ablage") {
