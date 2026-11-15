@@ -53,10 +53,15 @@ public struct Vault: Sendable {
         }
     }
 
-    /// Verschiebt eine Datei in die Inbox (Staging vor dem Ingest). Liefert die Ziel-URL.
+    /// Kopiert eine Datei in die Inbox (Staging vor dem Ingest). Liefert die Ziel-URL.
+    /// Die Quelle wird nie verschoben oder gelöscht — eine Datei darf durch den Import
+    /// nie an ihrem Ursprungsort verschwinden (Crash-Sicherheit).
     @discardableResult
     public func stageIntoInbox(fileAt source: URL) throws -> URL {
         let fm = FileManager.default
+        guard fm.fileExists(atPath: source.path) else {
+            throw PlessError.io("Quelldatei fehlt: \(source.path)")
+        }
         var dest = inboxURL.appendingPathComponent(source.lastPathComponent)
         var n = 2
         while fm.fileExists(atPath: dest.path) {
@@ -64,15 +69,9 @@ public struct Vault: Sendable {
             n += 1
         }
         do {
-            try fm.moveItem(at: source, to: dest)
+            try fm.copyItem(at: source, to: dest)
         } catch {
-            // z. B. anderes Volume (EXDEV): kopieren + löschen
-            do {
-                try fm.copyItem(at: source, to: dest)
-                try fm.removeItem(at: source)
-            } catch {
-                throw PlessError.io("stageIntoInbox fehlgeschlagen: \(error.localizedDescription)")
-            }
+            throw PlessError.io("stageIntoInbox fehlgeschlagen: \(error.localizedDescription)")
         }
         return dest
     }

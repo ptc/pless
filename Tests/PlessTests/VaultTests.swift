@@ -5,7 +5,7 @@ import PlessCore
 enum VaultTests {
     static func register() {
         MiniTest.test("Vault: Ordnerstruktur wird angelegt") { try createsFolderStructure() }
-        MiniTest.test("Vault: stageIntoInbox verschiebt Datei in die Inbox") { try stageIntoInboxMovesFile() }
+        MiniTest.test("Vault: stageIntoInbox kopiert in die Inbox — Original bleibt erhalten") { try stageIntoInboxCopiesFile() }
         MiniTest.test("Vault: documentsFolder legt YYYY/MM an") { try documentsFolderCreatesYearMonth() }
         MiniTest.test("Vault: bestehender Vault ohne createIfNeeded") { try existingVaultWithoutCreate() }
         MiniTest.test("Vault: fehlender Vault wirft vaultNotFound") { try missingVaultThrows() }
@@ -47,7 +47,7 @@ enum VaultTests {
         try MiniTest.expectEqual(vault.databaseURL.lastPathComponent, "pless.db")
     }
 
-    private static func stageIntoInboxMovesFile() throws {
+    private static func stageIntoInboxCopiesFile() throws {
         let root = makeTempDir()
         let srcDir = makeTempDir()
         defer {
@@ -60,7 +60,8 @@ enum VaultTests {
         try Data("dummy".utf8).write(to: src)
         let dest = try vault.stageIntoInbox(fileAt: src)
         try MiniTest.expect(FileManager.default.fileExists(atPath: dest.path))
-        try MiniTest.expect(!FileManager.default.fileExists(atPath: src.path))
+        // Crash-Sicherheit: die Quelle darf nie verschwinden
+        try MiniTest.expect(FileManager.default.fileExists(atPath: src.path), "Original muss erhalten bleiben")
         try MiniTest.expectEqual(dest.deletingLastPathComponent(), vault.inboxURL)
     }
 

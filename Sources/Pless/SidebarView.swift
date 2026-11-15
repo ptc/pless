@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import PlessCore
 
 /// Sidebar: Bibliothek, Kategorien (Baum mit Farbpunkten), Tags, Korrespondenten —
@@ -20,6 +21,7 @@ struct SidebarView: View {
                     .tag(SidebarSelection.all)
                     .contextMenu {
                         Button("Jetzt scannen") { state.scanInbox() }
+                        Button("Im Finder öffnen") { openInFinder(state.vault?.inboxURL) }
                     }
                     .onTapGesture { state.scanInbox() }
             }
@@ -51,10 +53,26 @@ struct SidebarView: View {
                 }
             }
             Section("Vault") {
-                Text(state.vaultPath.path)
-                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-                Text("Posteingang: \(state.vault?.inboxURL.path ?? "—")")
-                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                HStack(spacing: 4) {
+                    Text(state.vaultPath.path)
+                        .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                    Spacer()
+                    Button { openInFinder(state.vaultPath) } label: {
+                        Image(systemName: "arrow.up.right.square").font(.caption2)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Vault im Finder öffnen")
+                }
+                HStack(spacing: 4) {
+                    Text("Posteingang: \(state.vault?.inboxURL.path ?? "—")")
+                        .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                    Spacer()
+                    Button { openInFinder(state.vault?.inboxURL) } label: {
+                        Image(systemName: "tray.and.arrow.down").font(.caption2)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Posteingang (Import-Ordner) im Finder öffnen")
+                }
             }
         }
         .listStyle(.sidebar)
@@ -62,6 +80,12 @@ struct SidebarView: View {
     }
 
     // MARK: - Zeilen
+
+    /// Öffnet einen Ordner im Finder (Posteingang/Import-Ordner bzw. Vault).
+    private func openInFinder(_ url: URL?) {
+        guard let url else { return }
+        NSWorkspace.shared.open(url)
+    }
 
     private func categoryRow(_ node: CatNode) -> some View {
         Label {

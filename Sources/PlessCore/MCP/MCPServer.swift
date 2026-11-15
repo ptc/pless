@@ -13,6 +13,8 @@ public final class MCPServer {
         self.vault = vault
         self.db = db
         self.metadata = MetadataService(vault: vault, db: db)
+        // Crash-Recovery beim Start: verwaiste/fehlende Dateien wiederfinden
+        _ = try? RecoveryService(vault: vault, db: db).recover()
     }
 
     // MARK: - JSON-RPC

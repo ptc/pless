@@ -65,6 +65,9 @@ final class AppState: ObservableObject {
             ocr = OCRService(vault: v, db: database,
                              recognizer: VisionTextRecognizer(languages: langs.isEmpty ? ["de-DE", "en-US"] : langs),
                              metadata: metadata)
+            // Crash-Recovery vor dem Watcher: DB und Dateisystem abgleichen, damit keine
+            // Datei verloren geht, wenn die App mitten im Import abstürzt.
+            let recovery = try? RecoveryService(vault: v, db: database).recover()
             watcher = InboxWatcher(vault: v) { [weak self] url in
                 Task { @MainActor in self?.ingestInboxFile(url) }
             }
@@ -72,6 +75,9 @@ final class AppState: ObservableObject {
             watcher?.scan() // bereits liegende Dateien nach Start aufgreifen
             refresh()
             setStatus(.idle, idleText)
+            if let r = recovery, r.total > 0 {
+                setStatus(.warning, "Wiederherstellung: \(r.finalized) Dokument(e) finalisiert, \(r.relocated) Pfad(e) korrigiert, \(r.adopted) Datei(en) aus documents/ in den Posteingang übernommen")
+            }
         } catch {
             errorMessage = "Vault konnte nicht geöffnet werden: \(error)"
             setStatus(.error, "Vault konnte nicht geöffnet werden: \(error)")

@@ -12,5 +12,6 @@ func registerAllTests() {
     MetadataTests.register()
     InboxWatcherTests.register()
     HeuristicsTests.register()
+    RecoveryTests.register()
     MCPTests.register()
 }
