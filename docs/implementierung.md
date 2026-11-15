@@ -212,9 +212,9 @@ Kategorien
 - [x] Tests
 
 ### Phase 3 — Ingest
-- [ ] Import (Datei → `inbox/`), SHA-256-Dedup
-- [ ] PDF-Textextraktion (PDFKit), Fallback-Flag „OCR nötig"
-- [ ] Tests mit Fixture-PDFs
+- [x] Import (Datei → `inbox/` via `stageIntoInbox`), SHA-256-Dedup (Duplikat → `inbox/_abgelehnt/`)
+- [x] PDF-Textextraktion (PDFKit), Fallback-Flag „OCR nötig" (`needsReview`, `ocrDone=false`)
+- [x] Tests mit Fixture-PDFs (werden per CoreGraphics/CTLine zur Laufzeit erzeugt)
 
 ### Phase 4 — OCR
 - [ ] Vision-Wrapper hinter Protocol `TextRecognizer` (Fake für Tests)
@@ -274,6 +274,8 @@ Kategorien
 | 2026-11-15 | 0481f96 | 1 | Tests: Vault + Database (10 grün) |
 | 2026-11-15 | b927464 | 2 | Naming Engine: Template-Renderer + Sanitizer + Kollision |
 | 2026-11-15 | 7d9c134 | 2 | Naming-Tests (15 gesamt grün) |
+| 2026-11-15 | 8eff140 | 3 | Ingest: SHA-256-Dedup, PDFKit-Text, Duplikat/Reject |
+| 2026-11-15 | 368d123 | 3 | Ingest-Tests mit Fixture-PDFs (20 gesamt grün) |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
