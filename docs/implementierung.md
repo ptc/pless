@@ -248,18 +248,18 @@ Kategorien
 - [x] Tests — greift beim Ingest (Textschicht) und nach OCR, inkl. Datei-Ablage nach `documents/YYYY/MM/`
 
 ### Phase 10 — MCP-Server (offener Standard)
-- [ ] JSON-RPC 2.0 über stdio: `initialize`, `tools/list`, `tools/call`, `ping`
-- [ ] Tools: `search_documents`, `get_document`, `list_documents`, `list_categories`, `update_document`, `assign_tag`, `get_stats`
-- [ ] Tests (JSON-RPC-Framing, Tool-Aufrufe)
-- [ ] Doku: Einbindung in Claude Desktop / MCP-Clients
+- [x] JSON-RPC 2.0 über stdio: `initialize`, `tools/list`, `tools/call`, `ping`, `notifications/initialized` (protocolVersion `2025-06-18`)
+- [x] Tools: `search_documents`, `get_document`, `list_documents`, `list_categories`, `update_document` (inkl. Datei-Umbenennen), `assign_tag`, `get_stats`
+- [x] Tests (JSON-RPC-Framing, Tool-Aufrufe, Fehlercodes) + stdio-End-to-End via `pless mcp`
+- [x] Doku: Config-Snippet in Plan + README + App-Settings
 
 ### Phase 11 — Settings & Polish
-- [ ] Settings: Vault-Pfad, Import-Ordner, Namensschema, OCR-Sprachen, MCP
-- [ ] Dark Mode, Empty States, Feinschliff
+- [x] Settings (Cmd+,): Vault-Pfad, Import-Ordner (an/aus + Pfad), Namensschema + Live-Vorschau, OCR-Sprachen, MCP-Config-Snippet
+- [x] Empty States in der Liste; Dark Mode über Systemfarben (automatisch), SF Symbols
 
 ### Phase 12 — Doku & Übergabe
-- [ ] README: Build, Run, Vault, MCP-Config
-- [ ] Bekannte Einschränkungen dokumentieren
+- [x] README: Build, Run, Vault-Layout, MCP-Config, bekannte Einschränkungen
+- [x] Bekannte Einschränkungen dokumentiert (u. a. Share Extension braucht signiertes .app)
 
 ## Fortschritts-Log
 
@@ -289,6 +289,12 @@ Kategorien
 | 2026-11-15 | 742fc44 | 9 | Core: Heuristik (Datum/Korrespondent/Titel/Kategorie) greift bei Ingest + nach OCR, Datei-Ablage nach documents/YYYY/MM |
 | 2026-11-15 | 31df492 | 9 | Heuristik-Tests + Ingest/OCR-End-to-End — 52 gesamt grün |
 | 2026-11-15 | 7ba961b | 9 | UI: OCR-Service mit MetadataService verdrahtet |
+| 2026-11-15 | 70f62bc | 10 | Core: MCP-Server (JSON-RPC 2.0 stdio, 7 Tools) |
+| 2026-11-15 | 240c290 | 10 | MCP-Tests — 59 gesamt grün |
+| 2026-11-15 | 1031fc9 | 10 | CLI: `pless mcp --vault <pfad>` startet MCP-Server über stdio |
+| 2026-11-15 | 5a3470e | 11 | Core: Vault mit eigenem Import-Ordner (inboxOverride) |
+| 2026-11-15 | f28358f | 11 | Vault inboxOverride-Test — 60 gesamt grün |
+| 2026-11-15 | 5bd4302 | 11 | UI: Settings (Cmd+,) + Empty States |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
