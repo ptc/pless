@@ -303,6 +303,7 @@ Kategorien
 | 2026-11-15 | 369a141 | 8 | fix: InboxWatcher + Rename-Events + Poll-Fallback (2 s); Sidebar zeigt Vault-/Posteingang-Pfad — 61 Tests grün |
 | 2026-11-15 | 6baa560 | 8 | UI: Posteingang-Badge + „Jetzt scannen“ + Import-Status im Toolbar; Drop auch direkt auf der Liste |
 | 2026-11-15 | 0797fcf | 8 | UI: Import auto-selektiert, Titelleiste = Vault-Pfad, Detail zeigt Ablagepfad; Watcher-Poll auch ohne kqueue — 61 Tests grün, E2E verifiziert |
+| 2026-11-15 | 83d5e3c | 8 | UI: permanente Statusleiste (idle/busy/ok/error) — App sieht nie „kaputt“ aus |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
