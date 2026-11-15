@@ -29,6 +29,27 @@ public struct Vault: Sendable {
         return url
     }
 
+    /// Verschiebt eine Dokumentdatei innerhalb des Vaults (legt Zielordner an).
+    /// Wirft, wenn die Quelle fehlt oder das Ziel bereits existiert.
+    public func moveDocumentFile(from relativePath: String, to newRelativePath: String) throws {
+        let fm = FileManager.default
+        let src = root.appendingPathComponent(relativePath)
+        let dst = root.appendingPathComponent(newRelativePath)
+        if src == dst { return }
+        guard fm.fileExists(atPath: src.path) else {
+            throw PlessError.io("Quelldatei fehlt: \(relativePath)")
+        }
+        if fm.fileExists(atPath: dst.path) {
+            throw PlessError.io("Zieldatei existiert bereits: \(newRelativePath)")
+        }
+        try fm.createDirectory(at: dst.deletingLastPathComponent(), withIntermediateDirectories: true)
+        do {
+            try fm.moveItem(at: src, to: dst)
+        } catch {
+            throw PlessError.io("Umbenennen fehlgeschlagen: \(error.localizedDescription)")
+        }
+    }
+
     /// Verschiebt eine Datei in die Inbox (Staging vor dem Ingest). Liefert die Ziel-URL.
     @discardableResult
     public func stageIntoInbox(fileAt source: URL) throws -> URL {
