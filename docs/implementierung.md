@@ -316,6 +316,7 @@ Kategorien
 | 2026-11-15 | 007eba2 | 6 | feat: Bulk-Operationen — Mehrfachauswahl im Gitter (Klick / Cmd+Klick / Shift-Bereich / Cmd+A) + Leiste mit Kategorie-Picker und Tag-Feld für alle ausgewählten Dokumente — 71 Tests grün |
 | 2026-11-15 | eefa908 | 6 | feat: Kategorie/Tag per Drag & Drop aus der Sidebar aufs Gitter ziehen (Mehrfachauswahl wird als Zielmenge genommen, wenn die Karte selektiert ist) — 71 Tests grün |
 | 2026-11-15 | 78baf86 | 6 | fix: Kategorie-Aufklapp-Pfeil (>) nur noch bei echten Unterkategorien sichtbar — 71 Tests grün |
+| 2026-11-15 | 569ea10 | 6 | feat: Sidebar-Drag über der Liste highlightet alle selektierten Karten (gestrichelt); Drop weist Kategorie/Tag der ganzen Mehrfachauswahl zu — 71 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
