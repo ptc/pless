@@ -8,4 +8,5 @@ func registerAllTests() {
     IngestTests.register()
     OCRTests.register()
     SearchTests.register()
+    ThumbnailTests.register()
 }

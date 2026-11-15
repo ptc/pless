@@ -1,7 +1,4 @@
 import Foundation
-import CoreGraphics
-import CoreText
-import AppKit
 import MiniTest
 import PlessCore
 
@@ -26,31 +23,6 @@ enum IngestTests {
         return (vault, db, root, srcDir)
     }
 
-    /// Erzeugt ein einseitiges PDF per CoreGraphics (mit oder ohne Textschicht).
-    private static func writePDF(text: String?, to url: URL) throws {
-        let data = NSMutableData()
-        guard let consumer = CGDataConsumer(data: data) else {
-            throw PlessError.io("CGDataConsumer fehlgeschlagen")
-        }
-        var mediaBox = CGRect(x: 0, y: 0, width: 595, height: 842)
-        guard let ctx = CGContext(consumer: consumer, mediaBox: &mediaBox, nil) else {
-            throw PlessError.io("PDF-Kontext konnte nicht erzeugt werden")
-        }
-        ctx.beginPDFPage(nil)
-        if let text {
-            let attr = NSAttributedString(string: text, attributes: [.font: NSFont.systemFont(ofSize: 12)])
-            let line = CTLineCreateWithAttributedString(attr as CFAttributedString)
-            ctx.textPosition = CGPoint(x: 40, y: 800)
-            CTLineDraw(line, ctx)
-        } else {
-            ctx.setFillColor(NSColor.black.cgColor)
-            ctx.fill(CGRect(x: 40, y: 40, width: 200, height: 200))
-        }
-        ctx.endPDFPage()
-        ctx.closePDF()
-        try (data as Data).write(to: url, options: .atomic)
-    }
-
     // MARK: - Tests
 
     private static func shaKnown() throws {
@@ -68,7 +40,7 @@ enum IngestTests {
         let (vault, db, root, srcDir) = try makeVault()
         defer { try? FileManager.default.removeItem(at: root) }
         let src = srcDir.appendingPathComponent("rechnung.pdf")
-        try writePDF(text: "Rechnung Nr. 42 von der Allianz", to: src)
+        try PDFFixture.writePDF(text: "Rechnung Nr. 42 von der Allianz", to: src)
         let staged = try vault.stageIntoInbox(fileAt: src)
 
         let outcome = try IngestService(vault: vault, db: db).process(fileAt: staged)
@@ -91,7 +63,7 @@ enum IngestTests {
         let fm = FileManager.default
         let src1 = srcDir.appendingPathComponent("original.pdf")
         let src2 = srcDir.appendingPathComponent("kopie.pdf")
-        try writePDF(text: "Duplikat-Test Inhalt", to: src1)
+        try PDFFixture.writePDF(text: "Duplikat-Test Inhalt", to: src1)
         try fm.copyItem(at: src1, to: src2) // gleiche Bytes → gleicher SHA-256
 
         let svc = IngestService(vault: vault, db: db)
@@ -126,7 +98,7 @@ enum IngestTests {
         let (vault, db, root, srcDir) = try makeVault()
         defer { try? FileManager.default.removeItem(at: root) }
         let src = srcDir.appendingPathComponent("scan.pdf")
-        try writePDF(text: nil, to: src) // nur Grafik, keine Textschicht
+        try PDFFixture.writePDF(text: nil, to: src) // nur Grafik, keine Textschicht
         let staged = try vault.stageIntoInbox(fileAt: src)
 
         let outcome = try IngestService(vault: vault, db: db).process(fileAt: staged)

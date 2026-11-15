@@ -34,6 +34,11 @@ public enum MiniTest {
 
     // MARK: - Assertions
 
+    public static func unwrap<T>(_ value: T?, _ message: String = "unerwartet nil", file: String = #fileID, line: Int = #line) throws -> T {
+        guard let value else { throw TestFailure("\(file):\(line): \(message)") }
+        return value
+    }
+
     public static func expect(_ condition: Bool, _ message: String = "Bedingung nicht erfüllt", file: String = #fileID, line: Int = #line) throws {
         if !condition { throw TestFailure("\(file):\(line): \(message)") }
     }
