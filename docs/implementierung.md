@@ -217,9 +217,9 @@ Kategorien
 - [x] Tests mit Fixture-PDFs (werden per CoreGraphics/CTLine zur Laufzeit erzeugt)
 
 ### Phase 4 — OCR
-- [ ] Vision-Wrapper hinter Protocol `TextRecognizer` (Fake für Tests)
-- [ ] Hintergrund-Queue mit Fortschritt
-- [ ] Tests
+- [x] Vision-Wrapper hinter Protocol `TextRecognizer` (Fake für Tests); rendert PDF-Seiten per CoreGraphics (headless), dann `VNRecognizeTextRequest`
+- [x] Hintergrund-Queue (`OCRService.processPendingAsync`) mit Fortschritt (done, total)
+- [x] Tests (Fake-Recognizer, sync + async)
 
 ### Phase 5 — Index & Suche
 - [ ] FTS5-Index + Trigger über Dokumente
@@ -276,6 +276,8 @@ Kategorien
 | 2026-11-15 | 7d9c134 | 2 | Naming-Tests (15 gesamt grün) |
 | 2026-11-15 | 8eff140 | 3 | Ingest: SHA-256-Dedup, PDFKit-Text, Duplikat/Reject |
 | 2026-11-15 | 368d123 | 3 | Ingest-Tests mit Fixture-PDFs (20 gesamt grün) |
+| 2026-11-15 | 3c601e3 | 4 | OCR: TextRecognizer-Protocol, VisionTextRecognizer, OCRService-Queue |
+| 2026-11-15 | 1d34600 | 4 | OCR-Tests (Fake, sync/async) — 24 gesamt grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
