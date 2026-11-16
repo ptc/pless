@@ -11,10 +11,13 @@ struct ContentView: View {
         VStack(spacing: 0) {
             NavigationSplitView {
                 SidebarView()
+                    .navigationSplitViewColumnWidth(min: 230, ideal: 270, max: 340)
             } content: {
                 DocumentListView()
+                    .navigationSplitViewColumnWidth(min: 280, ideal: 340)
             } detail: {
                 DetailView()
+                    .navigationSplitViewColumnWidth(min: 340, ideal: 400, max: 520)
             }
             .navigationSplitViewStyle(.balanced)
             .task {

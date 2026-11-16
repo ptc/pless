@@ -51,7 +51,7 @@ struct PlessApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView().environmentObject(state)
-                .frame(minWidth: 960, minHeight: 600)
+                .frame(minWidth: 1000, minHeight: 600)
                 .sheet(isPresented: Binding(
                     get: { state.showSettings },
                     set: { state.showSettings = $0 })) {
