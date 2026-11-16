@@ -46,6 +46,7 @@ final class AppState: ObservableObject {
     @Published var draft: MetadataDraft?
     @Published var inboxCount = 0
     @Published var ocrRunning = false
+    @Published var syncRunning = false
     private var ocrCancelled = false
 
     private(set) var vault: Vault?
@@ -112,6 +113,8 @@ final class AppState: ObservableObject {
 
     func refresh() {
         guard let db else { return }
+        // Sobald Sync konfiguriert ist, sind „unknown“-Dokumente bekannt nicht gepusht → persistiert auf not_synced
+        if syncConfigured() { try? db.markUnknownAsNotSynced() }
         do {
             hits = try db.search(currentFilter())
             categories = try db.categories()
@@ -554,6 +557,103 @@ final class AppState: ObservableObject {
     func addTag(name: String) { run { try db?.findOrCreateTag(name: name) } }
     func updateTag(id: Int64, name: String, color: String?) { run { try db?.updateTag(id: id, name: name, color: color) } }
     func deleteTag(id: Int64) { run { try db?.deleteTag(id: id) } }
+
+    // MARK: - Sync nach paperless-ngx (Phase 13, opt-in)
+
+    /// true, wenn URL + Token konfiguriert sind (sonst werden keine Netzwerk-Calls ausgeführt).
+    func syncConfigured() -> Bool { settings.paperlessConfig() != nil }
+
+    /// Baut den SyncService frisch aus den aktuellen Settings (URL/Token-Änderung greift sofort).
+    private func makeSyncService() -> SyncService? {
+        guard let vault, let db, let cfg = settings.paperlessConfig() else { return nil }
+        return SyncService(db: db, vault: vault,
+                           client: PaperlessClient(config: cfg, transport: URLSessionTransport()))
+    }
+
+    /// Sync-Eintrag eines Dokuments (für das Badge in den Details).
+    func syncEntry(for docId: Int64) -> SyncEntry? {
+        guard let db else { return nil }
+        return try? db.syncEntry(for: docId)
+    }
+
+    /// Effektiver Sync-Stand zur Anzeige: ohne konfiguriertes paperless ist der Remote-Stand „unknown“.
+    func effectiveSyncState(_ doc: Document) -> SyncState {
+        syncConfigured() ? doc.syncState : .unknown
+    }
+
+    /// Push aller neuen/geänderten Dokumente nach paperless-ngx (nicht auf dem Main-Thread).
+    func syncAll() {
+        guard let service = makeSyncService(), !syncRunning else {
+            if !syncConfigured() {
+                setStatus(.warning, "Sync nicht konfiguriert — URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
+            }
+            return
+        }
+        syncRunning = true
+        let total = (try? service.pendingDocuments().count) ?? 0
+        setStatus(.busy, total == 0 ? "Sync: prüfe paperless-ngx…" : "Sync: 0/\(total)…")
+        let progress: @Sendable (Int, Int) -> Void = { done, tot in
+            DispatchQueue.main.async { self.setStatus(.busy, "Sync: \(done)/\(tot)…") }
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            Task {
+                var outcome: SyncOutcome?
+                var thrown: Error?
+                do {
+                    outcome = try await service.syncAll(progress: progress)
+                } catch let e { thrown = e }
+                Task { @MainActor in
+                    self.syncRunning = false
+                    if let thrown {
+                        self.setStatus(.error, "Sync fehlgeschlagen: \(thrown.localizedDescription)")
+                        self.errorMessage = "Sync nach paperless-ngx fehlgeschlagen: \(thrown)"
+                    } else if let o = outcome {
+                        if o.failed.isEmpty {
+                            if o.uploaded > 0 {
+                                self.setStatus(.ok, "Sync: \(o.uploaded) hochgeladen, \(o.skipped) übersprungen", autoIdleAfter: 8)
+                            } else {
+                                self.setStatus(.idle, "Sync: alles bereits aktuell (\(o.skipped) übersprungen)")
+                            }
+                        } else {
+                            self.setStatus(.warning, "Sync: \(o.uploaded) hochgeladen, \(o.skipped) übersprungen, \(o.failed.count) fehlgeschlagen — \(o.failed.map(\.filename).joined(separator: ", "))")
+                        }
+                    }
+                    self.refresh()
+                }
+            }
+        }
+    }
+
+    /// Push eines einzelnen Dokuments (Button in den Details).
+    func syncDocument(_ documentId: Int64) {
+        guard let service = makeSyncService(), !syncRunning else { return }
+        let title = selectedDoc?.title ?? selectedDoc?.filename ?? "Dokument"
+        syncRunning = true
+        setStatus(.busy, "Synchronisiere „\(title)“…")
+        DispatchQueue.global(qos: .userInitiated).async {
+            Task {
+                var step: SyncStep?
+                var thrown: Error?
+                do { step = try await service.sync(documentId: documentId) } catch let e { thrown = e }
+                Task { @MainActor in
+                    self.syncRunning = false
+                    switch step {
+                    case .uploaded(let pid):
+                        self.setStatus(.ok, "„\(title)“ synchronisiert → paperless #\(pid)", autoIdleAfter: 6)
+                    case .skipped(let pid):
+                        self.setStatus(.idle, "„\(title)“ bereits synchronisiert (paperless #\(pid))")
+                    case .none:
+                        if let thrown {
+                            if let db = self.db { try? db.setSyncState(.notSynced, for: documentId) }   // persistiert: Push fehlgeschlagen
+                            self.setStatus(.error, "Sync fehlgeschlagen: \(thrown.localizedDescription)")
+                            self.errorMessage = "Sync fehlgeschlagen: \(thrown)"
+                        }
+                    }
+                    self.refresh()
+                }
+            }
+        }
+    }
 
     // MARK: - Anzeige-Helfer
 

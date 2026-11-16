@@ -23,6 +23,19 @@ struct ContentView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
+                    Button { state.syncAll() } label: {
+                        if state.syncRunning {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Label("Sync", systemImage: "arrow.triangle.2.circlepath")
+                        }
+                    }
+                    .disabled(!state.syncConfigured() || state.syncRunning)
+                    .help(state.syncConfigured()
+                          ? "Neue/geänderte Dokumente zu paperless-ngx hochladen (Einweg-Push)"
+                          : "paperless-URL + API-Token in den Einstellungen (Cmd+,) konfigurieren")
+                }
+                ToolbarItem(placement: .primaryAction) {
                     // Bearbeiten/Fertig liegt in der Detail-Vorschau (DetailView-Toolbar)
                     TextField("Suchen…", text: Binding(
                         get: { state.searchText },
@@ -241,6 +254,44 @@ struct DocumentListView: View {
     }
 }
 
+/// Wolken-Symbol für den persistierten Sync-Stand (Phase 13): synced / not synced / unknown.
+struct SyncCloudBadge: View {
+    let state: SyncState
+
+    static func symbol(_ state: SyncState) -> String {
+        switch state {
+        case .synced: return "cloud.fill"
+        case .notSynced: return "cloud"
+        case .unknown: return "cloud.questionmark"
+        }
+    }
+
+    static func color(_ state: SyncState) -> Color {
+        switch state {
+        case .synced: return .green
+        case .notSynced: return .orange
+        case .unknown: return .secondary
+        }
+    }
+
+    static func help(_ state: SyncState) -> String {
+        switch state {
+        case .synced: return "Synchronisiert mit paperless-ngx"
+        case .notSynced: return "Noch nicht synchronisiert — Push über „Sync“ in der Toolbar"
+        case .unknown: return "Sync-Stand unbekannt (paperless-ngx nicht konfiguriert oder nie gelaufen)"
+        }
+    }
+
+    var body: some View {
+        Image(systemName: Self.symbol(state))
+            .font(.caption)
+            .foregroundStyle(Self.color(state))
+            .padding(4)
+            .background(Circle().fill(Color(nsColor: .controlBackgroundColor).opacity(0.85)))
+            .help(Self.help(state))
+    }
+}
+
 struct DocumentCard: View {
     @EnvironmentObject var state: AppState
     let hit: SearchHit
@@ -261,12 +312,17 @@ struct DocumentCard: View {
                     Image(systemName: "doc.text").resizable().aspectRatio(contentMode: .fit)
                         .foregroundStyle(.secondary).frame(height: 170)
                 }
-                if doc.needsReview && !doc.ocrDone {
-                    Label("OCR", systemImage: "doc.text.magnifyingglass")
-                        .font(.caption2).padding(4)
-                        .background(.orange.opacity(0.9), in: Capsule())
-                        .foregroundStyle(.white).padding(4)
+                HStack(spacing: 2) {
+                    // Sync-Stand als Wolke: gefüllt grün = synced, Umriss orange = not synced, grau mit ? = unknown
+                    SyncCloudBadge(state: state.effectiveSyncState(doc))
+                    if doc.needsReview && !doc.ocrDone {
+                        Label("OCR", systemImage: "doc.text.magnifyingglass")
+                            .font(.caption2).padding(4)
+                            .background(.orange.opacity(0.9), in: Capsule())
+                            .foregroundStyle(.white)
+                    }
                 }
+                .padding(4)
             }
             Text(doc.title ?? doc.filename).font(.caption).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 6) {

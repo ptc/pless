@@ -213,6 +213,20 @@ struct MetadataSummary: View {
                 row("Kategorie", state.nameOfCategory(doc.categoryId).isEmpty ? "—" : state.nameOfCategory(doc.categoryId))
                 row("Seiten", "\(doc.pageCount)")
                 row("OCR", doc.ocrDone ? "fertig" : "ausstehend")
+                // paperless-ngx Sync-Stand (Phase 13) — Wolke + Text je nach persistiertem Zustand
+                let syncState = state.effectiveSyncState(doc)
+                switch syncState {
+                case .synced:
+                    if let entry = doc.id.flatMap({ state.syncEntry(for: $0) }) {
+                        row("paperless", syncState, "#\(entry.paperlessId) · \(state.displayDate(String(entry.syncedAt.prefix(10))))")
+                    } else {
+                        row("paperless", syncState, "synchronisiert")
+                    }
+                case .notSynced:
+                    row("paperless", syncState, "nicht synchronisiert — Push über „Sync“ offen")
+                case .unknown:
+                    row("paperless", syncState, "unbekannt (paperless-ngx nicht konfiguriert)")
+                }
             }
             .font(.caption)
             // Korrespondent-Vorschlag aus dem Dokumenttext (bekannter Treffer oder Absender-Firma)
@@ -254,6 +268,17 @@ struct MetadataSummary: View {
             }
             HStack {
                 Button("Im Finder zeigen") { reveal() }
+                if state.syncConfigured(), let id = doc.id {
+                    Button { state.syncDocument(id) } label: {
+                        if state.syncRunning {
+                            ProgressView().controlSize(.mini)
+                        } else {
+                            Label("Synchronisieren", systemImage: "arrow.triangle.2.circlepath")
+                        }
+                    }
+                    .disabled(state.syncRunning)
+                    .help("Dieses Dokument zu paperless-ngx hochladen")
+                }
                 Spacer()
                 Button { state.beginEditing() } label: {
                     Label("Bearbeiten", systemImage: "pencil")
@@ -278,6 +303,18 @@ struct MetadataSummary: View {
         GridRow {
             Text(label).foregroundStyle(.secondary)
             Text(value)
+        }
+    }
+
+    /// Zeile mit Wolken-Symbol davor (Sync-Stand).
+    private func row(_ label: String, _ syncState: SyncState, _ value: String) -> some View {
+        GridRow {
+            Text(label).foregroundStyle(.secondary)
+            HStack(spacing: 4) {
+                Image(systemName: SyncCloudBadge.symbol(syncState))
+                    .foregroundStyle(SyncCloudBadge.color(syncState))
+                Text(value)
+            }
         }
     }
 
