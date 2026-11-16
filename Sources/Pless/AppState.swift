@@ -582,7 +582,8 @@ final class AppState: ObservableObject {
     }
 
     /// Push aller neuen/geänderten Dokumente nach paperless-ngx (nicht auf dem Main-Thread).
-    func syncAll() {
+    /// `forceMetadata` erzwingt den Metadaten-Push (PATCH) auch für unveränderte Dokumente.
+    func syncAll(forceMetadata: Bool = false) {
         guard let service = makeSyncService(), !syncRunning else {
             if !syncConfigured() {
                 setStatus(.warning, "Sync nicht konfiguriert — URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
@@ -590,17 +591,18 @@ final class AppState: ObservableObject {
             return
         }
         syncRunning = true
-        let total = (try? service.pendingDocuments().count) ?? 0
-        setStatus(.busy, total == 0 ? "Sync: prüfe paperless-ngx…" : "Sync: 0/\(total)…")
+        let prefix = forceMetadata ? "Sync (erzwungen)" : "Sync"
+        let total = (try? service.pendingDocuments(forceMetadata: forceMetadata).count) ?? 0
+        setStatus(.busy, total == 0 ? "\(prefix): prüfe paperless-ngx…" : "\(prefix): 0/\(total)…")
         let progress: @Sendable (Int, Int) -> Void = { done, tot in
-            DispatchQueue.main.async { self.setStatus(.busy, "Sync: \(done)/\(tot)…") }
+            DispatchQueue.main.async { self.setStatus(.busy, "\(prefix): \(done)/\(tot)…") }
         }
         DispatchQueue.global(qos: .userInitiated).async {
             Task {
                 var outcome: SyncOutcome?
                 var thrown: Error?
                 do {
-                    outcome = try await service.syncAll(progress: progress)
+                    outcome = try await service.syncAll(forceMetadata: forceMetadata, progress: progress)
                 } catch let e { thrown = e }
                 Task { @MainActor in
                     self.syncRunning = false
@@ -625,16 +627,17 @@ final class AppState: ObservableObject {
     }
 
     /// Push eines einzelnen Dokuments (Button in den Details).
-    func syncDocument(_ documentId: Int64) {
+    /// `forceMetadata` erzwingt den Metadaten-Push (PATCH) auch bei unverändertem Hash.
+    func syncDocument(_ documentId: Int64, forceMetadata: Bool = false) {
         guard let service = makeSyncService(), !syncRunning else { return }
         let title = selectedDoc?.title ?? selectedDoc?.filename ?? "Dokument"
         syncRunning = true
-        setStatus(.busy, "Synchronisiere „\(title)“…")
+        setStatus(.busy, forceMetadata ? "Erzwinge Metadaten-Sync für „\(title)“…" : "Synchronisiere „\(title)“…")
         DispatchQueue.global(qos: .userInitiated).async {
             Task {
                 var step: SyncStep?
                 var thrown: Error?
-                do { step = try await service.sync(documentId: documentId) } catch let e { thrown = e }
+                do { step = try await service.sync(documentId: documentId, forceMetadata: forceMetadata) } catch let e { thrown = e }
                 Task { @MainActor in
                     self.syncRunning = false
                     switch step {

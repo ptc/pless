@@ -23,17 +23,30 @@ struct ContentView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button { state.syncAll() } label: {
-                        if state.syncRunning {
-                            ProgressView().controlSize(.small)
-                        } else {
-                            Label("Sync", systemImage: "arrow.triangle.2.circlepath")
+                    HStack(spacing: 2) {
+                        Button { state.syncAll() } label: {
+                            if state.syncRunning {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                Label("Sync", systemImage: "arrow.triangle.2.circlepath")
+                            }
                         }
+                        .disabled(!state.syncConfigured() || state.syncRunning)
+                        .help(state.syncConfigured()
+                              ? "Neue/geänderte Dokumente zu paperless-ngx hochladen (Einweg-Push)"
+                              : "paperless-URL + API-Token in den Einstellungen (Cmd+,) konfigurieren")
+                        // Dropdown am Sync-Symbol: normaler Push oder erzwungener Metadaten-Push
+                        Menu {
+                            Button("Neu/geänderte synchronisieren") { state.syncAll() }
+                            Button("Kategorien & Metadaten erzwingen (alle gesyncten Dokumente per PATCH)") {
+                                state.syncAll(forceMetadata: true)
+                            }
+                        } label: {
+                            Image(systemName: "chevron.down.circle").font(.caption)
+                        }
+                        .disabled(!state.syncConfigured() || state.syncRunning)
+                        .help("Sync-Varianten: normal (nur neue/geänderte) oder erzwungen — pusht Kategorie/Korrespondent/Tags aller bereits gesyncten Dokumente per PATCH, auch ohne lokale Änderung")
                     }
-                    .disabled(!state.syncConfigured() || state.syncRunning)
-                    .help(state.syncConfigured()
-                          ? "Neue/geänderte Dokumente zu paperless-ngx hochladen (Einweg-Push)"
-                          : "paperless-URL + API-Token in den Einstellungen (Cmd+,) konfigurieren")
                 }
                 ToolbarItem(placement: .primaryAction) {
                     // Bearbeiten/Fertig liegt in der Detail-Vorschau (DetailView-Toolbar)

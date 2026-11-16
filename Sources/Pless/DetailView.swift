@@ -269,7 +269,10 @@ struct MetadataSummary: View {
             HStack {
                 Button("Im Finder zeigen") { reveal() }
                 if state.syncConfigured(), let id = doc.id {
-                    Button { state.syncDocument(id) } label: {
+                    Menu {
+                        Button("Synchronisieren") { state.syncDocument(id) }
+                        Button("Metadaten erzwingen (PATCH)") { state.syncDocument(id, forceMetadata: true) }
+                    } label: {
                         if state.syncRunning {
                             ProgressView().controlSize(.mini)
                         } else {
@@ -277,7 +280,7 @@ struct MetadataSummary: View {
                         }
                     }
                     .disabled(state.syncRunning)
-                    .help("Dieses Dokument zu paperless-ngx hochladen")
+                    .help("Dieses Dokument zu paperless-ngx hochladen — „Metadaten erzwingen“ pusht Kategorie/Korrespondent/Tags per PATCH, auch ohne Änderung")
                 }
                 Spacer()
                 Button { state.beginEditing() } label: {
