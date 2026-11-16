@@ -16,10 +16,37 @@ Kein Cloud, Single User.
   und Notizen bequem in der App bearbeiten, dazu Thumbnails und eine Detailansicht.
 - **KI-Anbindung:** eigener MCP-Server über stdio — eine lokale KI kann Dokumente
   suchen/lesen, Metadaten ändern und Tags zuweisen (Config unten).
-- **paperless-ngx Sync (opt-in):** auf Wunsch Push zu einer selbst gehosteten
-  paperless-Instanz, inkl. Import von Kategorien/Korrespondenten aus paperless und
-  Wolken-Symbol pro PDF für den Sync-Stand (grün = synchronisiert, orange = offen,
-  grau = unbekannt). Technischer Hintergrund: [docs/technik.md](docs/technik.md).
+- **paperless-ngx Sync (opt-in):** Push zu einer selbst gehosteten paperless-Instanz,
+  inkl. Import von Kategorien/Korrespondenten und Wolken-Symbol pro PDF —
+  Details im [eigenen Abschnitt](#paperless-ngx-sync-opt-in) unten.
+
+## paperless-ngx Sync (opt-in)
+
+Auf Wunsch spiegelt pless deine Dokumente zu einer selbst gehosteten
+[paperless-ngx](https://docs.paperless-ngx.com/)-Instanz. Ohne konfigurierte URL und
+API-Token (Einstellungen → paperless-ngx; das Token liegt sicher im macOS-Schlüsselbund)
+passiert nie ein Netzwerk-Call.
+
+**Was der Sync kann:**
+
+- **Push:** neue und geänderte PDFs werden hochgeladen — mit Titel, Datum, Korrespondent
+  (→ paperless-Correspondent), Kategorie (→ paperless-Document-Type) und Tags.
+  Fehlende Correspondents, Document Types und Tags werden in paperless automatisch angelegt.
+- **Idempotent:** doppelte Uploads werden per Checksumme erkannt. Ändert sich die Datei,
+  gibt es einen Re-Upload; ändern sich nur die Metadaten (Titel, Datum, Kategorie …),
+  wird das bestehende Dokument in paperless per PATCH aktualisiert — ohne Re-Upload.
+- **Metadaten erzwingen:** per Dropdown am Sync-Button (Toolbar) oder Menü in den
+  Dokument-Details lassen sich die Metadaten gezielt erneut pushen, z. B. um eine falsch
+  zugeordnete Kategorie zu korrigieren.
+- **Import aus paperless:** alle Document Types und Correspondents der paperless-Instanz
+  lassen sich als Kategorien und Korrespondenten nach pless übernehmen (ebenfalls über
+  das Sync-Dropdown).
+- **Sync-Stand pro PDF:** jede Dokumentkarte zeigt oben rechts eine Wolke — grün =
+  synchronisiert, orange = offen (z. B. nach Metadaten-Änderung oder fehlgeschlagenem
+  Push), grau = unbekannt (Sync nicht konfiguriert oder nie gelaufen). Dieselbe Anzeige
+  gibt es in der Detailansicht.
+
+Technischer Hintergrund (Mapping, Checksumme, PATCH, Pull): [docs/technik.md](docs/technik.md).
 
 ## Build & Test (Xcode installiert, SwiftPM-only — kein Xcode-Projekt nötig)
 
