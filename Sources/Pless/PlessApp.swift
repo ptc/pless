@@ -56,7 +56,8 @@ struct PlessApp: App {
                     get: { state.showSettings },
                     set: { state.showSettings = $0 })) {
                     SettingsView(settings: state.settings)
-                        .frame(width: 560, height: 520)
+                        .environmentObject(state)   // SettingsView liest state (paperless-Pull) — ohne Injection crasht das Sheet
+                        .frame(width: 680, height: 540)
                 }
         }
         .commands {
@@ -64,6 +65,9 @@ struct PlessApp: App {
                 Button("Importieren…") { importPanel() }
                     .keyboardShortcut("I", modifiers: .command)
                 Button("Posteingang jetzt scannen") { state.scanInbox() }
+                Divider()
+                Button("Zu paperless-ngx synchronisieren") { state.syncAll() }
+                    .disabled(!state.syncConfigured())
             }
             CommandMenu("Auswahl") {
                 Button("Alle auswählen") { state.selectAll() }

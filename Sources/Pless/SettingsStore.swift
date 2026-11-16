@@ -10,6 +10,8 @@ enum SettingsKey {
     static let customInboxEnabled = "customInboxEnabled"
     static let customInboxPath = "customInboxPath"
     static let dateFormat = "dateFormat"
+    static let paperlessURL = "paperlessURL"
+    // paperlessToken liegt NICHT in UserDefaults, sondern in der Keychain (KeychainStore)
 }
 
 @MainActor
@@ -33,6 +35,20 @@ final class SettingsStore: ObservableObject {
     @Published var dateFormat: String {
         didSet { save() }
     }
+    /// paperless-ngx Basis-URL (leer = Sync deaktiviert, kein Netzwerk-Zugriff).
+    @Published var paperlessURL: String {
+        didSet { save() }
+    }
+    /// paperless-ngx API-Token — wird in der Keychain gespeichert, nicht in UserDefaults.
+    @Published var paperlessToken: String {
+        didSet {
+            if paperlessToken.isEmpty {
+                KeychainStore.deleteToken()
+            } else {
+                KeychainStore.saveToken(paperlessToken)
+            }
+        }
+    }
 
     private let defaults: UserDefaults
 
@@ -45,6 +61,8 @@ final class SettingsStore: ObservableObject {
         self.customInboxEnabled = defaults.bool(forKey: SettingsKey.customInboxEnabled)
         self.customInboxPath = defaults.string(forKey: SettingsKey.customInboxPath) ?? ""
         self.dateFormat = defaults.string(forKey: SettingsKey.dateFormat) ?? "dd.MM.yyyy"
+        self.paperlessURL = defaults.string(forKey: SettingsKey.paperlessURL) ?? ""
+        self.paperlessToken = KeychainStore.loadToken() ?? ""
     }
 
     func save() {
@@ -54,6 +72,17 @@ final class SettingsStore: ObservableObject {
         defaults.set(customInboxEnabled, forKey: SettingsKey.customInboxEnabled)
         defaults.set(customInboxPath, forKey: SettingsKey.customInboxPath)
         defaults.set(dateFormat, forKey: SettingsKey.dateFormat)
+        defaults.set(paperlessURL, forKey: SettingsKey.paperlessURL)
+    }
+
+    /// Sync-Konfiguration — nil, solange URL oder Token fehlt (dann: kein Netzwerk-Call möglich).
+    func paperlessConfig() -> PaperlessConfig? {
+        let trimmed = paperlessURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !paperlessToken.isEmpty,
+              let url = URL(string: trimmed),
+              let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              url.host != nil else { return nil }
+        return PaperlessConfig(baseURL: url, token: paperlessToken)
     }
 
     /// Import-Ordner: eigener Pfad (falls aktiviert) oder Default `<vault>/inbox`.
