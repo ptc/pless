@@ -67,6 +67,10 @@ Ohne Konfiguration führt die App keinen einzigen Netzwerk-Call aus.
   **erzwungenen Metadaten-Sync**: alle bereits gesyncten Dokumente bekommen
   Kategorie/Korrespondent/Tags per `PATCH` neu — auch ohne lokale Änderung
   (z. B. um falsch gemappte Kategorien zu korrigieren).
+- **Pull (Stammdaten):** „Kategorien & Korrespondenten aus paperless importieren“
+  (Dropdown am Sync-Button oder in den Settings) übernimmt alle paperless
+  *Document Types* als Kategorien und alle *Correspondents* als Korrespondenten —
+  paginiert über `next`, bereits vorhandene Namen (case-insensitiv) bleiben erhalten.
 - **Mapping:** Korrespondent → paperless *Correspondent*, Kategorie → *Document
   Type*, Tag → *Tag* (jeweils find-or-create per Name, case-insensitiv); PDF via
   `POST /api/documents/post_document/` (multipart) mit Vault-Dateinamen
