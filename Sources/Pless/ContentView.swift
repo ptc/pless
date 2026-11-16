@@ -23,37 +23,27 @@ struct ContentView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    // Flacher Toolbar-Button: Klick = normaler Sync, dezenter Chevron daneben = Varianten-Menü
-                    HStack(spacing: 1) {
-                        Button { state.syncAll() } label: {
-                            if state.syncRunning {
-                                ProgressView().controlSize(.small)
-                            } else {
-                                Label("Sync", systemImage: "arrow.2.circlepath")
-                            }
+                    // Ein einzelner Button mit einem Sync-Symbol — Klick = normaler Sync,
+                    // Rechtsklick = Varianten (erzwingen / aus paperless importieren)
+                    Button { state.syncAll() } label: {
+                        if state.syncRunning {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Label("Sync", systemImage: "arrow.clockwise")
                         }
-                        .buttonStyle(.borderless)
-                        .disabled(state.syncRunning)
-                        .help(state.syncConfigured()
-                              ? "Neue/geänderte Dokumente zu paperless-ngx hochladen (Einweg-Push)"
-                              : "Klick zeigt den Hinweis: paperless-URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
-                        Menu {
-                            Button("Jetzt synchronisieren (nur neue/geänderte)") { state.syncAll() }
-                            Button("Metadaten erzwingen — Kategorie/Korrespondent/Tags aller gesyncten Dokumente per PATCH") {
-                                state.syncAll(forceMetadata: true)
-                            }
-                            Divider()
-                            Button("Kategorien & Korrespondenten aus paperless importieren") { state.pullFromPaperless() }
-                        } label: {
-                            Image(systemName: "chevron.down")
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 3)
-                                .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(state.syncRunning)
+                    .help(state.syncConfigured()
+                          ? "Neue/geänderte Dokumente zu paperless-ngx hochladen (Einweg-Push) — Rechtsklick für Varianten"
+                          : "Klick zeigt den Hinweis: paperless-URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
+                    .contextMenu {
+                        Button("Jetzt synchronisieren (nur neue/geänderte)") { state.syncAll() }
+                        Button("Metadaten erzwingen — Kategorie/Korrespondent/Tags aller gesyncten Dokumente per PATCH") {
+                            state.syncAll(forceMetadata: true)
                         }
-                        .menuStyle(.borderlessButton)
-                        .disabled(state.syncRunning)
-                        .help("Sync-Varianten: normal (nur neue/geänderte) oder erzwungen — pusht Kategorie/Korrespondent/Tags aller bereits gesyncten Dokumente per PATCH, auch ohne lokale Änderung")
+                        Divider()
+                        Button("Kategorien & Korrespondenten aus paperless importieren") { state.pullFromPaperless() }
                     }
                 }
                 ToolbarItem(placement: .primaryAction) {
