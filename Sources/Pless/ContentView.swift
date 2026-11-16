@@ -23,28 +23,28 @@ struct ContentView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    // Ein einzelner Button mit einem Sync-Symbol — Klick = normaler Sync,
-                    // Rechtsklick = Varianten (erzwingen / aus paperless importieren)
-                    Button { state.syncAll() } label: {
-                        if state.syncRunning {
-                            ProgressView().controlSize(.small)
-                        } else {
-                            Label("Sync", systemImage: "arrow.clockwise")
-                        }
-                    }
-                    .buttonStyle(.borderless)
-                    .disabled(state.syncRunning)
-                    .help(state.syncConfigured()
-                          ? "Neue/geänderte Dokumente zu paperless-ngx hochladen (Einweg-Push) — Rechtsklick für Varianten"
-                          : "Klick zeigt den Hinweis: paperless-URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
-                    .contextMenu {
+                    // Ein Dropdown-Button mit einem Symbol (Wolke + ein Pfeil): Klick öffnet
+                    // das Menü, „Jetzt synchronisieren“ ist der Default-Eintrag (Enter)
+                    Menu {
                         Button("Jetzt synchronisieren (nur neue/geänderte)") { state.syncAll() }
+                            .keyboardShortcut(.defaultAction)
                         Button("Metadaten erzwingen — Kategorie/Korrespondent/Tags aller gesyncten Dokumente per PATCH") {
                             state.syncAll(forceMetadata: true)
                         }
                         Divider()
                         Button("Kategorien & Korrespondenten aus paperless importieren") { state.pullFromPaperless() }
+                    } label: {
+                        if state.syncRunning {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Label("Sync", systemImage: "cloud.arrow.up")
+                        }
                     }
+                    .menuStyle(.borderlessButton)
+                    .disabled(state.syncRunning)
+                    .help(state.syncConfigured()
+                          ? "Zu paperless-ngx synchronisieren (Einweg-Push) — Menü mit Varianten: normal, Metadaten erzwingen, Import aus paperless"
+                          : "paperless-URL + API-Token in den Einstellungen (Cmd+,) konfigurieren")
                 }
                 ToolbarItem(placement: .primaryAction) {
                     // Bearbeiten/Fertig liegt in der Detail-Vorschau (DetailView-Toolbar)
