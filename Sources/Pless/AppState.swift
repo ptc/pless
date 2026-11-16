@@ -626,6 +626,35 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Pull: Kategorien (paperless Document Types) + Korrespondenten aus paperless-ngx in den Vault importieren.
+    func pullFromPaperless() {
+        guard let service = makeSyncService(), !syncRunning else {
+            if !syncConfigured() {
+                setStatus(.warning, "Sync nicht konfiguriert — URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
+            }
+            return
+        }
+        syncRunning = true
+        setStatus(.busy, "Importiere Kategorien & Korrespondenten aus paperless-ngx…")
+        DispatchQueue.global(qos: .userInitiated).async {
+            Task {
+                var result: (categories: Int, correspondents: Int)?
+                var thrown: Error?
+                do { result = try await service.pullMetadata() } catch let e { thrown = e }
+                Task { @MainActor in
+                    self.syncRunning = false
+                    if let thrown {
+                        self.setStatus(.error, "Import fehlgeschlagen: \(thrown.localizedDescription)")
+                        self.errorMessage = "Import aus paperless-ngx fehlgeschlagen: \(thrown)"
+                    } else if let r = result {
+                        self.setStatus(.ok, "Importiert aus paperless-ngx: \(r.categories) Kategorie(n), \(r.correspondents) Korrespondent(en) neu", autoIdleAfter: 8)
+                    }
+                    self.refresh()
+                }
+            }
+        }
+    }
+
     /// Push eines einzelnen Dokuments (Button in den Details).
     /// `forceMetadata` erzwingt den Metadaten-Push (PATCH) auch bei unverändertem Hash.
     func syncDocument(_ documentId: Int64, forceMetadata: Bool = false) {

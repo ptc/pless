@@ -41,6 +41,8 @@ struct ContentView: View {
                             Button("Kategorien & Metadaten erzwingen (alle gesyncten Dokumente per PATCH)") {
                                 state.syncAll(forceMetadata: true)
                             }
+                            Divider()
+                            Button("Kategorien & Korrespondenten aus paperless importieren") { state.pullFromPaperless() }
                         } label: {
                             Image(systemName: "chevron.down.circle").font(.caption)
                         }
