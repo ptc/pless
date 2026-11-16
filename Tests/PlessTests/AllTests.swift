@@ -15,4 +15,5 @@ func registerAllTests() {
     DateDisplayTests.register()
     RecoveryTests.register()
     MCPTests.register()
+    SyncTests.register()
 }

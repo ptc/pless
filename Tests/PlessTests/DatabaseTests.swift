@@ -4,7 +4,7 @@ import PlessCore
 
 enum DatabaseTests {
     static func register() {
-        MiniTest.test("DB: Migration legt Schema an (user_version=2, FTS5 inkl.)") { try createsSchema() }
+        MiniTest.test("DB: Migration legt Schema an (user_version=3, FTS5 + sync_map inkl.)") { try createsSchema() }
         MiniTest.test("DB: Document insert + fetch byUUID/bySHA256") { try insertAndFetch() }
         MiniTest.test("DB: doppelte sha256 wirft duplicateSHA256") { try duplicateSHAThrows() }
         MiniTest.test("DB: allDocuments liefert alle Dokumente") { try allDocumentsReturnsAll() }
@@ -83,7 +83,7 @@ enum DatabaseTests {
     private static func createsSchema() throws {
         let (db, root) = try makeDatabase()
         defer { try? FileManager.default.removeItem(at: root) }
-        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 2)
+        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 3)
         try MiniTest.expectEqual(
             try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='documents';"), 1)
         try MiniTest.expectEqual(
@@ -91,6 +91,8 @@ enum DatabaseTests {
             4)
         try MiniTest.expectEqual(
             try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='documents_fts';"), 1)
+        try MiniTest.expectEqual(
+            try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='sync_map';"), 1)
     }
 
     private static func insertAndFetch() throws {

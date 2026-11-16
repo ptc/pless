@@ -1,0 +1,335 @@
+import Foundation
+import MiniTest
+import PlessCore
+
+// MARK: - Fake-Transport: zeichnet Anfragen auf und beantwortet sie aus einem Handler.
+
+final class FakeTransport: HTTPTransport {
+    struct Recorded: Sendable {
+        var method: String
+        var path: String
+        var query: String?
+        var authorization: String?
+        var contentType: String?
+        var body: Data?
+    }
+    private let lock = NSLock()
+    private var recorded: [Recorded] = []
+    var requests: [Recorded] { lock.lock(); defer { lock.unlock() }; return recorded }
+    /// Antwort-Handler: bekommt die aufgezeichnete Anfrage, liefert (status, body).
+    var handler: @Sendable (Recorded) -> (Int, Data)
+
+    init(handler: @escaping @Sendable (Recorded) -> (Int, Data)) {
+        self.handler = handler
+    }
+
+    func send(_ request: URLRequest) async throws -> (status: Int, data: Data) {
+        // rohen Pfad aus der absoluteString nehmen — URL.path streicht den trailing slash,
+        // den paperless aber braucht; der Test soll genau das prüfen.
+        let abs = request.url?.absoluteString ?? ""
+        let base = "https://paperless.test"
+        let rawPath = abs.hasPrefix(base) ? String(abs.dropFirst(base.count)) : abs
+        let pathOnly = rawPath.split(separator: "?").first.map(String.init) ?? rawPath
+        let rec = Recorded(
+            method: request.httpMethod ?? "GET",
+            path: pathOnly,
+            query: request.url?.query,
+            authorization: request.value(forHTTPHeaderField: "Authorization"),
+            contentType: request.value(forHTTPHeaderField: "Content-Type"),
+            body: request.httpBody)
+        lock.lock(); recorded.append(rec); lock.unlock()
+        return handler(rec)
+    }
+}
+
+enum SyncTests {
+    static func register() {
+        MiniTest.test("DB: Migration V3 legt sync_map an (user_version=3)") { try migrationV3() }
+        MiniTest.test("DB: sync_map set/get/delete + documentsPendingSync (sha-Vergleich)") { try syncMapCrud() }
+        MiniTest.test("Client: find-or-create legt an bzw. findet vorhanden (case-insensitiv), Token-Header") { try findOrCreate() }
+        MiniTest.test("Client: checksumExists liefert ID bzw. nil") { try checksumLookup() }
+        MiniTest.test("Client: postDocument baut multipart mit allen Feldern (Datei, Titel, created, IDs, Tags)") { try postDocumentMultipart() }
+        MiniTest.test("Client: ping bei 200 true, bei 401 Fehler") { try pingTest() }
+        MiniTest.test("SyncService: Push legt sync_map, zweiter Lauf skipped, sha-Wechsel re-upload, Fehler landen in failed") { try syncServiceEndToEnd() }
+    }
+
+    /// Führt einen async-Block synchron aus (MiniTest-Bodies sind nicht async) — wie in OCRTests.
+    private static func awaitAsync<T>(_ body: @escaping @Sendable () async throws -> T) throws -> T {
+        let sem = DispatchSemaphore(value: 0)
+        var value: T?
+        var thrown: Error?
+        Task {
+            do { value = try await body() } catch let e { thrown = e }
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 30)
+        if let thrown { throw thrown }
+        return try MiniTest.unwrap(value, "awaitAsync: kein Ergebnis")
+    }
+
+    // MARK: - DB / Migration
+
+    private static func makeDB() throws -> (db: Database, root: URL) {
+        let root = PDFFixture.tempDir("pless-synctest")
+        let vault = try Vault(root: root)
+        return (try Database(url: vault.databaseURL), root)
+    }
+
+    private static func sampleDoc(sha: String) -> Document {
+        Document(uuid: UUID().uuidString, sha256: sha, filename: "test.pdf",
+                 relativePath: "documents/2026/11/test.pdf", title: "Testrechnung",
+                 documentDate: "2026-11-15", pageCount: 1, ocrDone: true)
+    }
+
+    private static func migrationV3() throws {
+        let (db, root) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 3)
+        try MiniTest.expectEqual(
+            try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='sync_map';"), 1)
+    }
+
+    private static func syncMapCrud() throws {
+        let (db, root) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let id = try db.insert(sampleDoc(sha: "aaa"))
+        try MiniTest.expectEqual(try db.syncEntry(for: id), nil)
+        try db.setSyncEntry(documentId: id, paperlessId: 42, sha256: "aaa")
+        let e = try MiniTest.unwrap(try db.syncEntry(for: id))
+        try MiniTest.expectEqual(e.paperlessId, 42)
+        try MiniTest.expectEqual(e.sha256, "aaa")
+        try MiniTest.expect(!e.syncedAt.isEmpty)
+        // Upsert: andere paperless-ID + sha
+        try db.setSyncEntry(documentId: id, paperlessId: 43, sha256: "bbb")
+        try MiniTest.expectEqual(try db.syncEntry(for: id)?.paperlessId, 43)
+        // pending: gleicher sha → nicht pending; anderer sha → pending; ohne Eintrag → pending
+        try MiniTest.expectEqual(try db.documentsPendingSync().count, 1)   // sha bbb ≠ doc aaa
+        try db.setSyncEntry(documentId: id, paperlessId: 42, sha256: "aaa")
+        try MiniTest.expectEqual(try db.documentsPendingSync().count, 0)
+        let id2 = try db.insert(sampleDoc(sha: "ccc"))
+        try MiniTest.expectEqual(try db.documentsPendingSync().map(\.id), [id2])
+        try db.deleteSyncEntry(for: id)
+        try MiniTest.expectEqual(try db.syncEntry(for: id), nil)
+        try MiniTest.expectEqual(try db.allSyncEntries().count, 0)
+    }
+
+    // MARK: - Client
+
+    private static func config() -> PaperlessConfig {
+        PaperlessConfig(baseURL: URL(string: "https://paperless.test/")!, token: "test-token")
+    }
+
+    private static func json(_ obj: Any) -> Data {
+        try! JSONSerialization.data(withJSONObject: obj)
+    }
+
+    private static func emptyList() -> Data {
+        json(["count": 0, "next": NSNull(), "previous": NSNull(), "results": []])
+    }
+
+    private static func findOrCreate() throws {
+        try awaitAsync {
+        // Teil A: nicht vorhanden → GETs leer → POST create liefert id 7
+        let createTransport = FakeTransport { req in
+            if req.path == "/api/correspondents/" && req.method == "GET" { return (200, emptyList()) }
+            if req.path == "/api/correspondents/" && req.method == "POST" { return (201, json(["id": 7, "name": "Allianz"])) }
+            return (404, Data())
+        }
+        let createClient = PaperlessClient(config: config(), transport: createTransport)
+        let id1 = try await createClient.findOrCreateCorrespondent(name: "Allianz")
+        try MiniTest.expectEqual(id1, 7)
+        // Token-Header bei jeder Anfrage, Query mit name__iexact, POST als JSON mit name
+        try MiniTest.expect(createTransport.requests.allSatisfy { $0.authorization == "Token test-token" })
+        try MiniTest.expect((createTransport.requests.first { $0.method == "GET" }?.query ?? "").contains("name__iexact=Allianz"))
+        let post = try MiniTest.unwrap(createTransport.requests.first { $0.method == "POST" })
+        try MiniTest.expectEqual(post.contentType, "application/json")
+        let postBody = try MiniTest.unwrap(String(data: post.body ?? Data(), encoding: .utf8))
+        try MiniTest.expect(postBody.contains("\"name\"") && postBody.contains("Allianz"))
+
+        // Teil B: vorhanden (case-insensitiv) → GET-Treffer, kein POST
+        let existingTransport = FakeTransport { req in
+            if req.path == "/api/correspondents/" && req.method == "GET" {
+                return (200, json(["count": 1, "results": [["id": 7, "name": "allianz"]]]))
+            }
+            return (404, Data())
+        }
+        let existingClient = PaperlessClient(config: config(), transport: existingTransport)
+        let id2 = try await existingClient.findOrCreateCorrespondent(name: "Allianz")
+        try MiniTest.expectEqual(id2, 7)
+        try MiniTest.expect(existingTransport.requests.allSatisfy { $0.method == "GET" }, "bei vorhandenem Eintrag darf nicht angelegt werden")
+        }
+    }
+
+    private static func checksumLookup() throws {
+        try awaitAsync {
+        let transport = FakeTransport { req in
+            if req.path == "/api/documents/" && (req.query ?? "").contains("checksum=abc") {
+                return (200, json(["count": 1, "results": [["id": 42, "checksum": "abc"]]]))
+            }
+            return (200, emptyList())
+        }
+        let client = PaperlessClient(config: config(), transport: transport)
+        try MiniTest.expectEqual(try await client.checksumExists("abc"), 42)
+        try MiniTest.expectEqual(try await client.checksumExists("unbekannt"), nil)
+        }
+    }
+
+    private static func postDocumentMultipart() throws {
+        try awaitAsync {
+        let transport = FakeTransport { req in
+            if req.path == "/api/documents/post_document/" && req.method == "POST" {
+                return (200, json(["id": 99]))
+            }
+            return (404, Data())
+        }
+        let client = PaperlessClient(config: config(), transport: transport)
+        let id = try await client.postDocument(
+            fileData: Data("PDF-BYTES".utf8), filename: "2026-11-15_Allianz_Test.pdf",
+            title: "Testrechnung", created: "2026-11-15",
+            correspondentId: 7, documentTypeId: 3, tagIds: [11, 12])
+        try MiniTest.expectEqual(id, 99)
+        let req = try MiniTest.unwrap(transport.requests.first)
+        try MiniTest.expect(req.contentType?.hasPrefix("multipart/form-data; boundary=") == true)
+        let body = String(decoding: req.body ?? Data(), as: UTF8.self)
+        try MiniTest.expect(body.contains("name=\"document\"; filename=\"2026-11-15_Allianz_Test.pdf\""), "Datei-Feld fehlt")
+        try MiniTest.expect(body.contains("application/pdf"))
+        try MiniTest.expect(body.contains("PDF-BYTES"))
+        try MiniTest.expect(body.contains("name=\"title\"") && body.contains("Testrechnung"))
+        try MiniTest.expect(body.contains("name=\"created\"") && body.contains("2026-11-15"))
+        try MiniTest.expect(body.contains("name=\"correspondent\"") && body.contains("\r\n7\r\n"))
+        try MiniTest.expect(body.contains("name=\"document_type\"") && body.contains("\r\n3\r\n"))
+        // Tags als repeated field
+        let tagFields = body.components(separatedBy: "name=\"tags\"").count - 1
+        try MiniTest.expectEqual(tagFields, 2)
+        try MiniTest.expect(body.contains("\r\n11\r\n") && body.contains("\r\n12\r\n"))
+        }
+    }
+
+    private static func pingTest() throws {
+        try awaitAsync {
+        let ok = FakeTransport { _ in (200, json(["documents": "https://paperless.test/api/documents/"])) }
+        let clientOk = PaperlessClient(config: config(), transport: ok)
+        try MiniTest.expect(try await clientOk.ping())
+        let bad = FakeTransport { _ in (401, Data("Unauthorized".utf8)) }
+        let clientBad = PaperlessClient(config: config(), transport: bad)
+        var thrown = false
+        do { _ = try await clientBad.ping() } catch { thrown = true }
+        try MiniTest.expect(thrown, "401 muss Fehler werfen")
+        }
+    }
+
+    // MARK: - SyncService Ende-zu-Ende (Fake-Server)
+
+    private static func syncServiceEndToEnd() throws {
+        try awaitAsync {
+        let root = PDFFixture.tempDir("pless-sync-e2e")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let vault = try Vault(root: root)
+        let db = try Database(url: vault.databaseURL)
+
+        // echte PDF-Datei im Vault ablegen
+        let folder = try vault.documentsFolder(year: 2026, month: 11)
+        let fileURL = folder.appendingPathComponent("test.pdf")
+        try PDFFixture.writePDF(text: "Rechnung 2026", to: fileURL)
+        let sha = try FileHash.sha256(of: fileURL)
+
+        let corrId = try db.findOrCreateCorrespondent(name: "Allianz")
+        let catId = try db.findOrCreateCategory(name: "Rechnungen")
+        var doc = sampleDoc(sha: sha)
+        doc.correspondentId = corrId
+        doc.categoryId = catId
+        doc.documentDate = "2026-11-15"
+        let docId = try db.insert(doc)
+        let tagId = try db.findOrCreateTag(name: "wichtig")
+        try db.addTagToDocument(documentId: docId, tagId: tagId)
+
+        // Fake-Server: find-or-create vergibt IDs, post_document liefert 42,
+        // Checksum-Suche kennt die „hochgeladenen“ sha256
+        var createdIds: [String: Int] = [:]
+        var nextId = 100
+        var uploadedChecksums: Set<String> = []
+        let transport = FakeTransport { req in
+            let path = req.path
+            if req.method == "GET" && path == "/api/documents/" {
+                let q = req.query ?? ""
+                if let range = q.range(of: "checksum=") {
+                    let sha = String(q[range.upperBound...])
+                    if uploadedChecksums.contains(sha) {
+                        return (200, json(["count": 1, "results": [["id": 42, "checksum": sha]]]))
+                    }
+                }
+                return (200, emptyList())
+            }
+            if req.method == "GET" { return (200, emptyList()) }   // name__iexact: nichts vorhanden
+            if req.method == "POST" && path == "/api/documents/post_document/" {
+                // sha aus dem multipart-Body ist aufwendig — wir markieren über den Titel nicht nötig;
+                // stattdessen: alle post_document-Antworten merken (für Skipped-Test reicht checksumExists)
+                return (200, json(["id": 42]))
+            }
+            if req.method == "POST" {   // create-Ressource
+                nextId += 1
+                createdIds[path] = nextId
+                return (201, json(["id": nextId, "name": "neu"]))
+            }
+            return (404, Data())
+        }
+        let client = PaperlessClient(config: config(), transport: transport)
+        let service = SyncService(db: db, vault: vault, client: client)
+
+        // 1. Durchlauf: 1 Dokument pending → Upload
+        try MiniTest.expectEqual(try service.pendingDocuments().count, 1)
+        var progressCalls: [(Int, Int)] = []
+        let outcome1 = try await service.syncAll { done, total in progressCalls.append((done, total)) }
+        try MiniTest.expectEqual(outcome1.uploaded, 1)
+        try MiniTest.expectEqual(outcome1.skipped, 0)
+        try MiniTest.expectEqual(outcome1.failed.count, 0)
+        try MiniTest.expect(progressCalls.count == 1 && progressCalls[0] == (1, 1), "Fortschritt 1/1 erwartet: \(progressCalls)")
+        let entry = try MiniTest.unwrap(try db.syncEntry(for: docId))
+        try MiniTest.expectEqual(entry.paperlessId, 42)
+        try MiniTest.expectEqual(entry.sha256, sha)
+        // Mapping wurde aufgelöst: correspondent + document_type + tag per find-or-create angelegt
+        let post = try MiniTest.unwrap(transport.requests.first { $0.path == "/api/documents/post_document/" })
+        let body = String(decoding: post.body ?? Data(), as: UTF8.self)
+        try MiniTest.expect(body.contains("name=\"correspondent\""), "Korrespondent-ID im Upload")
+        try MiniTest.expect(body.contains("name=\"document_type\""), "Kategorie als Document Type im Upload")
+        try MiniTest.expect(body.contains("name=\"tags\""), "Tag im Upload")
+        try MiniTest.expect(body.contains("filename=\"test.pdf\""), "Vault-Dateiname bleibt erhalten")
+        // find-or-create wurde für all drei Endpunkte aufgerufen
+        try MiniTest.expect(transport.requests.contains { $0.path == "/api/correspondents/" && $0.method == "POST" })
+        try MiniTest.expect(transport.requests.contains { $0.path == "/api/document_types/" && $0.method == "POST" })
+        try MiniTest.expect(transport.requests.contains { $0.path == "/api/tags/" && $0.method == "POST" })
+
+        // 2. Durchlauf: nichts pending (sha gleich) → 0/0/0
+        let outcome2 = try await service.syncAll()
+        try MiniTest.expect(outcome2.uploaded == 0 && outcome2.skipped == 0 && outcome2.failed.isEmpty,
+                            "zweiter Lauf leer erwartet: \(outcome2)")
+
+        // 3. Einzel-Sync mit vorhandenem Eintrag + Server-Treffer → skipped
+        uploadedChecksums.insert(sha)
+        let step = try await service.sync(documentId: docId)
+        try MiniTest.expectEqual(step, .skipped(paperlessId: 42))
+
+        // 4. sha-Wechsel (Datei ersetzt) → Eintrag passt nicht mehr → re-upload
+        try db.setSyncEntry(documentId: docId, paperlessId: 42, sha256: "alt")
+        try MiniTest.expectEqual(try service.pendingDocuments().count, 1)
+        let outcome4 = try await service.syncAll()
+        try MiniTest.expectEqual(outcome4.uploaded, 1)
+        try MiniTest.expectEqual(try db.syncEntry(for: docId)?.sha256, sha)
+
+        // 5. Server-Fehler beim Upload → failed, kein sync_map-Eintrag
+        let id5 = try db.insert(sampleDoc(sha: "fehler-sha"))
+        let failing = FakeTransport { req in
+            if req.path == "/api/documents/post_document/" { return (500, Data("boom".utf8)) }
+            if req.method == "GET" { return (200, emptyList()) }
+            return (201, json(["id": 1]))
+        }
+        let failingService = SyncService(db: db, vault: vault, client: PaperlessClient(config: config(), transport: failing))
+        let outcome5 = try await failingService.syncAll()
+        try MiniTest.expectEqual(outcome5.uploaded, 0)
+        try MiniTest.expectEqual(outcome5.failed.count, 1)
+        try MiniTest.expectEqual(outcome5.failed[0].filename, "test.pdf")
+        try MiniTest.expect(outcome5.failed[0].message.contains("500"), "HTTP-Status in der Meldung: \(outcome5.failed[0].message)")
+        try MiniTest.expectEqual(try db.syncEntry(for: id5), nil)
+        }
+    }
+}
