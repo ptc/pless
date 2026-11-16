@@ -355,6 +355,7 @@ Kategorien
 | 2026-11-16 | 8b72586 | 13 | feat(ui): Wolken-Badge pro PDF (cloud.fill/cloud/cloud.questionmark) + Sync-Stand in den Details — 91 Tests grün |
 | 2026-11-16 | ae9f532 | 13 | fix(core): Metadaten-Re-Push per PATCH bei meta_sha256-Abweichung (Migration V5) — 92 Tests grün |
 | 2026-11-16 | 697d5c1 | 13 | feat(ui): Sync-Status zählt „aktualisiert“ (PATCH) — 92 Tests grün |
+| 2026-11-16 | dc0dedb | 12/13 | docs: README um Sync nach paperless-ngx ergänzt (Push, Mapping, Idempotenz, Wolken-Badge) — 92 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
