@@ -322,6 +322,7 @@ Kategorien
 | 2026-11-15 | 54a2a82 | 6 | feat: Bearbeiten/Fertig/Abbrechen in der Detail-Vorschau; Edit-Modus sperrt Selektionswechsel (Details bleiben stabil) — 73 Tests grün |
 | 2026-11-15 | db86a87 | 6 | feat: Datumsanzeige im eingestellten Format (Default dd.MM.yyyy) in Liste/Detail/Edit-Modus; Eingabe wird auf ISO normalisiert; Setting „Datumsformat“ — 76 Tests grün |
 | 2026-11-15 | 469dc7a | 6 | feat: Bearbeiten unten in den Details; Datums-Vorschläge als Chips auch in der Detail-Summary — 76 Tests grün |
+| 2026-11-15 | 03910d8 | 6 | feat: Heuristik erkennt Langdaten wie „8. Oktober 2026“ (inkl. Abkürzungen) → Kurzform yyyy-MM-dd in den Datums-Vorschlägen — 77 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
