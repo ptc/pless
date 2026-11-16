@@ -366,6 +366,7 @@ Kategorien
 | 2026-11-16 | a4002d6 | 13 | feat(ui): Dropdown am Sync-Toolbar-Button + Detail-Menü mit „Metadaten erzwingen“ — 92 Tests grün |
 | 2026-11-16 | f0d3fcd | 13 | feat(core): Pull-Import paperless→pless (Document Types→Kategorien, Correspondents→Korrespondenten, paginiert, idempotent) — 94 Tests grün |
 | 2026-11-16 | e2eb12d | 13 | feat(ui): Import-Eintrag im Sync-Dropdown (Toolbar) — 94 Tests grün |
+| 2026-11-16 | ca06035 | — | docs: README als Programmbeschreibung, technischer Hintergrund nach docs/technik.md — 94 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
