@@ -284,10 +284,10 @@ struct SyncCloudBadge: View {
 
     var body: some View {
         Image(systemName: Self.symbol(state))
-            .font(.caption)
+            .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(Self.color(state))
-            .padding(4)
-            .background(Circle().fill(Color(nsColor: .controlBackgroundColor).opacity(0.85)))
+            .padding(5)
+            .background(Circle().fill(Color(nsColor: .controlBackgroundColor)))
             .help(Self.help(state))
     }
 }
