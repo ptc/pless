@@ -261,6 +261,19 @@ Kategorien
 - [x] README: Build, Run, Vault-Layout, MCP-Config, bekannte Einschränkungen
 - [x] Bekannte Einschränkungen dokumentiert (u. a. Share Extension braucht signiertes .app)
 
+### Phase 13 — Sync nach paperless-ngx (Einweg-Push, opt-in)
+> Opt-in-Ausnahme vom Grundsatz „keine Netzwerk-Calls“: erst aktiv, wenn der User in den
+> Settings eine paperless-URL + API-Token konfiguriert (self-hosted). Ohne Konfiguration
+> wird kein einziger Netzwerk-Call ausgeführt.
+
+- [ ] Mapping: pless-Kategorie → paperless **Document Type**, Tag → **Tag**, Korrespondent → **Correspondent** (jeweils find-or-create per Name → ID); PDF via `POST /api/documents/post_document/` (multipart) mit Vault-Dateinamen (→ paperless `original_filename`); Titel → `title`, Datum → `created`
+- [ ] Idempotenz: Tabelle `sync_map(document_id, paperless_id, sha256, synced_at)` (Migration V3, `user_version=3`) + Checksum-Check `GET /api/documents/?checksum=<sha256>` — bereits gesyncte/identische Dokumente werden übersprungen, bei geändertem sha256 neu hochgeladen
+- [ ] Settings: paperless-URL (UserDefaults) + API-Token (**Keychain**, nicht in pless.db) + „Verbindung testen“
+- [ ] `PaperlessClient` in PlessCore mit injizierbarem `HTTPTransport`-Protocol (App: URLSession, Tests: Fake): find-or-create für Correspondents/Tags/Document Types, `post_document` (multipart), Checksum-Suche, `ping`
+- [ ] `SyncService` in PlessCore: Push aller neuen/geänderten Dokumente mit Fortschritt, Ergebnis (uploaded/skipped/failed), `sync_map` aktualisieren
+- [ ] UI: „Sync“-Button in der Toolbar + Menü „Ablage > Zu paperless-ngx synchronisieren“, „Synchronisieren“ + Sync-Badge (paperless-ID) in den Details, Status/Progress in der Statusleiste
+- [ ] Tests: Fake-Transport (find-or-create, multipart-Payload, Idempotenz via Checksum, Fehlpfade) + sync_map-DB-Tests
+
 ## Fortschritts-Log
 
 | Datum | Commit | Phase | Feature |
