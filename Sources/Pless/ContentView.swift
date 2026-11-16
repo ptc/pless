@@ -23,32 +23,50 @@ struct ContentView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 2) {
+                    // Ein Split-Button: linker Teil = normaler Sync per Klick,
+                    // rechter Chevron = Varianten (erzwingen / importieren) als Menü
+                    HStack(spacing: 0) {
                         Button { state.syncAll() } label: {
                             if state.syncRunning {
                                 ProgressView().controlSize(.small)
                             } else {
-                                Label("Sync", systemImage: "arrow.triangle.2.circlepath")
+                                Label("Sync", systemImage: "cloud.arrow.up")
                             }
                         }
-                        .disabled(!state.syncConfigured() || state.syncRunning)
+                        .buttonStyle(.borderless)
+                        .disabled(state.syncRunning)
                         .help(state.syncConfigured()
                               ? "Neue/geänderte Dokumente zu paperless-ngx hochladen (Einweg-Push)"
-                              : "paperless-URL + API-Token in den Einstellungen (Cmd+,) konfigurieren")
-                        // Dropdown am Sync-Symbol: normaler Push oder erzwungener Metadaten-Push
+                              : "Klick zeigt den Hinweis: paperless-URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
+                        Rectangle()
+                            .fill(Color.secondary.opacity(0.3))
+                            .frame(width: 1)
+                            .padding(.vertical, 5)
                         Menu {
-                            Button("Neu/geänderte synchronisieren") { state.syncAll() }
-                            Button("Kategorien & Metadaten erzwingen (alle gesyncten Dokumente per PATCH)") {
+                            Button("Jetzt synchronisieren (nur neue/geänderte)") { state.syncAll() }
+                            Button("Metadaten erzwingen — Kategorie/Korrespondent/Tags aller gesyncten Dokumente per PATCH") {
                                 state.syncAll(forceMetadata: true)
                             }
                             Divider()
                             Button("Kategorien & Korrespondenten aus paperless importieren") { state.pullFromPaperless() }
                         } label: {
-                            Image(systemName: "chevron.down.circle").font(.caption)
+                            Image(systemName: "chevron.down")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 5)
+                                .contentShape(Rectangle())
                         }
-                        .disabled(!state.syncConfigured() || state.syncRunning)
+                        .disabled(state.syncRunning)
                         .help("Sync-Varianten: normal (nur neue/geänderte) oder erzwungen — pusht Kategorie/Korrespondent/Tags aller bereits gesyncten Dokumente per PATCH, auch ohne lokale Änderung")
                     }
+                    .padding(.leading, 8)
+                    .padding(.trailing, 5)
+                    .padding(.vertical, 3)
+                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(Color(nsColor: .controlBackgroundColor)))
+                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(Color.secondary.opacity(0.25)))
                 }
                 ToolbarItem(placement: .primaryAction) {
                     // Bearbeiten/Fertig liegt in der Detail-Vorschau (DetailView-Toolbar)
