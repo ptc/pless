@@ -93,12 +93,20 @@ struct SidebarView: View {
         return own + (node.children ?? []).reduce(0) { $0 + countFor($1) }
     }
 
-    @ViewBuilder
     private func categoryRow(_ node: CatNode) -> some View {
-        let base = Label {
-            Text(node.name)
-        } icon: {
-            Circle().fill(Color(hex: node.color) ?? .accentColor).frame(width: 8, height: 8)
+        // Zähler als trailing Text IN der Zeile (nicht .badge — das stört die native
+        // Auswahl-Markierung der List bei OutlineGroup-Zeilen)
+        let count = countFor(node)
+        return HStack(spacing: 6) {
+            Label {
+                Text(node.name)
+            } icon: {
+                Circle().fill(Color(hex: node.color) ?? .accentColor).frame(width: 8, height: 8)
+            }
+            Spacer()
+            if count > 0 {
+                Text("\(count)").font(.caption2).foregroundStyle(.secondary)
+            }
         }
         .tag(SidebarSelection.category(node.name))
         .onTapGesture {
@@ -116,8 +124,7 @@ struct SidebarView: View {
             // Drag-Payload fürs Zuweisen auf Dokumente im Gitter
             return NSItemProvider(object: "pless/category/\(id)" as NSString)
         }
-        let count = countFor(node)
-        let row = base.contextMenu {
+        .contextMenu {
             Button("Umbenennen…") {
                 guard let id = node.id,
                       let n = Prompts.askText(title: "Kategorie umbenennen", message: "Neuer Name", defaultValue: node.name) else { return }
@@ -155,19 +162,6 @@ struct SidebarView: View {
                                    message: "Dokumente mit dieser Kategorie verlieren die Zuordnung.") {
                     if let id = node.id { state.deleteCategory(id: id) }
                 }
-            }
-        }
-        Group {
-            if count > 0 {
-                row.badge(count)
-            } else {
-                row
-            }
-        }
-        // Auswahl-Markierung explizit (funktioniert auch mit Badge — die List zeichnet sie sonst nicht)
-        .background {
-            if case .category(let name) = state.sidebarSelection, name == node.name {
-                Color.accentColor.opacity(0.30)
             }
         }
     }
