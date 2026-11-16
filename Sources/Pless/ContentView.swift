@@ -255,9 +255,7 @@ struct DocumentListView: View {
 }
 
 /// Wolken-Symbol für den persistierten Sync-Stand (Phase 13): synced / not synced / unknown.
-struct SyncCloudBadge: View {
-    let state: SyncState
-
+enum SyncCloudBadge {
     static func symbol(_ state: SyncState) -> String {
         switch state {
         case .synced: return "cloud.fill"
@@ -291,15 +289,6 @@ struct SyncCloudBadge: View {
         case .unknown: return "Sync-Stand unbekannt (paperless-ngx nicht konfiguriert oder nie gelaufen)"
         }
     }
-
-    var body: some View {
-        Self.icon(state)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(Self.color(state))
-            .padding(5)
-            .background(Circle().fill(Color(nsColor: .controlBackgroundColor)))
-            .help(Self.help(state))
-    }
 }
 
 struct DocumentCard: View {
@@ -322,17 +311,12 @@ struct DocumentCard: View {
                     Image(systemName: "doc.text").resizable().aspectRatio(contentMode: .fit)
                         .foregroundStyle(.secondary).frame(height: 170)
                 }
-                HStack(spacing: 2) {
-                    // Sync-Stand als Wolke: gefüllt grün = synced, Umriss orange = not synced, grau mit ? = unknown
-                    SyncCloudBadge(state: state.effectiveSyncState(doc))
-                    if doc.needsReview && !doc.ocrDone {
-                        Label("OCR", systemImage: "doc.text.magnifyingglass")
-                            .font(.caption2).padding(4)
-                            .background(.orange.opacity(0.9), in: Capsule())
-                            .foregroundStyle(.white)
-                    }
+                if doc.needsReview && !doc.ocrDone {
+                    Label("OCR", systemImage: "doc.text.magnifyingglass")
+                        .font(.caption2).padding(4)
+                        .background(.orange.opacity(0.9), in: Capsule())
+                        .foregroundStyle(.white).padding(4)
                 }
-                .padding(4)
             }
             Text(doc.title ?? doc.filename).font(.caption).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 6) {
@@ -347,6 +331,14 @@ struct DocumentCard: View {
                 let corr = state.nameOfCorrespondent(doc.correspondentId)
                 if !corr.isEmpty { Text(corr) }
                 if let d = doc.documentDate { Text(state.displayDate(d)) }
+                Spacer()
+                // Sync-Wolke auf dem weißen Feld neben/unter der Vorschau (nicht auf dem Dokument selbst):
+                // gefüllt grün = synced, Umriss orange = not synced, grau mit ? = unknown
+                let syncState = state.effectiveSyncState(doc)
+                SyncCloudBadge.icon(syncState)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(SyncCloudBadge.color(syncState))
+                    .help(SyncCloudBadge.help(syncState))
             }
             .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
         }
