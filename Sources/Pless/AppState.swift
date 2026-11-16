@@ -161,6 +161,16 @@ final class AppState: ObservableObject {
             selectionSet = [id]
         }
         selection = id
+        syncSidebarToSelectedCategory()
+    }
+
+    /// Klick auf ein Dokument → dessen Kategorie wird in der Sidebar-Liste ausgewählt/markiert
+    /// (und die Übersicht filtert auf diese Kategorie, wie beim direkten Kategorie-Klick).
+    private func syncSidebarToSelectedCategory() {
+        guard let doc = selectedDoc,
+              let catName = categories.first(where: { $0.id == doc.categoryId })?.name else { return }
+        if case .category(let cur) = sidebarSelection, cur == catName { return }
+        sidebarSelection = .category(catName)
     }
 
     func selectAll() {
@@ -330,8 +340,8 @@ final class AppState: ObservableObject {
                 }
                 self.runOCR()
                 self.refresh()
-                if let last = importedIds.last { self.selection = last; self.selectionSet = [last] } // neues Dokument direkt anzeigen
-                else if let dup = duplicates.last, let id = dup.id { self.selection = id; self.selectionSet = [id] } // nur Duplikat: vorhandenes Dokument zeigen
+                if let last = importedIds.last { self.selection = last; self.selectionSet = [last]; self.syncSidebarToSelectedCategory() } // neues Dokument direkt anzeigen
+                else if let dup = duplicates.last, let id = dup.id { self.selection = id; self.selectionSet = [id]; self.syncSidebarToSelectedCategory() } // nur Duplikat: vorhandenes Dokument zeigen
             }
         }
     }
@@ -358,10 +368,10 @@ final class AppState: ObservableObject {
                     self.errorMessage = "Import aus Posteingang fehlgeschlagen — \(failure)"
                 } else if case .imported(let doc) = outcome {
                     self.setStatus(.ok, "Importiert: \(doc.title ?? doc.filename) → \(doc.relativePath)", autoIdleAfter: 6)
-                    if let id = doc.id { self.selection = id; self.selectionSet = [id] }
+                    if let id = doc.id { self.selection = id; self.selectionSet = [id]; self.syncSidebarToSelectedCategory() }
                 } else if case .duplicate(let existing) = outcome {
                     self.setStatus(.warning, "Posteingang: Duplikat „\(existing.title ?? existing.filename)“ bereits im Vault — Datei → _abgelehnt/")
-                    if let id = existing.id { self.selection = id; self.selectionSet = [id] } // vorhandenes Dokument in der Liste markieren
+                    if let id = existing.id { self.selection = id; self.selectionSet = [id]; self.syncSidebarToSelectedCategory() } // vorhandenes Dokument in der Liste markieren
                 } else if case .rejected(let reason) = outcome {
                     self.setStatus(.error, "Posteingang: \(url.lastPathComponent) zurückgewiesen (\(reason)) — Datei → _abgelehnt/")
                 }
