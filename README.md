@@ -62,7 +62,11 @@ Ohne Konfiguration führt die App keinen einzigen Netzwerk-Call aus.
 
 - **Push:** „Sync“-Button in der Toolbar (alle neuen/geänderten Dokumente) oder
   „Synchronisieren“ in den Details (einzeln); Fortschritt/Ergebnis in der Statusleiste
-  (hochgeladen / aktualisiert / übersprungen / fehlgeschlagen).
+  (hochgeladen / aktualisiert / übersprungen / fehlgeschlagen). Per **Dropdown am
+  Sync-Button** (Toolbar) bzw. Menü in den Details gibt es zusätzlich einen
+  **erzwungenen Metadaten-Sync**: alle bereits gesyncten Dokumente bekommen
+  Kategorie/Korrespondent/Tags per `PATCH` neu — auch ohne lokale Änderung
+  (z. B. um falsch gemappte Kategorien zu korrigieren).
 - **Mapping:** Korrespondent → paperless *Correspondent*, Kategorie → *Document
   Type*, Tag → *Tag* (jeweils find-or-create per Name, case-insensitiv); PDF via
   `POST /api/documents/post_document/` (multipart) mit Vault-Dateinamen

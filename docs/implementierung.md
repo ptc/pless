@@ -274,7 +274,8 @@ Kategorien
 - [x] `SyncService` in PlessCore: Push aller neuen/geänderten Dokumente mit Fortschritt, Ergebnis (uploaded/skipped/failed), `sync_map` aktualisieren
 - [x] UI: „Sync“-Button in der Toolbar + „Synchronisieren“ + Sync-Badge (paperless-ID) in den Details, Status/Progress in der Statusleiste
 - [x] Tests: Fake-Transport (find-or-create, multipart-Payload, Idempotenz via Checksum, Fehlpfade) + sync_map-DB-Tests
-- [x] Sync-Stand pro Dokument **persistiert**: Spalte `documents.sync_state` (`synced` / `not_synced` / `unknown`, Migration V4, `user_version=4`, Backfill aus `sync_map`); Transitionen: erfolgreicher Push → `synced`, fehlgeschlagener Push → `not_synced`, sobald Sync konfiguriert → `unknown` per Reconcile auf `not_synced`; ohne Konfiguration Anzeige `unknown`. UI: Wolken-Badge auf jeder PDF-Karte (`cloud.fill` grün / `cloud` orange / `cloud.questionmark` grau, mit Tooltip) + Wolke + Text in den Details
+- [x] Sync-Stand pro Dokument **persistiert**: Spalte `documents.sync_state` (`synced` / `not_synced` / `unknown`, Migration V4, `user_version=4`, Backfill aus `sync_map`); Transitionen: erfolgreicher Push → `synced`, fehlgeschlagener Push → `not_synced`, sobald Sync konfiguriert → `unknown` per Reconcile auf `not_synced`; ohne Konfiguration Anzeige `unknown`. UI: Wolken-Badge in der oberen rechten Ecke jeder PDF-Karte (`cloud.fill` grün / `cloud` orange / Wolke+„?“ grau, mit Tooltip) + Wolke + Text in den Details
+- [x] Forced Sync: Dropdown am Sync-Toolbar-Button + Menü in den Details — „Kategorien & Metadaten erzwingen“ pusht per `forceMetadata` alle gesyncten Dokumente per PATCH (auch ohne Hash-Änderung)
 
 ## Fortschritts-Log
 
@@ -360,6 +361,8 @@ Kategorien
 | 2026-11-16 | 8941564 | 13 | fix(ui): Wolken-Badge größer/deutlicher (13pt, volle Scheibe) — 92 Tests grün |
 | 2026-11-16 | 07220c9 | 13 | fix(ui): unknown-Wolke als cloud+„?“ komponiert (cloud.questionmark fehlt im SF-Katalog → leer gerendert); Sync/Resync über echtes HTTP gegen Fake-paperless verifiziert (Upload mit document_type, PATCH nach Kategorie-Edit) — 92 Tests grün |
 | 2026-11-16 | 663bc89 | 13 | fix(core): find-or-create-Fallback results.first lieferte bei ignoriertem name-Filter immer denselben Document Type („Arbeitsvertrag“) — jetzt nur exakter case-insensitiver Treffer — 92 Tests grün |
+| 2026-11-16 | 57c10c2 | 13 | feat(core): forceMetadata-Sync (PATCH auch bei unverändertem meta-Hash) — 92 Tests grün |
+| 2026-11-16 | 98a3a85 | 13 | feat(ui): Dropdown am Sync-Toolbar-Button + Detail-Menü mit „Metadaten erzwingen“ — 92 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
