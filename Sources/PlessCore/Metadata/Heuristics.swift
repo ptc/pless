@@ -37,31 +37,75 @@ public enum Heuristics {
         extractDates(from: text).first
     }
 
-    /// Alle gültigen Datums-Vorkommen im Text (ISO + deutsch gemischt), Duplikate entfernt,
-    /// in Reihenfolge des Auftretens — als Vorschläge zur Auswahl im Editor.
+    /// Alle gültigen Datums-Vorkommen im Text (ISO, deutsch numerisch, deutsch mit Monatsname
+    /// wie „8. Oktober 2026“), Duplikate entfernt, in Reihenfolge des Auftretens — als
+    /// Vorschläge zur Auswahl im Editor.
     public static func extractDates(from text: String) -> [String] {
-        guard let re = try? NSRegularExpression(
-            pattern: #"\b(20\d{2})-(\d{2})-(\d{2})\b|\b(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})\b"#) else { return [] }
-        var out: [String] = []
-        var seen = Set<String>()
-        for m in re.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
-            func group(_ i: Int) -> String? {
-                let r = m.range(at: i)
-                guard r.location != NSNotFound, let range = Range(r, in: text) else { return nil }
-                return String(text[range])
+        var found: [(loc: Int, date: String)] = []
+
+        // ISO + numerisch deutsch (14.02.2026 / 14.02.26)
+        if let re = try? NSRegularExpression(
+            pattern: #"\b(20\d{2})-(\d{2})-(\d{2})\b|\b(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})\b"#) {
+            for m in re.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+                func group(_ i: Int) -> String? {
+                    let r = m.range(at: i)
+                    guard r.location != NSNotFound, let range = Range(r, in: text) else { return nil }
+                    return String(text[range])
+                }
+                let d: String?
+                if m.range(at: 1).location != NSNotFound { // ISO
+                    d = validDate(y: Int(group(1)!)!, m: Int(group(2)!)!, d: Int(group(3)!)!)
+                } else {
+                    guard let dd = group(4), let mm = group(5), let yy = group(6) else { continue }
+                    var y = Int(yy)!
+                    if yy.count == 2 { y += 2000 }
+                    d = validDate(y: y, m: Int(mm)!, d: Int(dd)!)
+                }
+                if let d { found.append((m.range.location, d)) }
             }
-            let d: String?
-            if m.range(at: 1).location != NSNotFound { // ISO-Alternative
-                d = validDate(y: Int(group(1)!)!, m: Int(group(2)!)!, d: Int(group(3)!)!)
-            } else {                                    // deutsch
-                guard let dd = group(4), let mm = group(5), let yy = group(6) else { continue }
-                var y = Int(yy)!
-                if yy.count == 2 { y += 2000 }
-                d = validDate(y: y, m: Int(mm)!, d: Int(dd)!)
-            }
-            if let d, !seen.contains(d) { seen.insert(d); out.append(d) }
         }
-        return out
+
+        // deutsch mit Monatsname: „8. Oktober 2026“, „3. Mrz 2026“ (auch Abkürzungen)
+        if let re = try? NSRegularExpression(
+            pattern: #"(?i)\b(\d{1,2})\.\s*([A-Za-zäöüÄÖÜ]+\.?)\s*(20\d{2})\b"#) {
+            for m in re.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+                func group(_ i: Int) -> String? {
+                    let r = m.range(at: i)
+                    guard r.location != NSNotFound, let range = Range(r, in: text) else { return nil }
+                    return String(text[range])
+                }
+                guard let dd = group(1), let name = group(2), let yy = group(3),
+                      let mm = monthNumber(name) else { continue }
+                if let d = validDate(y: Int(yy)!, m: mm, d: Int(dd)!) {
+                    found.append((m.range.location, d))
+                }
+            }
+        }
+
+        var seen = Set<String>()
+        return found.sorted { $0.loc < $1.loc }.compactMap { pair in
+            seen.insert(pair.date).inserted ? pair.date : nil
+        }
+    }
+
+    /// Monatsname (deutsch, mit/ohne Abkürzung und Punkt) → 1...12, sonst nil.
+    private static func monthNumber(_ name: String) -> Int? {
+        let n = name.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: ". "))
+        switch n {
+        case "januar", "jan": return 1
+        case "februar", "feb": return 2
+        case "märz", "maerz", "mär", "mrz": return 3
+        case "april", "apr": return 4
+        case "mai": return 5
+        case "juni", "jun": return 6
+        case "juli", "jul": return 7
+        case "august", "aug": return 8
+        case "september", "sep": return 9
+        case "oktober", "okt": return 10
+        case "november", "nov": return 11
+        case "dezember", "dez": return 12
+        default: return nil
+        }
     }
 
     /// Korrespondent: bekannter Name kommt im Text vor (case-insensitive, Wortgrenzen).
