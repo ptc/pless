@@ -8,6 +8,51 @@ struct SidebarView: View {
     @EnvironmentObject var state: AppState
 
     var body: some View {
+        VStack(spacing: 0) {
+            inboxBar
+            Divider()
+            list
+        }
+    }
+
+    /// Posteingang-Leiste oben in der Sidebar — bewusst außerhalb der selektierbaren
+    /// Liste, damit sie keine Ansicht umschaltet: zeigt, wie viele PDFs im Import-Ordner
+    /// warten, und scannt auf Knopfdruck (der Watcher macht das sonst automatisch).
+    private var inboxBar: some View {
+        HStack(spacing: 8) {
+            Label("Posteingang", systemImage: "tray.arrow.down")
+                .help("Import-Ordner <Vault>/inbox — PDFs hier hineinlegen, sie werden automatisch importiert")
+            Spacer()
+            Text(state.inboxCount == 0 ? "leer" : "\(state.inboxCount) wartend")
+                .font(.caption)
+                .fontWeight(state.inboxCount == 0 ? .regular : .semibold)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(state.inboxCount == 0
+                                           ? Color.secondary.opacity(0.18)
+                                           : Color.orange.opacity(0.35)))
+            Button { state.scanInbox() } label: {
+                Label("Scannen", systemImage: "arrow.triangle.2.circlepath")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .help("Posteingang jetzt scannen — importiert alle wartenden PDFs")
+            Button { openInFinder(state.vault?.inboxURL) } label: {
+                Image(systemName: "folder")
+            }
+            .buttonStyle(.borderless)
+            .help("Posteingang-Ordner im Finder öffnen")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.thickMaterial)
+        .contextMenu {
+            Button("Jetzt scannen") { state.scanInbox() }
+            Button("Im Finder öffnen") { openInFinder(state.vault?.inboxURL) }
+        }
+    }
+
+    private var list: some View {
         List(selection: Binding(
             get: { state.sidebarSelection },
             set: { state.sidebarSelection = $0 ?? .all })) {
@@ -16,14 +61,6 @@ struct SidebarView: View {
                     .badge(state.hits.count)
                     .tag(SidebarSelection.all)
                 Label("OCR ausstehend", systemImage: "doc.text.magnifyingglass").tag(SidebarSelection.pendingOCR)
-                Label("Posteingang", systemImage: "tray.arrow.down")
-                    .badge(state.inboxCount)
-                    .tag(SidebarSelection.all)
-                    .contextMenu {
-                        Button("Jetzt scannen") { state.scanInbox() }
-                        Button("Im Finder öffnen") { openInFinder(state.vault?.inboxURL) }
-                    }
-                    .onTapGesture { state.scanInbox() }
             }
             Section(header: sectionHeader("Kategorien") {
                 if let name = Prompts.askText(title: "Neue Kategorie", message: "Name") {
@@ -62,16 +99,6 @@ struct SidebarView: View {
                     }
                     .buttonStyle(.borderless)
                     .help("Vault im Finder öffnen")
-                }
-                HStack(spacing: 4) {
-                    Text("Posteingang: \(state.vault?.inboxURL.path ?? "—")")
-                        .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-                    Spacer()
-                    Button { openInFinder(state.vault?.inboxURL) } label: {
-                        Image(systemName: "tray.and.arrow.down").font(.caption2)
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Posteingang (Import-Ordner) im Finder öffnen")
                 }
             }
         }
