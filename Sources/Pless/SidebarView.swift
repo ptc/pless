@@ -101,6 +101,11 @@ struct SidebarView: View {
             Circle().fill(Color(hex: node.color) ?? .accentColor).frame(width: 8, height: 8)
         }
         .tag(SidebarSelection.category(node.name))
+        .onTapGesture {
+            // Klick filtert die Übersicht auf diese Kategorie (unabhängig von der List-Selection)
+            state.sidebarSelection = .category(node.name)
+            state.refresh()
+        }
         .onDrag {
             guard let id = node.id else { return NSItemProvider() }
             // Drag-Payload fürs Zuweisen auf Dokumente im Gitter

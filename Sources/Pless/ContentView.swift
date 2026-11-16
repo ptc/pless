@@ -267,6 +267,14 @@ struct DocumentCard: View {
             }
             Text(doc.title ?? doc.filename).font(.caption).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 6) {
+                // farbiges Kategorie-Tag (jede Kategorie hat ihre eigene Farbe)
+                if let cat = state.categories.first(where: { $0.id == doc.categoryId }) {
+                    Text(cat.name)
+                        .font(.caption2)
+                        .foregroundStyle(Color(hex: cat.color)?.isLight == true ? .black : .white)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Capsule().fill(Color(hex: cat.color) ?? .accentColor))
+                }
                 let corr = state.nameOfCorrespondent(doc.correspondentId)
                 if !corr.isEmpty { Text(corr) }
                 if let d = doc.documentDate { Text(state.displayDate(d)) }

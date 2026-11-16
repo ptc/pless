@@ -81,6 +81,11 @@ final class AppState: ObservableObject {
             // Veraltete Thumbnails (z. B. nach Orientierungs-Fix) einmalig löschen —
             // werden beim Anzeigen on demand mit korrekter Orientierung neu gerendert.
             let removedThumbs = v.invalidateThumbnailsIfOutdated()
+            // bestehende Kategorien ohne Farbe bekommen eine eindeutige Palettenfarbe
+            for (i, c) in ((try? database.categories()) ?? []).enumerated() where c.id != nil && c.color == nil {
+                try? database.updateCategory(id: c.id!, name: c.name, parentId: c.parentId,
+                                              color: ColorPalette.autoColor(existingCount: Int64(i)))
+            }
             watcher = InboxWatcher(vault: v) { [weak self] url in
                 Task { @MainActor in self?.ingestInboxFile(url) }
             }

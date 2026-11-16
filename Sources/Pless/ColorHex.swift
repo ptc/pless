@@ -12,10 +12,12 @@ extension Color {
     }
 }
 
-/// Feste Farbpalette für Kategorien/Tags (hex, wie in der DB gespeichert).
-enum ColorPalette {
-    static let presets: [String] = [
-        "#FF3B30", "#FF9500", "#FFCC00", "#34C759",
-        "#00C7BE", "#007AFF", "#5856D6", "#FF2D55", "#8E8E93"
-    ]
+// ColorPalette liegt in PlessCore (Core vergibt Auto-Farben beim Anlegen).
+
+extension Color {
+    /// Luminanz-basierte Helligkeit — für die Kontrast-Textfarbe auf farbigen Tags.
+    var isLight: Bool {
+        guard let cg = cgColor, let comps = cg.components, comps.count >= 3 else { return false }
+        return (0.299 * comps[0] + 0.587 * comps[1] + 0.114 * comps[2]) > 0.6
+    }
 }

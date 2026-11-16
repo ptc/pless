@@ -317,11 +317,18 @@ public final class Database {
 
     @discardableResult
     public func insertCategory(name: String, parentId: Int64? = nil, color: String? = nil) throws -> Int64 {
+        // ohne explizite Farbe: nächste Palettenfarbe (jede Kategorie eine andere Farbe)
+        let effectiveColor: String
+        if let color {
+            effectiveColor = color
+        } else {
+            effectiveColor = ColorPalette.autoColor(existingCount: try scalarInt("SELECT COUNT(*) FROM categories"))
+        }
         let stmt = try prepare("INSERT INTO categories(name, parent_id, color) VALUES(?,?,?)")
         defer { sqlite3_finalize(stmt) }
         bind(stmt, 1, name)
         bind(stmt, 2, parentId)
-        bind(stmt, 3, color)
+        bind(stmt, 3, effectiveColor)
         return try stepInsert(stmt)
     }
 

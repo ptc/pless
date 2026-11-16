@@ -10,6 +10,21 @@ enum DatabaseTests {
         MiniTest.test("DB: allDocuments liefert alle Dokumente") { try allDocumentsReturnsAll() }
         MiniTest.test("DB: Correspondent/Category/Tag Roundtrip (inkl. Hierarchie)") { try entityRoundtrip() }
         MiniTest.test("DB: categoryDocumentCounts zählt Dokumente pro Kategorie") { try categoryCountsTest() }
+        MiniTest.test("DB: Kategorie ohne Farbe bekommt automatisch Palettenfarbe (eindeutig, explizite bleibt)") { try categoryAutoColor() }
+    }
+
+    private static func categoryAutoColor() throws {
+        let (db, root) = try makeDatabase()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let a = try db.insertCategory(name: "A")
+        let b = try db.insertCategory(name: "B")
+        let ca = try db.category(id: a)?.color
+        let cb = try db.category(id: b)?.color
+        try MiniTest.expect(ca != nil && cb != nil, "Auto-Farbe fehlt")
+        try MiniTest.expect(ca != cb, "Farben müssen verschieden sein: \(ca ?? "nil"), \(cb ?? "nil")")
+        try MiniTest.expect(ColorPalette.presets.contains(ca!), "Farbe aus Palette: \(ca!)")
+        let c = try db.insertCategory(name: "C", color: "#123456")
+        try MiniTest.expectEqual(try db.category(id: c)?.color, "#123456")
     }
 
     private static func categoryCountsTest() throws {
