@@ -22,14 +22,12 @@ bash Scripts/make-app.sh        # Release-Build + Bundle + ad-hoc-Signing → di
 open dist/Pless.app             # starten (oder nach /Applications kopieren)
 ```
 
-`dist/` liegt nicht im git. Ad-hoc signiert — reicht lokal; für Verteilung außerhalb
-dieses Macs braucht es später ein Developer-ID-Signing (Xcode-Projekt).
-
+`dist/` liegt nicht im git. Ad-hoc signiert — reicht lokal.
 ## Vault-Layout (alles liegt in einem Ordner, Default `~/Documents/Pless`)
 
 ```
 <vault>/
-├── pless.db                  ← SQLite: Metadaten + FTS5-Volltextindex
+├── pless.db                  ← SQLite: Metadaten + FTS5-Volltextindex + sync_map (paperless-ngx)
 ├── documents/YYYY/MM/…pdf    ← Ablage mit generiertem Namen ({date}_{correspondent}_{title}.pdf)
 ├── inbox/                    ← Import-Ordner (Watch via DispatchSource; Pfad in Settings änderbar)
 │   └── _abgelehnt/           ← Duplikate & unleserliche Dateien
@@ -55,11 +53,41 @@ Config-Snippet (auch in den App-Settings unter „MCP“ zum Kopieren):
 }
 ```
 
+## Sync nach paperless-ngx (Einweg-Push, opt-in)
+
+Opt-in-Ausnahme vom Grundsatz „keine Netzwerk-Calls“: erst aktiv, wenn in den
+Settings (Cmd+,) eine **paperless-URL** + **API-Token** hinterlegt sind (Token im
+Keychain, nicht in `pless.db`); „Verbindung testen“ prüft per `GET /api/`.
+Ohne Konfiguration führt die App keinen einzigen Netzwerk-Call aus.
+
+- **Push:** „Sync“-Button in der Toolbar (alle neuen/geänderten Dokumente) oder
+  „Synchronisieren“ in den Details (einzeln); Fortschritt/Ergebnis in der Statusleiste
+  (hochgeladen / aktualisiert / übersprungen / fehlgeschlagen).
+- **Mapping:** Korrespondent → paperless *Correspondent*, Kategorie → *Document
+  Type*, Tag → *Tag* (jeweils find-or-create per Name, case-insensitiv); PDF via
+  `POST /api/documents/post_document/` (multipart) mit Vault-Dateinamen
+  (→ `original_filename`), Titel → `title`, Dokumentdatum → `created`.
+- **Idempotenz:** Tabelle `sync_map(document_id, paperless_id, sha256, synced_at,
+  meta_sha256)` in `pless.db` (Schema V5) + Checksum-Check
+  `GET /api/documents/?checksum=<sha256>` — identische Dokumente werden übersprungen.
+  Datei geändert (neuer sha256) → Re-Upload; nur Metadaten geändert (z. B. Kategorie
+  nachträglich gesetzt — `meta_sha256` weicht ab) → `PATCH /api/documents/<id>/`,
+  die Datei wird nicht erneut hochgeladen.
+- **Sync-Stand pro PDF:** persistiert in `documents.sync_state`
+  (`synced` / `not_synced` / `unknown`, Schema V4) und als Wolken-Badge auf jeder
+  Karte in der Liste sowie in den Details sichtbar: `cloud.fill` grün =
+  synchronisiert, `cloud` orange = Push offen (z. B. direkt nach einem Metadaten-Edit
+  oder nach einem fehlgeschlagenen Push), `cloud.questionmark` grau = unbekannt
+  (paperless nicht konfiguriert oder nie gelaufen).
+
 ## Bekannte Einschränkungen
 
 - Share Extension (Apple-Teilen) fehlt noch: braucht .app-Packaging + Signing
   (Xcode-Projekt) — bis dahin landen geteilte PDFs manuell im Import-Ordner.
 - Kein Papierkorb in der UI (Soft Delete `deleted_at` ist im Schema vorbereitet).
+- Sync ist Einweg-Push: Änderungen, die direkt in paperless-ngx gemacht werden,
+  spiegelt pless nicht zurück (ein remote gelöschtes Dokument wird beim nächsten
+  Sync allerdings automatisch neu hochgeladen).
 - OCR-Sprachen fest auf de/en (in Settings umschaltbar), `accurate`-Modus.
 - Tests laufen mit MiniTest (CLT-Altlast); XCTest/Swift Testing optional später.
 
