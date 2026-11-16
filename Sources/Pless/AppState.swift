@@ -119,9 +119,12 @@ final class AppState: ObservableObject {
             if !isEditing {
                 // im Edit-Modus die Auswahl nicht anfassen (Detailansicht bleibt stabil)
                 if let sel = selection, !hits.contains(where: { $0.document.id == sel }) {
-                    selection = hits.first?.document.id
+                    // bei Kategorie/Tag/Korrespondent-Filter nicht automatisch ein PDF auswählen
+                    selection = (sidebarSelection == .all) ? hits.first?.document.id : nil
                 }
-                if selection == nil { selection = hits.first?.document.id } // erstes Dokument vorselektieren
+                if selection == nil, sidebarSelection == .all {
+                    selection = hits.first?.document.id // erstes Dokument vorselektieren (nur ungefiltert)
+                }
             }
             selectionSet = selectionSet.intersection(Set(hits.compactMap { $0.document.id }))
         } catch {
