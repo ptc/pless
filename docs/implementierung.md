@@ -335,6 +335,7 @@ Kategorien
 | 2026-11-16 | 1436b2f | 6 | fix: OCR-Text-Panel default zu; Notizfeld im Edit-Modus leer klein — 79 Tests grün |
 | 2026-11-16 | 99cade9 | 6 | feat: Korrespondenten — Vorschlag in Details mit Übernehmen-Chip, Zähler + Filter-Toggle in Sidebar, Neuanlegen — 81 Tests grün |
 | 2026-11-16 | 4c35952 | 6 | feat: Korrespondent per Drag & Drop aufs Gitter zuweisen; Doppelklick in Sidebar = umbenennen — 82 Tests grün |
+| 2026-11-16 | 234ad42 | 6 | fix: Korrespondent-Vorschlag ab Rechtsform abschneiden (Böttcher AG … → Böttcher AG); Behörden ganz — 82 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
