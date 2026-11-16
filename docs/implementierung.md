@@ -322,18 +322,18 @@ Kategorien
 | 2026-11-15 | 54a2a82 | 6 | feat: Bearbeiten/Fertig/Abbrechen in der Detail-Vorschau; Edit-Modus sperrt Selektionswechsel (Details bleiben stabil) — 73 Tests grün |
 | 2026-11-15 | db86a87 | 6 | feat: Datumsanzeige im eingestellten Format (Default dd.MM.yyyy) in Liste/Detail/Edit-Modus; Eingabe wird auf ISO normalisiert; Setting „Datumsformat“ — 76 Tests grün |
 | 2026-11-15 | 469dc7a | 6 | feat: Bearbeiten unten in den Details; Datums-Vorschläge als Chips auch in der Detail-Summary — 76 Tests grün |
-| 2026-11-15 | 03910d8 | 6 | feat: Heuristik erkennt Langdaten wie „8. Oktober 2026“ (inkl. Abkürzungen) → Kurzform yyyy-MM-dd in den Datums-Vorschlägen — 77 Tests grün |
-| 2026-11-15 | f0d1413 | 6 | feat: Heuristik erkennt US-Datum 12/08/2026 (MM/DD/YYYY) → 2026-12-08, auch 2-stelliges Jahr — 78 Tests grün |
-| 2026-11-15 | bacf089 | 6 | feat: Kategorie-Klick filtert Übersicht; farbiges Kategorie-Tag auf den Karten; Auto-Farbe pro Kategorie (Palette) — 79 Tests grün |
-| 2026-11-15 | c0e6027 | 6 | feat: Kategorie-Auswahl wird in der Sidebar markiert; erneuter Klick → wieder alle Dokumente — 79 Tests grün |
-| 2026-11-15 | 1e6fe74 | 6 | feat: aktive Karte im Gitter stärker markiert (Rahmen + Füllung + Häkchen), ausgewählte nur Rahmen — 79 Tests grün |
-| 2026-11-15 | 1b94cd8 | 6 | feat: Klick auf Dokument wählt dessen Kategorie in der Sidebar aus (markiert + filtert) — 79 Tests grün |
-| 2026-11-15 | 40d0e8f | 6 | revert: Klick auf PDF markiert nur das PDF; Kategorie-Klick markiert/filtert die Kategorie — 79 Tests grün |
-| 2026-11-15 | 576437c | 6 | fix: Kategorie-Markierung auch mit Zähler-Badge (explizites Highlight über sidebarSelection) — 79 Tests grün |
-| 2026-11-15 | b6d12bc | 6 | fix: Kategorie-/Tag-Filter wählt nicht mehr automatisch das erste PDF aus — 79 Tests grün |
-| 2026-11-15 | 633b1d0 | 6 | fix: Kategorie-Zähler als trailing Text statt .badge() — native Auswahl-Markierung wieder überall — 79 Tests grün |
-| 2026-11-15 | 58abc41 | 6 | fix: OCR-Text-Panel default zu; Notizfeld im Edit-Modus leer klein — 79 Tests grün |
-| 2026-11-15 | 86b3364 | 6 | feat: Korrespondenten — Vorschlag in Details mit Übernehmen-Chip, Zähler + Filter-Toggle in Sidebar, Neuanlegen — 81 Tests grün |
+| 2026-11-16 | d6ed612 | 6 | feat: Heuristik erkennt Langdaten wie „8. Oktober 2026“ (inkl. Abkürzungen) → Kurzform yyyy-MM-dd in den Datums-Vorschlägen — 77 Tests grün |
+| 2026-11-16 | 4154f0b | 6 | feat: Heuristik erkennt US-Datum 12/08/2026 (MM/DD/YYYY) → 2026-12-08, auch 2-stelliges Jahr — 78 Tests grün |
+| 2026-11-16 | e0e30eb | 6 | feat: Kategorie-Klick filtert Übersicht; farbiges Kategorie-Tag auf den Karten; Auto-Farbe pro Kategorie (Palette) — 79 Tests grün |
+| 2026-11-16 | 4862b1f | 6 | feat: Kategorie-Auswahl wird in der Sidebar markiert; erneuter Klick → wieder alle Dokumente — 79 Tests grün |
+| 2026-11-16 | 2d332a5 | 6 | feat: aktive Karte im Gitter stärker markiert (Rahmen + Füllung + Häkchen), ausgewählte nur Rahmen — 79 Tests grün |
+| 2026-11-16 | eadba5b | 6 | feat: Klick auf Dokument wählt dessen Kategorie in der Sidebar aus (markiert + filtert) — 79 Tests grün |
+| 2026-11-16 | 211732d | 6 | revert: Klick auf PDF markiert nur das PDF; Kategorie-Klick markiert/filtert die Kategorie — 79 Tests grün |
+| 2026-11-16 | b5bf606 | 6 | fix: Kategorie-Markierung auch mit Zähler-Badge (explizites Highlight über sidebarSelection) — 79 Tests grün |
+| 2026-11-16 | bbf80f1 | 6 | fix: Kategorie-/Tag-Filter wählt nicht mehr automatisch das erste PDF aus — 79 Tests grün |
+| 2026-11-16 | 53cd534 | 6 | fix: Kategorie-Zähler als trailing Text statt .badge() — native Auswahl-Markierung wieder überall — 79 Tests grün |
+| 2026-11-16 | 1436b2f | 6 | fix: OCR-Text-Panel default zu; Notizfeld im Edit-Modus leer klein — 79 Tests grün |
+| 2026-11-16 | 99cade9 | 6 | feat: Korrespondenten — Vorschlag in Details mit Übernehmen-Chip, Zähler + Filter-Toggle in Sidebar, Neuanlegen — 81 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
