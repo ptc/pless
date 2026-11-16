@@ -23,14 +23,13 @@ struct ContentView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    // Ein Split-Button: linker Teil = normaler Sync per Klick,
-                    // rechter Chevron = Varianten (erzwingen / importieren) als Menü
-                    HStack(spacing: 0) {
+                    // Flacher Toolbar-Button: Klick = normaler Sync, dezenter Chevron daneben = Varianten-Menü
+                    HStack(spacing: 1) {
                         Button { state.syncAll() } label: {
                             if state.syncRunning {
                                 ProgressView().controlSize(.small)
                             } else {
-                                Label("Sync", systemImage: "cloud.arrow.up")
+                                Label("Sync", systemImage: "arrow.2.circlepath")
                             }
                         }
                         .buttonStyle(.borderless)
@@ -38,10 +37,6 @@ struct ContentView: View {
                         .help(state.syncConfigured()
                               ? "Neue/geänderte Dokumente zu paperless-ngx hochladen (Einweg-Push)"
                               : "Klick zeigt den Hinweis: paperless-URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
-                        Rectangle()
-                            .fill(Color.secondary.opacity(0.3))
-                            .frame(width: 1)
-                            .padding(.vertical, 5)
                         Menu {
                             Button("Jetzt synchronisieren (nur neue/geänderte)") { state.syncAll() }
                             Button("Metadaten erzwingen — Kategorie/Korrespondent/Tags aller gesyncten Dokumente per PATCH") {
@@ -51,22 +46,15 @@ struct ContentView: View {
                             Button("Kategorien & Korrespondenten aus paperless importieren") { state.pullFromPaperless() }
                         } label: {
                             Image(systemName: "chevron.down")
-                                .font(.caption.weight(.semibold))
+                                .font(.caption2.weight(.bold))
                                 .foregroundStyle(.secondary)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 5)
+                                .padding(.horizontal, 3)
                                 .contentShape(Rectangle())
                         }
+                        .menuStyle(.borderlessButton)
                         .disabled(state.syncRunning)
                         .help("Sync-Varianten: normal (nur neue/geänderte) oder erzwungen — pusht Kategorie/Korrespondent/Tags aller bereits gesyncten Dokumente per PATCH, auch ohne lokale Änderung")
                     }
-                    .padding(.leading, 8)
-                    .padding(.trailing, 5)
-                    .padding(.vertical, 3)
-                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(Color(nsColor: .controlBackgroundColor)))
-                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(Color.secondary.opacity(0.25)))
                 }
                 ToolbarItem(placement: .primaryAction) {
                     // Bearbeiten/Fertig liegt in der Detail-Vorschau (DetailView-Toolbar)
