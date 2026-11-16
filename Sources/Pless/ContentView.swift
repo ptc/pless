@@ -26,24 +26,31 @@ struct ContentView: View {
                     // Ein Dropdown-Button mit einem Symbol (Wolke + ein Pfeil): Klick öffnet
                     // das Menü, „Jetzt synchronisieren“ ist der Default-Eintrag (Enter)
                     Menu {
-                        Button("Jetzt synchronisieren (nur neue/geänderte)") { state.syncAll() }
-                            .keyboardShortcut(.defaultAction)
-                        Button("Metadaten erzwingen — Kategorie/Korrespondent/Tags aller gesyncten Dokumente per PATCH") {
-                            state.syncAll(forceMetadata: true)
+                        Button { state.syncAll() } label: {
+                            Label("Jetzt synchronisieren", systemImage: "cloud.arrow.up.fill")
+                        }
+                        .keyboardShortcut(.defaultAction)
+                        Button { state.syncAll(forceMetadata: true) } label: {
+                            Label("Metadaten aktualisieren", systemImage: "pencil.circle.fill")
                         }
                         Divider()
-                        Button("Kategorien & Korrespondenten aus paperless importieren") { state.pullFromPaperless() }
+                        Button { state.pullFromPaperless() } label: {
+                            Label("Aus paperless importieren", systemImage: "tray.and.arrow.down.fill")
+                        }
                     } label: {
-                        if state.syncRunning {
-                            ProgressView().controlSize(.small)
-                        } else {
-                            Label("Sync", systemImage: "cloud.arrow.up")
+                        HStack(spacing: 4) {
+                            if state.syncRunning {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                syncCloudIcon
+                            }
+                            Text("Sync")
                         }
                     }
                     .menuStyle(.borderlessButton)
                     .disabled(state.syncRunning)
                     .help(state.syncConfigured()
-                          ? "Zu paperless-ngx synchronisieren (Einweg-Push) — Menü mit Varianten: normal, Metadaten erzwingen, Import aus paperless"
+                          ? "Zu paperless-ngx synchronisieren (Einweg-Push) — Menü: jetzt synchronisieren, Metadaten aktualisieren, Import aus paperless"
                           : "paperless-URL + API-Token in den Einstellungen (Cmd+,) konfigurieren")
                 }
                 ToolbarItem(placement: .primaryAction) {
@@ -87,6 +94,19 @@ struct ContentView: View {
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
                 }
             }
+        }
+    }
+
+    /// Sync-Symbol: Wolke + ein Pfeil, selbst komponiert — das SF-Symbol cloud.arrow.up
+    /// rendert im Toolbar-Maßstab mit zu dünner Wolke (nur der Pfeil sichtbar).
+    private var syncCloudIcon: some View {
+        ZStack {
+            Image(systemName: "cloud.fill")
+                .font(.system(size: 13, weight: .semibold))
+            Image(systemName: "arrow.up")
+                .font(.system(size: 6, weight: .black))
+                .foregroundStyle(Color(nsColor: .controlBackgroundColor))
+                .offset(y: 0.5)
         }
     }
 }

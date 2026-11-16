@@ -293,17 +293,21 @@ struct MetadataSummary: View {
                 Button("Im Finder zeigen") { reveal() }
                 if state.syncConfigured(), let id = doc.id {
                     Menu {
-                        Button("Synchronisieren") { state.syncDocument(id) }
-                        Button("Metadaten erzwingen (PATCH)") { state.syncDocument(id, forceMetadata: true) }
+                        Button { state.syncDocument(id) } label: {
+                            Label("Jetzt synchronisieren", systemImage: "cloud.arrow.up.fill")
+                        }
+                        Button { state.syncDocument(id, forceMetadata: true) } label: {
+                            Label("Metadaten aktualisieren", systemImage: "pencil.circle.fill")
+                        }
                     } label: {
                         if state.syncRunning {
                             ProgressView().controlSize(.mini)
                         } else {
-                            Label("Synchronisieren", systemImage: "arrow.triangle.2.circlepath")
+                            Label("Synchronisieren", systemImage: "cloud.arrow.up.fill")
                         }
                     }
                     .disabled(state.syncRunning)
-                    .help("Dieses Dokument zu paperless-ngx hochladen — „Metadaten erzwingen“ pusht Kategorie/Korrespondent/Tags per PATCH, auch ohne Änderung")
+                    .help("Dieses Dokument zu paperless-ngx hochladen — „Metadaten aktualisieren“ pusht Kategorie/Korrespondent/Tags per PATCH, auch ohne Änderung")
                 }
                 Spacer()
                 Button { state.beginEditing() } label: {
