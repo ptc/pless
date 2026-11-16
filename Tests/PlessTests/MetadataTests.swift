@@ -15,6 +15,23 @@ enum MetadataTests {
         MiniTest.test("Metadata: Tag rename/delete (Cascade auf document_tags)") { try tagRenameDelete() }
         MiniTest.test("Metadata: OCR mit metadata wendet Heuristik an und legt Datei ab") { try ocrAppliesSuggestions() }
         MiniTest.test("Metadata: Bulk-Muster — Kategorie auf mehrere Docs, andere Felder bleiben; Tag idempotent") { try bulkPattern() }
+        MiniTest.test("Metadata: Bulk-Muster — Korrespondent setzen, Titel/Kategorie bleiben erhalten") { try bulkCorrespondent() }
+    }
+
+    private static func bulkCorrespondent() throws {
+        let (vault, db, root, srcDir) = try makeEnv()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let d1 = try ingestOne(db: db, vault: vault, srcDir: srcDir, name: "a.pdf", text: "Inhalt A")
+        let catId = try db.findOrCreateCategory(name: "Verträge")
+        let corrId = try db.findOrCreateCorrespondent(name: "Allianz")
+        let svc = MetadataService(vault: vault, db: db)
+        let cur = try db.document(byId: d1.id!)!
+        _ = try svc.saveMetadata(documentId: d1.id!, title: cur.title, documentDate: cur.documentDate,
+                                 correspondentId: corrId, categoryId: catId, notes: nil)
+        let after = try db.document(byId: d1.id!)!
+        try MiniTest.expectEqual(after.correspondentId, corrId)
+        try MiniTest.expectEqual(after.categoryId, catId)      // Kategorie unverändert
+        try MiniTest.expectEqual(after.title, cur.title)        // Titel unverändert
     }
 
     /// Simuliert die Bulk-Operation aus der UI: Kategorie per saveMetadata setzen (Titel/Datum/

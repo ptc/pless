@@ -212,7 +212,35 @@ final class AppState: ObservableObject {
                       "Tag „\(name)“ auf \(r.ok) Dokument(e) gesetzt" +
                       (r.failed.isEmpty ? "" : " — \(r.failed.count) fehlgeschlagen"),
                       autoIdleAfter: r.failed.isEmpty ? 6 : nil)
+        } else if payload.hasPrefix("pless/correspondent/"),
+                  let id = Int64(payload.dropFirst("pless/correspondent/".count)) {
+            let name = correspondents.first { $0.id == id }?.name ?? "?"
+            let r = bulkAssign(ids: targets, correspondentId: id)
+            setStatus(r.failed.isEmpty ? .ok : .error,
+                      "Korrespondent „\(name)“ auf \(r.ok) Dokument(e) gesetzt" +
+                      (r.failed.isEmpty ? "" : " — \(r.failed.count) fehlgeschlagen"),
+                      autoIdleAfter: r.failed.isEmpty ? 6 : nil)
         }
+    }
+
+    /// Bulk: Korrespondent auf eine Dokumentmenge setzen (andere Felder bleiben erhalten).
+    @discardableResult
+    func bulkAssign(ids: Set<Int64>, correspondentId: Int64) -> (ok: Int, failed: [String]) {
+        guard let db, let metadata else { return (0, ["kein Vault geladen"]) }
+        var ok = 0
+        var failed: [String] = []
+        for id in ids.sorted() {
+            do {
+                guard let doc = try db.document(byId: id) else { continue }
+                _ = try metadata.saveMetadata(documentId: id, title: doc.title, documentDate: doc.documentDate,
+                                               correspondentId: correspondentId, categoryId: doc.categoryId, notes: doc.notes)
+                ok += 1
+            } catch {
+                failed.append(error.localizedDescription)
+            }
+        }
+        refresh()
+        return (ok, failed)
     }
 
     /// Bulk: Kategorie und/oder Tag auf eine Dokumentmenge setzen.

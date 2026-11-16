@@ -223,6 +223,18 @@ struct SidebarView: View {
             }
             state.refresh()
         }
+        .onTapGesture(count: 2) {
+            // Doppelklick → Korrespondent bearbeiten (umbenennen)
+            if let id = c.id,
+               let n = Prompts.askText(title: "Korrespondent umbenennen", message: "Neuer Name", defaultValue: c.name) {
+                state.renameCorrespondent(id: id, newName: n)
+            }
+        }
+        .onDrag {
+            guard let id = c.id else { return NSItemProvider() }
+            // Drag-Payload fürs Zuweisen auf Dokumente im Gitter
+            return NSItemProvider(object: "pless/correspondent/\(id)" as NSString)
+        }
         .contextMenu {
                 Button("Umbenennen…") {
                     if let n = Prompts.askText(title: "Korrespondent umbenennen", message: "Neuer Name", defaultValue: c.name) {
