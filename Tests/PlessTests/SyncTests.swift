@@ -465,6 +465,15 @@ enum SyncTests {
         try MiniTest.expect(outcome4c.uploaded == 0 && outcome4c.updated == 0 && outcome4c.skipped == 0 && outcome4c.failed.isEmpty,
                             "nach PATCH nichts mehr pending: \(outcome4c)")
 
+        // 4d. Forced Sync: Metadaten-Push (PATCH) auch ohne Hash-Änderung — z. B. um falsch gemappte
+        // Kategorien (find-or-create-Bug) auf einen Schlag zu korrigieren
+        let outcome4d = try await service.syncAll(forceMetadata: true)
+        try MiniTest.expectEqual(outcome4d.updated, 1)
+        try MiniTest.expectEqual(outcome4d.uploaded, 0)
+        try MiniTest.expect(transport.requests.filter { $0.method == "PATCH" }.count >= 2, "Force-Sync muss erneut PATCHen")
+        let stepF = try await service.sync(documentId: docId, forceMetadata: true)
+        try MiniTest.expectEqual(stepF, .updated(paperlessId: 42))
+
         // 5. Server-Fehler beim Upload → failed, kein sync_map-Eintrag
         let id5 = try db.insert(sampleDoc(sha: "fehler-sha"))
         let failing = FakeTransport { req in

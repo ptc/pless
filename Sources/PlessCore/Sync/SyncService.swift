@@ -70,13 +70,14 @@ public final class SyncService {
 
     /// Dokumente, die ein Push-Anlauf anfassen muss: noch nie gesynct, Datei geändert (sha256)
     /// ODER Metadaten geändert (meta_sha256 weicht ab / fehlt — z. B. Kategorie nachträglich gesetzt).
-    public func pendingDocuments() throws -> [Document] {
+    /// `forceMetadata` erzwingt den Metadaten-Push für alle bereits gesyncten Dokumente (unabhängig vom Hash).
+    public func pendingDocuments(forceMetadata: Bool = false) throws -> [Document] {
         var out: [Document] = []
         for doc in try db.allDocuments() {
             guard let id = doc.id else { continue }
             let entry = try db.syncEntry(for: id)
             let meta = try metaHash(of: doc)
-            if entry == nil || entry!.sha256 != doc.sha256 || entry!.metaSha256 != meta {
+            if entry == nil || entry!.sha256 != doc.sha256 || forceMetadata || entry!.metaSha256 != meta {
                 out.append(doc)
             }
         }
@@ -84,14 +85,15 @@ public final class SyncService {
     }
 
     /// Synchronisiert ein einzelnes Dokument. Wirft bei Netzwerk-/Serverfehlern.
-    public func sync(documentId: Int64) async throws -> SyncStep {
+    /// `forceMetadata` pusht die Metadaten per PATCH, auch wenn sich am Hash nichts geändert hat.
+    public func sync(documentId: Int64, forceMetadata: Bool = false) async throws -> SyncStep {
         guard let doc = try db.document(byId: documentId), let id = doc.id else {
             throw PlessError.notFound("Dokument #\(documentId)")
         }
         let meta = try metaHash(of: doc)
         // Bereits gesynct und Datei unverändert?
         if let entry = try db.syncEntry(for: id), entry.sha256 == doc.sha256 {
-            if entry.metaSha256 == meta {
+            if entry.metaSha256 == meta && !forceMetadata {
                 // Datei + Metadaten unverändert → nur prüfen, ob es auf dem Server noch existiert
                 if let remoteId = try await client.checksumExists(doc.sha256) {
                     return .skipped(paperlessId: remoteId)
@@ -117,13 +119,14 @@ public final class SyncService {
     }
 
     /// Synchronisiert alle ausstehenden Dokumente. `progress(done, total)` nach jedem Dokument.
-    public func syncAll(progress: (@Sendable (Int, Int) -> Void)? = nil) async throws -> SyncOutcome {
-        let pending = try pendingDocuments()
+    /// `forceMetadata` erzwingt den Metadaten-Push (PATCH) auch für Dokumente mit unverändertem Hash.
+    public func syncAll(forceMetadata: Bool = false, progress: (@Sendable (Int, Int) -> Void)? = nil) async throws -> SyncOutcome {
+        let pending = try pendingDocuments(forceMetadata: forceMetadata)
         var outcome = SyncOutcome()
         for (i, doc) in pending.enumerated() {
             do {
                 guard let id = doc.id else { continue }
-                switch try await sync(documentId: id) {
+                switch try await sync(documentId: id, forceMetadata: forceMetadata) {
                 case .uploaded: outcome.uploaded += 1
                 case .updated: outcome.updated += 1
                 case .skipped: outcome.skipped += 1
