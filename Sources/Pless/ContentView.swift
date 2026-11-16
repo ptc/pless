@@ -198,6 +198,7 @@ struct DocumentListView: View {
                         ForEach(g.hits, id: \.document.id) { hit in
                             DocumentCard(hit: hit,
                                          selected: hit.document.id.map { state.selectionSet.contains($0) } ?? false,
+                                         active: hit.document.id == state.selection,
                                          bulkHighlight: sidebarDropTargeted)
                                 .onTapGesture {
                                     guard let id = hit.document.id, !state.isEditing else { return }
@@ -244,6 +245,8 @@ struct DocumentCard: View {
     @EnvironmentObject var state: AppState
     let hit: SearchHit
     let selected: Bool
+    /// Aktiv = wird gerade rechts in der Detailansicht angezeigt → stärkere Markierung
+    var active: Bool = false
     /// Sidebar-Drag über der Liste → alle selektierten Karten zeigen den gestrichelten Rahmen
     var bulkHighlight: Bool = false
     @State private var dropTargeted = false
@@ -282,11 +285,25 @@ struct DocumentCard: View {
             .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
         }
         .padding(8)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(active
+                    ? Color.accentColor.opacity(0.10)
+                    : Color(nsColor: .controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay {
             RoundedRectangle(cornerRadius: 8)
-                .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 2.5)
+                .stroke(active ? Color.accentColor : (selected ? Color.accentColor.opacity(0.7) : Color.clear),
+                        lineWidth: active ? 3 : 2.5)
+        }
+        .overlay {
+            // aktives Element: Akzent-Häkchen oben links
+            if active {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(Color.accentColor)
+                    .background(Circle().fill(Color(nsColor: .controlBackgroundColor)))
+                    .font(.caption)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(4)
+            }
         }
         // Kategorie/Tag aus der Sidebar auf diese Karte ziehen → Zuweisung (Mehrfachauswahl,
         // wenn die Karte selektiert ist, sonst nur diese Karte)
