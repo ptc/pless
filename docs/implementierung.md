@@ -373,6 +373,7 @@ Kategorien
 | 2026-11-16 | b84b05d | UI | fix(ui): Sync-Button flach ohne Kasten, Symbol arrow.2.circlepath; Chevron-Menü borderless daneben — 94 Tests grün |
 | 2026-11-16 | f7d1b05 | UI | fix(ui): Sync-Toolbar ein einzelner Button mit einem Symbol (arrow.clockwise); Varianten per Rechtsklick — 94 Tests grün |
 | 2026-11-16 | 420ba73 | UI | fix(ui): Sync als einzelner Dropdown-Button (cloud.arrow.up, ein Pfeil); Menü: Sync/Erzwingen/Import — 94 Tests grün |
+| 2026-11-16 | d4255ca | UI | fix(ui): Sync-Symbol komponiert aus cloud.fill + arrow.up (beides sichtbar); Menü-Punkte kürzer benannt — 94 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
