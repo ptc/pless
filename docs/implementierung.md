@@ -266,13 +266,14 @@ Kategorien
 > Settings eine paperless-URL + API-Token konfiguriert (self-hosted). Ohne Konfiguration
 > wird kein einziger Netzwerk-Call ausgeführt.
 
-- [ ] Mapping: pless-Kategorie → paperless **Document Type**, Tag → **Tag**, Korrespondent → **Correspondent** (jeweils find-or-create per Name → ID); PDF via `POST /api/documents/post_document/` (multipart) mit Vault-Dateinamen (→ paperless `original_filename`); Titel → `title`, Datum → `created`
-- [ ] Idempotenz: Tabelle `sync_map(document_id, paperless_id, sha256, synced_at)` (Migration V3, `user_version=3`) + Checksum-Check `GET /api/documents/?checksum=<sha256>` — bereits gesyncte/identische Dokumente werden übersprungen, bei geändertem sha256 neu hochgeladen
-- [ ] Settings: paperless-URL (UserDefaults) + API-Token (**Keychain**, nicht in pless.db) + „Verbindung testen“
-- [ ] `PaperlessClient` in PlessCore mit injizierbarem `HTTPTransport`-Protocol (App: URLSession, Tests: Fake): find-or-create für Correspondents/Tags/Document Types, `post_document` (multipart), Checksum-Suche, `ping`
-- [ ] `SyncService` in PlessCore: Push aller neuen/geänderten Dokumente mit Fortschritt, Ergebnis (uploaded/skipped/failed), `sync_map` aktualisieren
-- [ ] UI: „Sync“-Button in der Toolbar + Menü „Ablage > Zu paperless-ngx synchronisieren“, „Synchronisieren“ + Sync-Badge (paperless-ID) in den Details, Status/Progress in der Statusleiste
-- [ ] Tests: Fake-Transport (find-or-create, multipart-Payload, Idempotenz via Checksum, Fehlpfade) + sync_map-DB-Tests
+- [x] Mapping: pless-Kategorie → paperless **Document Type**, Tag → **Tag**, Korrespondent → **Correspondent** (jeweils find-or-create per Name → ID); PDF via `POST /api/documents/post_document/` (multipart) mit Vault-Dateinamen (→ paperless `original_filename`); Titel → `title`, Datum → `created`
+- [x] Idempotenz: Tabelle `sync_map(document_id, paperless_id, sha256, synced_at)` (Migration V3, `user_version=3`) + Checksum-Check `GET /api/documents/?checksum=<sha256>` — bereits gesyncte/identische Dokumente werden übersprungen, bei geändertem sha256 neu hochgeladen
+- [x] Settings: paperless-URL (UserDefaults) + API-Token (**Keychain**, nicht in pless.db) + „Verbindung testen“
+- [x] `PaperlessClient` in PlessCore mit injizierbarem `HTTPTransport`-Protocol (App: URLSession, Tests: Fake): find-or-create für Correspondents/Tags/Document Types, `post_document` (multipart), Checksum-Suche, `ping`
+- [x] `SyncService` in PlessCore: Push aller neuen/geänderten Dokumente mit Fortschritt, Ergebnis (uploaded/skipped/failed), `sync_map` aktualisieren
+- [x] UI: „Sync“-Button in der Toolbar + „Synchronisieren“ + Sync-Badge (paperless-ID) in den Details, Status/Progress in der Statusleiste
+- [x] Tests: Fake-Transport (find-or-create, multipart-Payload, Idempotenz via Checksum, Fehlpfade) + sync_map-DB-Tests
+- [x] Sync-Stand pro Dokument **persistiert**: Spalte `documents.sync_state` (`synced` / `not_synced` / `unknown`, Migration V4, `user_version=4`, Backfill aus `sync_map`); Transitionen: erfolgreicher Push → `synced`, fehlgeschlagener Push → `not_synced`, sobald Sync konfiguriert → `unknown` per Reconcile auf `not_synced`; ohne Konfiguration Anzeige `unknown`. UI: Wolken-Badge auf jeder PDF-Karte (`cloud.fill` grün / `cloud` orange / `cloud.questionmark` grau, mit Tooltip) + Wolke + Text in den Details
 
 ## Fortschritts-Log
 
@@ -349,6 +350,8 @@ Kategorien
 | 2026-11-16 | 99cade9 | 6 | feat: Korrespondenten — Vorschlag in Details mit Übernehmen-Chip, Zähler + Filter-Toggle in Sidebar, Neuanlegen — 81 Tests grün |
 | 2026-11-16 | 4c35952 | 6 | feat: Korrespondent per Drag & Drop aufs Gitter zuweisen; Doppelklick in Sidebar = umbenennen — 82 Tests grün |
 | 2026-11-16 | 234ad42 | 6 | fix: Korrespondent-Vorschlag ab Rechtsform abschneiden (Böttcher AG … → Böttcher AG); Behörden ganz — 82 Tests grün |
+| 2026-11-16 | ad888d5 | 13 | feat(core): Sync-Status persistiert — Migration V4 (sync_state: synced/not_synced/unknown, Backfill aus sync_map) — 91 Tests grün |
+| 2026-11-16 | 8b72586 | 13 | feat(ui): Wolken-Badge pro PDF (cloud.fill/cloud/cloud.questionmark) + Sync-Stand in den Details — 91 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
