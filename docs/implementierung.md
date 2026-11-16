@@ -334,6 +334,7 @@ Kategorien
 | 2026-11-16 | 53cd534 | 6 | fix: Kategorie-Zähler als trailing Text statt .badge() — native Auswahl-Markierung wieder überall — 79 Tests grün |
 | 2026-11-16 | 1436b2f | 6 | fix: OCR-Text-Panel default zu; Notizfeld im Edit-Modus leer klein — 79 Tests grün |
 | 2026-11-16 | 99cade9 | 6 | feat: Korrespondenten — Vorschlag in Details mit Übernehmen-Chip, Zähler + Filter-Toggle in Sidebar, Neuanlegen — 81 Tests grün |
+| 2026-11-16 | 4c35952 | 6 | feat: Korrespondent per Drag & Drop aufs Gitter zuweisen; Doppelklick in Sidebar = umbenennen — 82 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
