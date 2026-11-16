@@ -157,10 +157,18 @@ struct SidebarView: View {
                 }
             }
         }
-        if count > 0 {
-            row.badge(count)
-        } else {
-            row
+        Group {
+            if count > 0 {
+                row.badge(count)
+            } else {
+                row
+            }
+        }
+        // Auswahl-Markierung explizit (funktioniert auch mit Badge — die List zeichnet sie sonst nicht)
+        .background {
+            if case .category(let name) = state.sidebarSelection, name == node.name {
+                Color.accentColor.opacity(0.30)
+            }
         }
     }
 
