@@ -174,15 +174,16 @@ public final class PaperlessClient: Sendable {
 
     /// Metadaten eines vorhandenen paperless-Dokuments aktualisieren: `PATCH /api/documents/<id>/`.
     /// nil-Referenzen (correspondent / document_type) werden als null gesendet → werden in paperless geleert.
+    /// title/created fehlen lokal → Feld wird ganz weggelassen (paperless erlaubt dort kein null, PATCH würde sonst 400 liefern).
     public func updateDocument(paperlessId: Int, title: String?, created: String?,
                                correspondentId: Int?, documentTypeId: Int?, tagIds: [Int]) async throws {
         var body: [String: Any] = [
-            "title": title ?? NSNull(),
-            "created": created ?? NSNull(),
             "correspondent": correspondentId.map { $0 as Any } ?? NSNull(),
             "document_type": documentTypeId.map { $0 as Any } ?? NSNull(),
             "tags": tagIds
         ]
+        if let title { body["title"] = title }
+        if let created { body["created"] = created }
         let data = try JSONSerialization.data(withJSONObject: body)
         _ = try await send(request("PATCH", path: "/api/documents/\(paperlessId)/", body: data,
                                    contentType: "application/json"),

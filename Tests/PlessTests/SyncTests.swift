@@ -193,6 +193,15 @@ enum SyncTests {
         try MiniTest.expectEqual(obj!["correspondent"] as? Int, 7)
         try MiniTest.expect(obj!["document_type"] is NSNull, "document_type nil → null (löschen in paperless)")
         try MiniTest.expectEqual((obj!["tags"] as? [NSNumber])?.map { $0.intValue }, [11, 12])
+
+        // title/created nil → Felder fehlen ganz (paperless: null nicht erlaubt → 400); Referenzen null = leeren
+        try await client.updateDocument(paperlessId: 42, title: nil, created: nil,
+                                        correspondentId: nil, documentTypeId: nil, tagIds: [])
+        let req2 = try MiniTest.unwrap(transport.requests.last)
+        let obj2 = try MiniTest.unwrap(try JSONSerialization.jsonObject(with: req2.body ?? Data()) as? [String: Any])
+        try MiniTest.expect(!obj2.keys.contains("title") && !obj2.keys.contains("created"), "nil-Felder weglassen: \(obj2.keys)")
+        try MiniTest.expect(obj2["correspondent"] is NSNull && obj2["document_type"] is NSNull)
+        try MiniTest.expectEqual((obj2["tags"] as? [NSNumber])?.map { $0.intValue } ?? [], [])
         }
     }
 
