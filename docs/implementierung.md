@@ -331,6 +331,7 @@ Kategorien
 | 2026-11-15 | 40d0e8f | 6 | revert: Klick auf PDF markiert nur das PDF; Kategorie-Klick markiert/filtert die Kategorie — 79 Tests grün |
 | 2026-11-15 | 576437c | 6 | fix: Kategorie-Markierung auch mit Zähler-Badge (explizites Highlight über sidebarSelection) — 79 Tests grün |
 | 2026-11-15 | b6d12bc | 6 | fix: Kategorie-/Tag-Filter wählt nicht mehr automatisch das erste PDF aus — 79 Tests grün |
+| 2026-11-15 | 633b1d0 | 6 | fix: Kategorie-Zähler als trailing Text statt .badge() — native Auswahl-Markierung wieder überall — 79 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
