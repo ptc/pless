@@ -318,7 +318,17 @@ struct DocumentCard: View {
                         .foregroundStyle(.white).padding(4)
                 }
             }
-            Text(doc.title ?? doc.filename).font(.caption).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+            HStack(alignment: .top, spacing: 6) {
+                Text(doc.title ?? doc.filename).font(.caption).lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                // Sync-Wolke rechts oben in der Ecke des weißen Felds (nicht auf dem Dokument-Thumbnail):
+                // gefüllt grün = synced, Umriss orange = not synced, grau mit ? = unknown
+                let syncState = state.effectiveSyncState(doc)
+                SyncCloudBadge.icon(syncState)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(SyncCloudBadge.color(syncState))
+                    .help(SyncCloudBadge.help(syncState))
+            }
             HStack(spacing: 6) {
                 // farbiges Kategorie-Tag (jede Kategorie hat ihre eigene Farbe)
                 if let cat = state.categories.first(where: { $0.id == doc.categoryId }) {
@@ -331,14 +341,6 @@ struct DocumentCard: View {
                 let corr = state.nameOfCorrespondent(doc.correspondentId)
                 if !corr.isEmpty { Text(corr) }
                 if let d = doc.documentDate { Text(state.displayDate(d)) }
-                Spacer()
-                // Sync-Wolke auf dem weißen Feld neben/unter der Vorschau (nicht auf dem Dokument selbst):
-                // gefüllt grün = synced, Umriss orange = not synced, grau mit ? = unknown
-                let syncState = state.effectiveSyncState(doc)
-                SyncCloudBadge.icon(syncState)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(SyncCloudBadge.color(syncState))
-                    .help(SyncCloudBadge.help(syncState))
             }
             .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
         }
