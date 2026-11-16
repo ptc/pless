@@ -328,6 +328,7 @@ Kategorien
 | 2026-11-15 | c0e6027 | 6 | feat: Kategorie-Auswahl wird in der Sidebar markiert; erneuter Klick → wieder alle Dokumente — 79 Tests grün |
 | 2026-11-15 | 1e6fe74 | 6 | feat: aktive Karte im Gitter stärker markiert (Rahmen + Füllung + Häkchen), ausgewählte nur Rahmen — 79 Tests grün |
 | 2026-11-15 | 1b94cd8 | 6 | feat: Klick auf Dokument wählt dessen Kategorie in der Sidebar aus (markiert + filtert) — 79 Tests grün |
+| 2026-11-15 | 40d0e8f | 6 | revert: Klick auf PDF markiert nur das PDF; Kategorie-Klick markiert/filtert die Kategorie — 79 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
