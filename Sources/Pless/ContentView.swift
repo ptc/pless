@@ -318,17 +318,7 @@ struct DocumentCard: View {
                         .foregroundStyle(.white).padding(4)
                 }
             }
-            HStack(alignment: .top, spacing: 6) {
-                Text(doc.title ?? doc.filename).font(.caption).lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                // Sync-Wolke rechts oben in der Ecke des weißen Felds (nicht auf dem Dokument-Thumbnail):
-                // gefüllt grün = synced, Umriss orange = not synced, grau mit ? = unknown
-                let syncState = state.effectiveSyncState(doc)
-                SyncCloudBadge.icon(syncState)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(SyncCloudBadge.color(syncState))
-                    .help(SyncCloudBadge.help(syncState))
-            }
+            Text(doc.title ?? doc.filename).font(.caption).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 6) {
                 // farbiges Kategorie-Tag (jede Kategorie hat ihre eigene Farbe)
                 if let cat = state.categories.first(where: { $0.id == doc.categoryId }) {
@@ -353,6 +343,16 @@ struct DocumentCard: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(active ? Color.accentColor : (selected ? Color.accentColor.opacity(0.7) : Color.clear),
                         lineWidth: active ? 3 : 2.5)
+        }
+        .overlay(alignment: .topTrailing) {
+            // Sync-Wolke in der oberen rechten Ecke der Karte (im weißen Rand, nicht auf dem Dokument):
+            // gefüllt grün = synced, Umriss orange = not synced, grau mit ? = unknown
+            let syncState = state.effectiveSyncState(doc)
+            SyncCloudBadge.icon(syncState)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(SyncCloudBadge.color(syncState))
+                .padding(3)
+                .help(SyncCloudBadge.help(syncState))
         }
         .overlay {
             // aktives Element: Akzent-Häkchen oben links
