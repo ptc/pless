@@ -7,6 +7,7 @@ enum HeuristicsTests {
         MiniTest.test("Heuristik: Datum (dd.mm.yyyy, dd.mm.yy, ISO, ungültig)") { try dates() }
         MiniTest.test("Heuristik: alle Datums-Vorschläge (mehrere, dedupliziert, Reihenfolge)") { try datesAll() }
         MiniTest.test("Heuristik: Langform mit Monatsname (8. Oktober 2026 → 2026-10-08)") { try datesLongGerman() }
+        MiniTest.test("Heuristik: US-Format MM/DD/YYYY (12/08/2026 → 2026-12-08)") { try datesUS() }
         MiniTest.test("Heuristik: Korrespondent matchen (case-insensitive, längster gewinnt)") { try correspondent() }
         MiniTest.test("Heuristik: Titel = erste sinnvolle Zeile") { try title() }
         MiniTest.test("Heuristik: Kategorie per Schlüsselwort") { try category() }
@@ -46,6 +47,20 @@ enum HeuristicsTests {
         try MiniTest.expectEqual(Heuristics.extractDates(from: "8. Sombertag 2026"), [])
         // extractDate (erstes Vorkommen) funktioniert damit auch
         try MiniTest.expectEqual(Heuristics.extractDate(from: "vom 8. Oktober 2026"), "2026-10-08")
+    }
+
+    private static func datesUS() throws {
+        // US-Format MM/DD/YYYY (Schrägstriche): 12/08/2026 = 8. Dezember 2026
+        try MiniTest.expectEqual(Heuristics.extractDates(from: "Invoice dated 12/08/2026"), ["2026-12-08"])
+        try MiniTest.expectEqual(Heuristics.extractDates(from: "12/08/26"), ["2026-12-08"]) // 2-stelliges Jahr
+        try MiniTest.expectEqual(Heuristics.extractDates(from: "01/31/2026"), ["2026-01-31"])
+        // gemischt, Reihenfolge nach Vorkommen
+        try MiniTest.expectEqual(
+            Heuristics.extractDates(from: "12/08/2026 und 2026-10-08 und 08.10.2026"),
+            ["2026-12-08", "2026-10-08"])
+        // ungültig: 02/30/2026 (Februar hat keine 30 Tage), 13/01/2026 (Monat 13)
+        try MiniTest.expectEqual(Heuristics.extractDates(from: "02/30/2026"), [])
+        try MiniTest.expectEqual(Heuristics.extractDates(from: "13/01/2026"), [])
     }
 
     private static func correspondent() throws {

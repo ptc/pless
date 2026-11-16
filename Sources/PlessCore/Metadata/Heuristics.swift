@@ -43,9 +43,9 @@ public enum Heuristics {
     public static func extractDates(from text: String) -> [String] {
         var found: [(loc: Int, date: String)] = []
 
-        // ISO + numerisch deutsch (14.02.2026 / 14.02.26)
+        // ISO + numerisch deutsch (14.02.2026 / 14.02.26, Punkte) + US (12/08/2026, Schrägstriche = MM/DD/YYYY)
         if let re = try? NSRegularExpression(
-            pattern: #"\b(20\d{2})-(\d{2})-(\d{2})\b|\b(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})\b"#) {
+            pattern: #"\b(20\d{2})-(\d{2})-(\d{2})\b|\b(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})\b|\b(\d{1,2})/(\d{1,2})/(20\d{2}|\d{2})\b"#) {
             for m in re.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
                 func group(_ i: Int) -> String? {
                     let r = m.range(at: i)
@@ -53,10 +53,15 @@ public enum Heuristics {
                     return String(text[range])
                 }
                 let d: String?
-                if m.range(at: 1).location != NSNotFound { // ISO
+                if m.range(at: 1).location != NSNotFound { // ISO: yyyy-MM-dd
                     d = validDate(y: Int(group(1)!)!, m: Int(group(2)!)!, d: Int(group(3)!)!)
-                } else {
+                } else if m.range(at: 4).location != NSNotFound { // deutsch: dd.MM.yyyy
                     guard let dd = group(4), let mm = group(5), let yy = group(6) else { continue }
+                    var y = Int(yy)!
+                    if yy.count == 2 { y += 2000 }
+                    d = validDate(y: y, m: Int(mm)!, d: Int(dd)!)
+                } else { // US: MM/DD/YYYY
+                    guard let mm = group(7), let dd = group(8), let yy = group(9) else { continue }
                     var y = Int(yy)!
                     if yy.count == 2 { y += 2000 }
                     d = validDate(y: y, m: Int(mm)!, d: Int(dd)!)
