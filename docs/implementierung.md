@@ -268,6 +268,7 @@ Kategorien
 
 - [x] Mapping: pless-Kategorie → paperless **Document Type**, Tag → **Tag**, Korrespondent → **Correspondent** (jeweils find-or-create per Name → ID); PDF via `POST /api/documents/post_document/` (multipart) mit Vault-Dateinamen (→ paperless `original_filename`); Titel → `title`, Datum → `created`
 - [x] Idempotenz: Tabelle `sync_map(document_id, paperless_id, sha256, synced_at)` (Migration V3, `user_version=3`) + Checksum-Check `GET /api/documents/?checksum=<sha256>` — bereits gesyncte/identische Dokumente werden übersprungen, bei geändertem sha256 neu hochgeladen
+- [x] Metadaten-Re-Push: `sync_map.meta_sha256` (Migration V5) speichert den Metadaten-Hash (Titel/Datum/Korrespondent/Kategorie/Tags/Notizen) beim Push; weicht er ab (z. B. Kategorie nachträglich gesetzt), geht `PATCH /api/documents/<id>/` an paperless — kein Re-Upload der Datei. Metadaten-Edits setzen lokal sofort `sync_state='not_synced'`
 - [x] Settings: paperless-URL (UserDefaults) + API-Token (**Keychain**, nicht in pless.db) + „Verbindung testen“
 - [x] `PaperlessClient` in PlessCore mit injizierbarem `HTTPTransport`-Protocol (App: URLSession, Tests: Fake): find-or-create für Correspondents/Tags/Document Types, `post_document` (multipart), Checksum-Suche, `ping`
 - [x] `SyncService` in PlessCore: Push aller neuen/geänderten Dokumente mit Fortschritt, Ergebnis (uploaded/skipped/failed), `sync_map` aktualisieren
@@ -352,6 +353,8 @@ Kategorien
 | 2026-11-16 | 234ad42 | 6 | fix: Korrespondent-Vorschlag ab Rechtsform abschneiden (Böttcher AG … → Böttcher AG); Behörden ganz — 82 Tests grün |
 | 2026-11-16 | ad888d5 | 13 | feat(core): Sync-Status persistiert — Migration V4 (sync_state: synced/not_synced/unknown, Backfill aus sync_map) — 91 Tests grün |
 | 2026-11-16 | 8b72586 | 13 | feat(ui): Wolken-Badge pro PDF (cloud.fill/cloud/cloud.questionmark) + Sync-Stand in den Details — 91 Tests grün |
+| 2026-11-16 | ae9f532 | 13 | fix(core): Metadaten-Re-Push per PATCH bei meta_sha256-Abweichung (Migration V5) — 92 Tests grün |
+| 2026-11-16 | 697d5c1 | 13 | feat(ui): Sync-Status zählt „aktualisiert“ (PATCH) — 92 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
