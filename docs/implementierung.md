@@ -370,6 +370,7 @@ Kategorien
 | 2026-11-16 | 78829c4 | — | docs: README mit eigenem paperless-ngx-Abschnitt — 94 Tests grün |
 | 2026-11-16 | bec38c0 | UI | fix(ui): Posteingang als eigene Leiste oben in der Sidebar (Status-Pill + Scannen-Button), schaltet nicht mehr auf „Alle Dokumente“ um — 94 Tests grün |
 | 2026-11-16 | dd73b26 | UI | fix(ui): Sync-Toolbar als ein Split-Button (Klick = Sync, Chevron = Menü) statt zweier getrennter Buttons — 94 Tests grün |
+| 2026-11-16 | b84b05d | UI | fix(ui): Sync-Button flach ohne Kasten, Symbol arrow.2.circlepath; Chevron-Menü borderless daneben — 94 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
