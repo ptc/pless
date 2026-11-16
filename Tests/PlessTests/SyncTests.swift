@@ -249,6 +249,30 @@ enum SyncTests {
         let id2 = try await existingClient.findOrCreateCorrespondent(name: "Allianz")
         try MiniTest.expectEqual(id2, 7)
         try MiniTest.expect(existingTransport.requests.allSatisfy { $0.method == "GET" }, "bei vorhandenem Eintrag darf nicht angelegt werden")
+
+        // Teil C: Server ignoriert den Filter und liefert unpassende Ressourcen →
+        // KEIN results.first-Fallback, sondern anlegen (sonst landet jede Kategorie als „Arbeitsvertrag“)
+        let noisyTransport = FakeTransport { req in
+            if req.method == "GET" { return (200, json(["count": 1, "results": [["id": 1, "name": "Arbeitsvertrag"]]])) }
+            if req.method == "POST" { return (201, json(["id": 9, "name": "Steuern"])) }
+            return (404, Data())
+        }
+        let noisyClient = PaperlessClient(config: config(), transport: noisyTransport)
+        let id3 = try await noisyClient.findOrCreateDocumentType(name: "Steuern")
+        try MiniTest.expectEqual(id3, 9)
+        try MiniTest.expect(noisyTransport.requests.contains { $0.method == "POST" }, "bei keinem exakten Treffer muss angelegt werden")
+
+        // Teil D: exakter Treffer (case-insensitiv) in voller Liste → richtige ID, kein POST
+        let mixedTransport = FakeTransport { req in
+            if req.method == "GET" {
+                return (200, json(["count": 2, "results": [["id": 1, "name": "Arbeitsvertrag"], ["id": 7, "name": "STEUERN"]]]))
+            }
+            return (404, Data())
+        }
+        let mixedClient = PaperlessClient(config: config(), transport: mixedTransport)
+        let id4 = try await mixedClient.findOrCreateDocumentType(name: "Steuern")
+        try MiniTest.expectEqual(id4, 7)
+        try MiniTest.expect(mixedTransport.requests.allSatisfy { $0.method == "GET" }, "bei Treffer in der Liste darf nicht angelegt werden")
         }
     }
 

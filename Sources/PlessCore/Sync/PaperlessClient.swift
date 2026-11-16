@@ -131,13 +131,15 @@ public final class PaperlessClient: Sendable {
 
     /// Liefert die ID der benannten Ressource; legt sie an, falls es sie (case-insensitiv) nicht gibt.
     /// paperless filtert `?name__iexact=` (neuere Versionen); ältere nur `?name=` — beides wird versucht.
+    /// WICHTIG: nur ein exakter (case-insensitiver) Name-Treffer zählt — nie `results.first` nehmen:
+    /// ignoriert der Server den Filter, käme sonst immer die erste Ressource des Servers zurück
+    /// (z. B. landet dann jede Kategorie als „Arbeitsvertrag“).
     public func findOrCreate(endpoint: String, name: String) async throws -> Int {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw PlessError.sync("\(endpoint): leerer Name") }
         for param in ["name__iexact", "name"] {
             let results = try await list(path: endpoint, query: [param: trimmed])
-            if let hit = results.first(where: { ($0["name"] as? String)?.lowercased() == trimmed.lowercased() })
-                ?? results.first,
+            if let hit = results.first(where: { ($0["name"] as? String)?.lowercased() == trimmed.lowercased() }),
                let id = hit["id"] as? Int {
                 return id
             }
