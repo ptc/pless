@@ -368,6 +368,7 @@ Kategorien
 | 2026-11-16 | e2eb12d | 13 | feat(ui): Import-Eintrag im Sync-Dropdown (Toolbar) — 94 Tests grün |
 | 2026-11-16 | ca06035 | — | docs: README als Programmbeschreibung, technischer Hintergrund nach docs/technik.md — 94 Tests grün |
 | 2026-11-16 | 78829c4 | — | docs: README mit eigenem paperless-ngx-Abschnitt — 94 Tests grün |
+| 2026-11-16 | bec38c0 | UI | fix(ui): Posteingang als eigene Leiste oben in der Sidebar (Status-Pill + Scannen-Button), schaltet nicht mehr auf „Alle Dokumente“ um — 94 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
