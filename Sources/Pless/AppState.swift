@@ -609,13 +609,13 @@ final class AppState: ObservableObject {
                         self.errorMessage = "Sync nach paperless-ngx fehlgeschlagen: \(thrown)"
                     } else if let o = outcome {
                         if o.failed.isEmpty {
-                            if o.uploaded > 0 {
-                                self.setStatus(.ok, "Sync: \(o.uploaded) hochgeladen, \(o.skipped) übersprungen", autoIdleAfter: 8)
+                            if o.uploaded > 0 || o.updated > 0 {
+                                self.setStatus(.ok, "Sync: \(o.uploaded) hochgeladen, \(o.updated) aktualisiert, \(o.skipped) übersprungen", autoIdleAfter: 8)
                             } else {
                                 self.setStatus(.idle, "Sync: alles bereits aktuell (\(o.skipped) übersprungen)")
                             }
                         } else {
-                            self.setStatus(.warning, "Sync: \(o.uploaded) hochgeladen, \(o.skipped) übersprungen, \(o.failed.count) fehlgeschlagen — \(o.failed.map(\.filename).joined(separator: ", "))")
+                            self.setStatus(.warning, "Sync: \(o.uploaded) hochgeladen, \(o.updated) aktualisiert, \(o.skipped) übersprungen, \(o.failed.count) fehlgeschlagen — \(o.failed.map(\.filename).joined(separator: ", "))")
                         }
                     }
                     self.refresh()
@@ -640,6 +640,8 @@ final class AppState: ObservableObject {
                     switch step {
                     case .uploaded(let pid):
                         self.setStatus(.ok, "„\(title)“ synchronisiert → paperless #\(pid)", autoIdleAfter: 6)
+                    case .updated(let pid):
+                        self.setStatus(.ok, "„\(title)“ aktualisiert → paperless #\(pid) (Metadaten per PATCH)", autoIdleAfter: 6)
                     case .skipped(let pid):
                         self.setStatus(.idle, "„\(title)“ bereits synchronisiert (paperless #\(pid))")
                     case .none:
