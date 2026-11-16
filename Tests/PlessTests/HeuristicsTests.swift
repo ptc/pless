@@ -76,6 +76,13 @@ enum HeuristicsTests {
         try MiniTest.expectEqual(
             Heuristics.suggestCorrespondent(from: "Finanzamt Musterstadt\nBescheid", known: []),
             "Finanzamt Musterstadt")
+        // Absender mit Adresse: ab Rechtsform abschneiden
+        try MiniTest.expectEqual(
+            Heuristics.suggestCorrespondent(from: "Böttcher AG Musterstraße 1 in 23433 Hamburg\nRechnung Nr. 9", known: []),
+            "Böttcher AG")
+        try MiniTest.expectEqual(
+            Heuristics.suggestCorrespondent(from: "Schmidt & Söhne GmbH, Industrieweg 5, 80331 München", known: []),
+            "Schmidt & Söhne GmbH")
         // nichts Passendes → nil
         try MiniTest.expectEqual(Heuristics.suggestCorrespondent(from: "Hallo Welt\nirgendein Text", known: []), nil)
     }

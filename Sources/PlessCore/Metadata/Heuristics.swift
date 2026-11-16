@@ -152,12 +152,20 @@ public enum Heuristics {
     /// ersten Zeilen nach einer Absender-Firma mit Rechtsform gesucht (z. B. „Müller GmbH“).
     public static func suggestCorrespondent(from text: String, known: [String] = []) -> String? {
         if let m = matchCorrespondent(from: text, known: known) { return m }
-        let legal = #"\b(GmbH|AG|SE|UG|GbR|OHG|KG|PartG|PartGmbB|Ltd\.?|Inc\.?|LLC|S\.A\.|e\.K\.|Stiftung|Verein|Finanzamt|Amtsgericht|Landgericht|Stadtwerke|Ministerium|Behörde)\b"#
-        guard let re = try? NSRegularExpression(pattern: legal, options: [.caseInsensitive]) else { return nil }
+        // Rechtsformen: da wird abgeschnitten („Böttcher AG Musterstraße 1 …“ → „Böttcher AG“)
+        let legal = #"\b(GmbH|AG|SE|UG|GbR|OHG|KG|PartG|PartGmbB|Ltd\.?|Inc\.?|LLC|S\.A\.|e\.K\.|Stiftung|Verein)\b"#
+        // Behörden-Namen: die gehören zum Namen, Zeile bleibt ganz („Finanzamt Musterstadt“)
+        let authority = #"\b(Finanzamt|Amtsgericht|Landgericht|Stadtwerke|Ministerium|Behörde)\b"#
+        guard let reLegal = try? NSRegularExpression(pattern: legal, options: [.caseInsensitive]),
+              let reAuth = try? NSRegularExpression(pattern: authority, options: [.caseInsensitive]) else { return nil }
         for line in text.split(separator: "\n").prefix(10) {
             let t = line.trimmingCharacters(in: .whitespacesAndNewlines)
             guard t.count >= 3, t.count <= 80 else { continue }
-            if re.firstMatch(in: t, range: NSRange(t.startIndex..., in: t)) != nil {
+            if let m = reLegal.firstMatch(in: t, range: NSRange(t.startIndex..., in: t)),
+               let r = Range(m.range, in: t) {
+                return t[..<r.upperBound].trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            if reAuth.firstMatch(in: t, range: NSRange(t.startIndex..., in: t)) != nil {
                 return String(t.prefix(60))
             }
         }
