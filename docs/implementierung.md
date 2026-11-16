@@ -358,6 +358,7 @@ Kategorien
 | 2026-11-16 | dc0dedb | 12/13 | docs: README um Sync nach paperless-ngx ergänzt (Push, Mapping, Idempotenz, Wolken-Badge) — 92 Tests grün |
 | 2026-11-16 | 14eb569 | 13 | fix(core): PATCH sendet title/created nur bei Wert (paperless 400 bei null) — Resync nach Metadaten-Edit wieder ok — 92 Tests grün |
 | 2026-11-16 | 8941564 | 13 | fix(ui): Wolken-Badge größer/deutlicher (13pt, volle Scheibe) — 92 Tests grün |
+| 2026-11-16 | 07220c9 | 13 | fix(ui): unknown-Wolke als cloud+„?“ komponiert (cloud.questionmark fehlt im SF-Katalog → leer gerendert); Sync/Resync über echtes HTTP gegen Fake-paperless verifiziert (Upload mit document_type, PATCH nach Kategorie-Edit) — 92 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
