@@ -282,90 +282,90 @@ Kategorien
 
 | Datum | Commit | Phase | Feature |
 |---|---|---|---|
-| 2026-11-15 | 57b160e | 0 | Doku committed: AGENTS.md, Plan, README, .gitignore |
-| 2026-11-15 | fd6a920 | 0 | SwiftPM-Skeleton + MiniTest-Runner (CLT: kein XCTest/Testing-Makros) |
-| 2026-11-15 | ad13b54 | 1 | Core: Models, Vault, SQLite-Schema V1 + CRUD |
-| 2026-11-15 | 31dfb6b | 1 | Tests: Vault + Database (10 grün) |
-| 2026-11-15 | 403dc1e | 2 | Naming Engine: Template-Renderer + Sanitizer + Kollision |
-| 2026-11-15 | 14f08b7 | 2 | Naming-Tests (15 gesamt grün) |
-| 2026-11-15 | 6c9f334 | 3 | Ingest: SHA-256-Dedup, PDFKit-Text, Duplikat/Reject |
-| 2026-11-15 | f82a739 | 3 | Ingest-Tests mit Fixture-PDFs (20 gesamt grün) |
-| 2026-11-15 | e3259e7 | 4 | OCR: TextRecognizer-Protocol, VisionTextRecognizer, OCRService-Queue |
-| 2026-11-15 | c4a0fa6 | 4 | OCR-Tests (Fake, sync/async) — 24 gesamt grün |
-| 2026-11-15 | 88c6c6d | 5 | FTS5-Index (Migration V2 + Trigger) + Such-API mit Filtern |
-| 2026-11-15 | 1e652db | 5 | Search-Tests — 29 gesamt grün |
-| 2026-11-15 | ad599b9 | 6 | Core: PDF-Rendering & Thumbnails, tags(for:), onlyNeedsReview-Filter |
-| 2026-11-15 | 92d94f3 | 6 | Thumbnail-Tests + PDFFixture — 32 gesamt grün |
-| 2026-11-15 | e49f732 | 6 | App-Shell (SwiftUI): @main, 3 Spalten, Liste+Suche, PDF-Viewer, Thumbnails |
-| 2026-11-15 | 6e223b4 | 7 | Core: MetadataService (Speichern + Umbenennen nach Template + Datei-Umzug), Entity-CRUD, moveDocumentFile |
-| 2026-11-15 | 00356d2 | 7 | Metadata-Tests — 41 gesamt grün |
-| 2026-11-15 | a2dc8fb | 7 | UI: Metadaten-Editor (Bearbeiten/Fertig), Felder+Tags, Verwaltung in Sidebar (Baum, Farben, Kontextmenüs) |
-| 2026-11-15 | d73deea | 8 | Core: InboxWatcher (DispatchSource auf inbox/, entprellt, ohne _abgelehnt/) |
-| 2026-11-15 | 461e1bb | 8 | InboxWatcher-Tests — 45 gesamt grün |
-| 2026-11-15 | a5ad6d3 | 8 | UI: Watcher startet mit App, Drag & Drop PDFs, Menü „Ablage > Importieren…“ |
-| 2026-11-15 | 8fa2a2c | 9 | Core: Heuristik (Datum/Korrespondent/Titel/Kategorie) greift bei Ingest + nach OCR, Datei-Ablage nach documents/YYYY/MM |
-| 2026-11-15 | d965046 | 9 | Heuristik-Tests + Ingest/OCR-End-to-End — 52 gesamt grün |
-| 2026-11-15 | c396616 | 9 | UI: OCR-Service mit MetadataService verdrahtet |
-| 2026-11-15 | 002028d | 10 | Core: MCP-Server (JSON-RPC 2.0 stdio, 7 Tools) |
-| 2026-11-15 | e47b5e9 | 10 | MCP-Tests — 59 gesamt grün |
-| 2026-11-15 | 0d5584d | 10 | CLI: `pless mcp --vault <pfad>` startet MCP-Server über stdio |
-| 2026-11-15 | 7b1e6ca | 11 | Core: Vault mit eigenem Import-Ordner (inboxOverride) |
-| 2026-11-15 | 51100ae | 11 | Vault inboxOverride-Test — 60 gesamt grün |
-| 2026-11-15 | d105e7b | 11 | UI: Settings (Cmd+,) + Empty States |
-| 2026-11-15 | c7735c1 | 12 | Docs: README + Phase 10/11/12 abgehakt |
-| 2026-11-15 | e71816a | 12 | build: Scripts/make-app.sh → dist/Pless.app (Release, ad-hoc signiert) |
-| 2026-11-15 | 9b98335 | 11 | fix: Settings-Sheet per „Fertig“/Esc schließbar |
-| 2026-11-15 | 29b568e | 11 | fix: Settings „Schließen“-Button + Auto-Save-Hinweis; make-app.sh baut vor dem Kopieren |
-| 2026-11-15 | ef52acb | 8 | fix: Drag&Drop/Ingest asynchron (kein Main-Thread-Deadlock mehr) — E2E verifiziert |
-| 2026-11-15 | 4d642fb | 8 | fix: InboxWatcher + Rename-Events + Poll-Fallback (2 s); Sidebar zeigt Vault-/Posteingang-Pfad — 61 Tests grün |
-| 2026-11-15 | d9479b1 | 8 | UI: Posteingang-Badge + „Jetzt scannen“ + Import-Status im Toolbar; Drop auch direkt auf der Liste |
-| 2026-11-15 | 1cd104d | 8 | UI: Import auto-selektiert, Titelleiste = Vault-Pfad, Detail zeigt Ablagepfad; Watcher-Poll auch ohne kqueue — 61 Tests grün, E2E verifiziert |
-| 2026-11-15 | 88aa833 | 8 | UI: permanente Statusleiste (idle/busy/ok/error) — App sieht nie „kaputt“ aus |
-| 2026-11-15 | 62fa504 | 8 | fix: Drag&Drop auf ganzes Fenster + Drop-Hinweis, loadObject(ofClass:) statt deprecated loadItem, PDF-Dokumenttyp + application(open:) für Dock-Drops — 61 Tests grün |
-| 2026-11-15 | b408e9e | 6 | UI: Thumbnail-Gitter statt Zeilen (Tap selektiert, blauer Rahmen), PDF-Zoom (Anpassen/100 %/±) |
-| 2026-11-15 | a07a0a0 | 6 | UI: Gitter gruppiert nach Jahr/Monat mit Trenner-Überschriften; PDF-Vorschau default „volle skalierte Höhe“ + Modus-Picker (Anpassen/Höhe/100 %) — 61 Tests grün |
-| 2026-11-15 | bd1314d | 6 | UI: Doubletten-Hinweis beim Import — neuer Status `.warning` (orange) in der Statusleiste; Duplikat (SHA-256) wird nicht erneut importiert, Datei → `_abgelehnt/`, vorhandenes Dokument wird selektiert — 61 Tests grün |
-| 2026-11-15 | 7ce81d0 | 6 | Crash-sichere Imports: stageIntoInbox kopiert nur noch (Original verschwindet nie); RecoveryService beim Start (App + MCP) finalisiert abgebrochene Imports, korrigiert DB-Pfade per SHA-256, adoptiert Waisen-PDFs; Sidebar: Posteingang/Vault im Finder öffnen — 65 Tests grün |
-| 2026-11-15 | 3fa99be | 6 | fix: Thumbnails nicht mehr kopfüber (Flip im CGContext entfernt + Orientierungs-Regressionstest); feat: OCR abbrechen (Statusleiste) + manueller OCR-Start pro Dokument in der Vorschau — 68 Tests grün |
-| 2026-11-15 | 2c9837b | 6 | App-Icon: `Scripts/make-icon.swift` rendert pless.icns (alle Größen, CoreGraphics), make-app.sh packt es ins Bundle (`CFBundleIconFile=pless`) — 68 Tests grün |
-| 2026-11-15 | 8e687a4 | 6 | fix: bestehende (kopfüber) Thumbnails werden beim Start einmalig invalidiert (Format-Marker `.format-v2` in thumbnails/) und on demand neu gerendert — E2E verifiziert, 69 Tests grün |
-| 2026-11-15 | 5397a1c | 6 | fix: Import-Race (doppelt gemeldete Posteingang-Datei → duplicateSHA256 als harter Fehler) — process() serialisiert, Race → .duplicate, in-flight-Schutz in AppState, lesbare PlessError-Texte — 70 Tests grün |
-| 2026-11-15 | 5430f00 | 6 | feat: Bulk-Operationen — Mehrfachauswahl im Gitter (Klick / Cmd+Klick / Shift-Bereich / Cmd+A) + Leiste mit Kategorie-Picker und Tag-Feld für alle ausgewählten Dokumente — 71 Tests grün |
-| 2026-11-15 | 3f7c640 | 6 | feat: Kategorie/Tag per Drag & Drop aus der Sidebar aufs Gitter ziehen (Mehrfachauswahl wird als Zielmenge genommen, wenn die Karte selektiert ist) — 71 Tests grün |
-| 2026-11-15 | e83d0ad | 6 | fix: Kategorie-Aufklapp-Pfeil (>) nur noch bei echten Unterkategorien sichtbar — 71 Tests grün |
-| 2026-11-15 | 7140d38 | 6 | feat: Sidebar-Drag über der Liste highlightet alle selektierten Karten (gestrichelt); Drop weist Kategorie/Tag der ganzen Mehrfachauswahl zu — 71 Tests grün |
-| 2026-11-15 | e317154 | 6 | feat: Zähler-Badge hinter jeder Kategorie in der Sidebar (inkl. Unterkategorien, 0 ausgeblendet) — 72 Tests grün |
-| 2026-11-15 | e36f483 | 6 | feat: mehrere Datums-Vorschläge als Chips im Metadaten-Editor (extractDates); OCR-Text-Panel in der Vorschau (markierbar) — 73 Tests grün |
-| 2026-11-15 | 5cfa81e | 6 | feat: Bearbeiten/Fertig/Abbrechen in der Detail-Vorschau; Edit-Modus sperrt Selektionswechsel (Details bleiben stabil) — 73 Tests grün |
-| 2026-11-15 | 0b74d16 | 6 | feat: Datumsanzeige im eingestellten Format (Default dd.MM.yyyy) in Liste/Detail/Edit-Modus; Eingabe wird auf ISO normalisiert; Setting „Datumsformat“ — 76 Tests grün |
-| 2026-11-15 | 08f9d26 | 6 | feat: Bearbeiten unten in den Details; Datums-Vorschläge als Chips auch in der Detail-Summary — 76 Tests grün |
-| 2026-11-16 | d243a74 | 6 | feat: Heuristik erkennt Langdaten wie „8. Oktober 2026“ (inkl. Abkürzungen) → Kurzform yyyy-MM-dd in den Datums-Vorschlägen — 77 Tests grün |
-| 2026-11-16 | ab95f2e | 6 | feat: Heuristik erkennt US-Datum 12/08/2026 (MM/DD/YYYY) → 2026-12-08, auch 2-stelliges Jahr — 78 Tests grün |
-| 2026-11-16 | dee5b09 | 6 | feat: Kategorie-Klick filtert Übersicht; farbiges Kategorie-Tag auf den Karten; Auto-Farbe pro Kategorie (Palette) — 79 Tests grün |
-| 2026-11-16 | 29bd0d1 | 6 | feat: Kategorie-Auswahl wird in der Sidebar markiert; erneuter Klick → wieder alle Dokumente — 79 Tests grün |
-| 2026-11-16 | 2006584 | 6 | feat: aktive Karte im Gitter stärker markiert (Rahmen + Füllung + Häkchen), ausgewählte nur Rahmen — 79 Tests grün |
-| 2026-11-16 | 8c13ea4 | 6 | feat: Klick auf Dokument wählt dessen Kategorie in der Sidebar aus (markiert + filtert) — 79 Tests grün |
-| 2026-11-16 | 49f6ac7 | 6 | revert: Klick auf PDF markiert nur das PDF; Kategorie-Klick markiert/filtert die Kategorie — 79 Tests grün |
-| 2026-11-16 | e2338ee | 6 | fix: Kategorie-Markierung auch mit Zähler-Badge (explizites Highlight über sidebarSelection) — 79 Tests grün |
-| 2026-11-16 | fa39cd0 | 6 | fix: Kategorie-/Tag-Filter wählt nicht mehr automatisch das erste PDF aus — 79 Tests grün |
-| 2026-11-16 | a7a4829 | 6 | fix: Kategorie-Zähler als trailing Text statt .badge() — native Auswahl-Markierung wieder überall — 79 Tests grün |
-| 2026-11-16 | ffa8137 | 6 | fix: OCR-Text-Panel default zu; Notizfeld im Edit-Modus leer klein — 79 Tests grün |
-| 2026-11-16 | 2d670fc | 6 | feat: Korrespondenten — Vorschlag in Details mit Übernehmen-Chip, Zähler + Filter-Toggle in Sidebar, Neuanlegen — 81 Tests grün |
-| 2026-11-16 | 7ad355d | 6 | feat: Korrespondent per Drag & Drop aufs Gitter zuweisen; Doppelklick in Sidebar = umbenennen — 82 Tests grün |
-| 2026-11-16 | 9ac2c7a | 6 | fix: Korrespondent-Vorschlag ab Rechtsform abschneiden (Böttcher AG … → Böttcher AG); Behörden ganz — 82 Tests grün |
-| 2026-11-16 | f3396f1 | 13 | feat(core): Sync-Status persistiert — Migration V4 (sync_state: synced/not_synced/unknown, Backfill aus sync_map) — 91 Tests grün |
-| 2026-11-16 | 0531639 | 13 | feat(ui): Wolken-Badge pro PDF (cloud.fill/cloud/cloud.questionmark) + Sync-Stand in den Details — 91 Tests grün |
-| 2026-11-16 | a0ef886 | 13 | fix(core): Metadaten-Re-Push per PATCH bei meta_sha256-Abweichung (Migration V5) — 92 Tests grün |
-| 2026-11-16 | 489e1db | 13 | feat(ui): Sync-Status zählt „aktualisiert“ (PATCH) — 92 Tests grün |
-| 2026-11-16 | 3789a99 | 12/13 | docs: README um Sync nach paperless-ngx ergänzt (Push, Mapping, Idempotenz, Wolken-Badge) — 92 Tests grün |
-| 2026-11-16 | 9909056 | 13 | fix(core): PATCH sendet title/created nur bei Wert (paperless 400 bei null) — Resync nach Metadaten-Edit wieder ok — 92 Tests grün |
-| 2026-11-16 | 6afd278 | 13 | fix(ui): Wolken-Badge größer/deutlicher (13pt, volle Scheibe) — 92 Tests grün |
-| 2026-11-16 | d9bedd4 | 13 | fix(ui): unknown-Wolke als cloud+„?“ komponiert (cloud.questionmark fehlt im SF-Katalog → leer gerendert); Sync/Resync über echtes HTTP gegen Fake-paperless verifiziert (Upload mit document_type, PATCH nach Kategorie-Edit) — 92 Tests grün |
-| 2026-11-16 | 05ccc2b | 13 | fix(core): find-or-create-Fallback results.first lieferte bei ignoriertem name-Filter immer denselben Document Type („Arbeitsvertrag“) — jetzt nur exakter case-insensitiver Treffer — 92 Tests grün |
-| 2026-11-16 | 164325a | 13 | feat(core): forceMetadata-Sync (PATCH auch bei unverändertem meta-Hash) — 92 Tests grün |
-| 2026-11-16 | 389392f | 13 | feat(ui): Dropdown am Sync-Toolbar-Button + Detail-Menü mit „Metadaten erzwingen“ — 92 Tests grün |
-| 2026-11-16 | b75f43a | 13 | feat(core): Pull-Import paperless→pless (Document Types→Kategorien, Correspondents→Korrespondenten, paginiert, idempotent) — 94 Tests grün |
-| 2026-11-16 | 13af292 | 13 | feat(ui): Import-Eintrag im Sync-Dropdown (Toolbar) — 94 Tests grün |
+| 2026-11-15 | 40fbd40 | 0 | Doku committed: AGENTS.md, Plan, README, .gitignore |
+| 2026-11-15 | 2f7a88f | 0 | SwiftPM-Skeleton + MiniTest-Runner (CLT: kein XCTest/Testing-Makros) |
+| 2026-11-15 | dbff041 | 1 | Core: Models, Vault, SQLite-Schema V1 + CRUD |
+| 2026-11-15 | 02807f6 | 1 | Tests: Vault + Database (10 grün) |
+| 2026-11-15 | fcfb090 | 2 | Naming Engine: Template-Renderer + Sanitizer + Kollision |
+| 2026-11-15 | 21b3a61 | 2 | Naming-Tests (15 gesamt grün) |
+| 2026-11-15 | 735570e | 3 | Ingest: SHA-256-Dedup, PDFKit-Text, Duplikat/Reject |
+| 2026-11-15 | ec530a9 | 3 | Ingest-Tests mit Fixture-PDFs (20 gesamt grün) |
+| 2026-11-15 | 543c0b7 | 4 | OCR: TextRecognizer-Protocol, VisionTextRecognizer, OCRService-Queue |
+| 2026-11-15 | 731bc3d | 4 | OCR-Tests (Fake, sync/async) — 24 gesamt grün |
+| 2026-11-15 | 62482ec | 5 | FTS5-Index (Migration V2 + Trigger) + Such-API mit Filtern |
+| 2026-11-15 | da858a2 | 5 | Search-Tests — 29 gesamt grün |
+| 2026-11-15 | b877ab2 | 6 | Core: PDF-Rendering & Thumbnails, tags(for:), onlyNeedsReview-Filter |
+| 2026-11-15 | a8163ab | 6 | Thumbnail-Tests + PDFFixture — 32 gesamt grün |
+| 2026-11-15 | e56e831 | 6 | App-Shell (SwiftUI): @main, 3 Spalten, Liste+Suche, PDF-Viewer, Thumbnails |
+| 2026-11-15 | e994596 | 7 | Core: MetadataService (Speichern + Umbenennen nach Template + Datei-Umzug), Entity-CRUD, moveDocumentFile |
+| 2026-11-15 | 3e84c48 | 7 | Metadata-Tests — 41 gesamt grün |
+| 2026-11-15 | c56d0cf | 7 | UI: Metadaten-Editor (Bearbeiten/Fertig), Felder+Tags, Verwaltung in Sidebar (Baum, Farben, Kontextmenüs) |
+| 2026-11-15 | e85b1cd | 8 | Core: InboxWatcher (DispatchSource auf inbox/, entprellt, ohne _abgelehnt/) |
+| 2026-11-15 | b7ee782 | 8 | InboxWatcher-Tests — 45 gesamt grün |
+| 2026-11-15 | 518fd3d | 8 | UI: Watcher startet mit App, Drag & Drop PDFs, Menü „Ablage > Importieren…“ |
+| 2026-11-15 | bb6c5cc | 9 | Core: Heuristik (Datum/Korrespondent/Titel/Kategorie) greift bei Ingest + nach OCR, Datei-Ablage nach documents/YYYY/MM |
+| 2026-11-15 | 045031e | 9 | Heuristik-Tests + Ingest/OCR-End-to-End — 52 gesamt grün |
+| 2026-11-15 | 78cfe5b | 9 | UI: OCR-Service mit MetadataService verdrahtet |
+| 2026-11-15 | c886cdb | 10 | Core: MCP-Server (JSON-RPC 2.0 stdio, 7 Tools) |
+| 2026-11-15 | efa3cfd | 10 | MCP-Tests — 59 gesamt grün |
+| 2026-11-15 | 8a12649 | 10 | CLI: `pless mcp --vault <pfad>` startet MCP-Server über stdio |
+| 2026-11-15 | 728e708 | 11 | Core: Vault mit eigenem Import-Ordner (inboxOverride) |
+| 2026-11-15 | ffe9f27 | 11 | Vault inboxOverride-Test — 60 gesamt grün |
+| 2026-11-15 | d8e309d | 11 | UI: Settings (Cmd+,) + Empty States |
+| 2026-11-15 | 345c415 | 12 | Docs: README + Phase 10/11/12 abgehakt |
+| 2026-11-15 | f330f18 | 12 | build: Scripts/make-app.sh → dist/Pless.app (Release, ad-hoc signiert) |
+| 2026-11-15 | 772b94d | 11 | fix: Settings-Sheet per „Fertig“/Esc schließbar |
+| 2026-11-15 | c6655dd | 11 | fix: Settings „Schließen“-Button + Auto-Save-Hinweis; make-app.sh baut vor dem Kopieren |
+| 2026-11-15 | 1f78620 | 8 | fix: Drag&Drop/Ingest asynchron (kein Main-Thread-Deadlock mehr) — E2E verifiziert |
+| 2026-11-15 | 1144b8e | 8 | fix: InboxWatcher + Rename-Events + Poll-Fallback (2 s); Sidebar zeigt Vault-/Posteingang-Pfad — 61 Tests grün |
+| 2026-11-15 | 8e0388c | 8 | UI: Posteingang-Badge + „Jetzt scannen“ + Import-Status im Toolbar; Drop auch direkt auf der Liste |
+| 2026-11-15 | 1d1ef54 | 8 | UI: Import auto-selektiert, Titelleiste = Vault-Pfad, Detail zeigt Ablagepfad; Watcher-Poll auch ohne kqueue — 61 Tests grün, E2E verifiziert |
+| 2026-11-15 | 0d575c3 | 8 | UI: permanente Statusleiste (idle/busy/ok/error) — App sieht nie „kaputt“ aus |
+| 2026-11-15 | 8768a84 | 8 | fix: Drag&Drop auf ganzes Fenster + Drop-Hinweis, loadObject(ofClass:) statt deprecated loadItem, PDF-Dokumenttyp + application(open:) für Dock-Drops — 61 Tests grün |
+| 2026-11-15 | 7287db7 | 6 | UI: Thumbnail-Gitter statt Zeilen (Tap selektiert, blauer Rahmen), PDF-Zoom (Anpassen/100 %/±) |
+| 2026-11-15 | 6f980ec | 6 | UI: Gitter gruppiert nach Jahr/Monat mit Trenner-Überschriften; PDF-Vorschau default „volle skalierte Höhe“ + Modus-Picker (Anpassen/Höhe/100 %) — 61 Tests grün |
+| 2026-11-15 | 97c2b93 | 6 | UI: Doubletten-Hinweis beim Import — neuer Status `.warning` (orange) in der Statusleiste; Duplikat (SHA-256) wird nicht erneut importiert, Datei → `_abgelehnt/`, vorhandenes Dokument wird selektiert — 61 Tests grün |
+| 2026-11-15 | c8dff98 | 6 | Crash-sichere Imports: stageIntoInbox kopiert nur noch (Original verschwindet nie); RecoveryService beim Start (App + MCP) finalisiert abgebrochene Imports, korrigiert DB-Pfade per SHA-256, adoptiert Waisen-PDFs; Sidebar: Posteingang/Vault im Finder öffnen — 65 Tests grün |
+| 2026-11-15 | d43792d | 6 | fix: Thumbnails nicht mehr kopfüber (Flip im CGContext entfernt + Orientierungs-Regressionstest); feat: OCR abbrechen (Statusleiste) + manueller OCR-Start pro Dokument in der Vorschau — 68 Tests grün |
+| 2026-11-15 | 95c7ae5 | 6 | App-Icon: `Scripts/make-icon.swift` rendert pless.icns (alle Größen, CoreGraphics), make-app.sh packt es ins Bundle (`CFBundleIconFile=pless`) — 68 Tests grün |
+| 2026-11-15 | 7b76c6e | 6 | fix: bestehende (kopfüber) Thumbnails werden beim Start einmalig invalidiert (Format-Marker `.format-v2` in thumbnails/) und on demand neu gerendert — E2E verifiziert, 69 Tests grün |
+| 2026-11-15 | 3eee291 | 6 | fix: Import-Race (doppelt gemeldete Posteingang-Datei → duplicateSHA256 als harter Fehler) — process() serialisiert, Race → .duplicate, in-flight-Schutz in AppState, lesbare PlessError-Texte — 70 Tests grün |
+| 2026-11-15 | a2d76fa | 6 | feat: Bulk-Operationen — Mehrfachauswahl im Gitter (Klick / Cmd+Klick / Shift-Bereich / Cmd+A) + Leiste mit Kategorie-Picker und Tag-Feld für alle ausgewählten Dokumente — 71 Tests grün |
+| 2026-11-15 | aa92444 | 6 | feat: Kategorie/Tag per Drag & Drop aus der Sidebar aufs Gitter ziehen (Mehrfachauswahl wird als Zielmenge genommen, wenn die Karte selektiert ist) — 71 Tests grün |
+| 2026-11-15 | 0cdf5c7 | 6 | fix: Kategorie-Aufklapp-Pfeil (>) nur noch bei echten Unterkategorien sichtbar — 71 Tests grün |
+| 2026-11-15 | ae7514c | 6 | feat: Sidebar-Drag über der Liste highlightet alle selektierten Karten (gestrichelt); Drop weist Kategorie/Tag der ganzen Mehrfachauswahl zu — 71 Tests grün |
+| 2026-11-15 | 3bd1d60 | 6 | feat: Zähler-Badge hinter jeder Kategorie in der Sidebar (inkl. Unterkategorien, 0 ausgeblendet) — 72 Tests grün |
+| 2026-11-15 | b616e6a | 6 | feat: mehrere Datums-Vorschläge als Chips im Metadaten-Editor (extractDates); OCR-Text-Panel in der Vorschau (markierbar) — 73 Tests grün |
+| 2026-11-15 | fa27ebd | 6 | feat: Bearbeiten/Fertig/Abbrechen in der Detail-Vorschau; Edit-Modus sperrt Selektionswechsel (Details bleiben stabil) — 73 Tests grün |
+| 2026-11-15 | b4b192f | 6 | feat: Datumsanzeige im eingestellten Format (Default dd.MM.yyyy) in Liste/Detail/Edit-Modus; Eingabe wird auf ISO normalisiert; Setting „Datumsformat“ — 76 Tests grün |
+| 2026-11-15 | f5f5ddc | 6 | feat: Bearbeiten unten in den Details; Datums-Vorschläge als Chips auch in der Detail-Summary — 76 Tests grün |
+| 2026-11-16 | 646f6f6 | 6 | feat: Heuristik erkennt Langdaten wie „8. Oktober 2026“ (inkl. Abkürzungen) → Kurzform yyyy-MM-dd in den Datums-Vorschlägen — 77 Tests grün |
+| 2026-11-16 | 59baef5 | 6 | feat: Heuristik erkennt US-Datum 12/08/2026 (MM/DD/YYYY) → 2026-12-08, auch 2-stelliges Jahr — 78 Tests grün |
+| 2026-11-16 | e6391aa | 6 | feat: Kategorie-Klick filtert Übersicht; farbiges Kategorie-Tag auf den Karten; Auto-Farbe pro Kategorie (Palette) — 79 Tests grün |
+| 2026-11-16 | 76fb003 | 6 | feat: Kategorie-Auswahl wird in der Sidebar markiert; erneuter Klick → wieder alle Dokumente — 79 Tests grün |
+| 2026-11-16 | c84256d | 6 | feat: aktive Karte im Gitter stärker markiert (Rahmen + Füllung + Häkchen), ausgewählte nur Rahmen — 79 Tests grün |
+| 2026-11-16 | cb5e0d7 | 6 | feat: Klick auf Dokument wählt dessen Kategorie in der Sidebar aus (markiert + filtert) — 79 Tests grün |
+| 2026-11-16 | d862d9d | 6 | revert: Klick auf PDF markiert nur das PDF; Kategorie-Klick markiert/filtert die Kategorie — 79 Tests grün |
+| 2026-11-16 | 7f5504c | 6 | fix: Kategorie-Markierung auch mit Zähler-Badge (explizites Highlight über sidebarSelection) — 79 Tests grün |
+| 2026-11-16 | 52f4953 | 6 | fix: Kategorie-/Tag-Filter wählt nicht mehr automatisch das erste PDF aus — 79 Tests grün |
+| 2026-11-16 | c2ac798 | 6 | fix: Kategorie-Zähler als trailing Text statt .badge() — native Auswahl-Markierung wieder überall — 79 Tests grün |
+| 2026-11-16 | 41f4f73 | 6 | fix: OCR-Text-Panel default zu; Notizfeld im Edit-Modus leer klein — 79 Tests grün |
+| 2026-11-16 | 656f4e6 | 6 | feat: Korrespondenten — Vorschlag in Details mit Übernehmen-Chip, Zähler + Filter-Toggle in Sidebar, Neuanlegen — 81 Tests grün |
+| 2026-11-16 | e8e2be8 | 6 | feat: Korrespondent per Drag & Drop aufs Gitter zuweisen; Doppelklick in Sidebar = umbenennen — 82 Tests grün |
+| 2026-11-16 | 2cb0013 | 6 | fix: Korrespondent-Vorschlag ab Rechtsform abschneiden (Böttcher AG … → Böttcher AG); Behörden ganz — 82 Tests grün |
+| 2026-11-16 | 6900edf | 13 | feat(core): Sync-Status persistiert — Migration V4 (sync_state: synced/not_synced/unknown, Backfill aus sync_map) — 91 Tests grün |
+| 2026-11-16 | d7359d0 | 13 | feat(ui): Wolken-Badge pro PDF (cloud.fill/cloud/cloud.questionmark) + Sync-Stand in den Details — 91 Tests grün |
+| 2026-11-16 | 212dba8 | 13 | fix(core): Metadaten-Re-Push per PATCH bei meta_sha256-Abweichung (Migration V5) — 92 Tests grün |
+| 2026-11-16 | 96b3a5e | 13 | feat(ui): Sync-Status zählt „aktualisiert“ (PATCH) — 92 Tests grün |
+| 2026-11-16 | 329db30 | 12/13 | docs: README um Sync nach paperless-ngx ergänzt (Push, Mapping, Idempotenz, Wolken-Badge) — 92 Tests grün |
+| 2026-11-16 | e60b396 | 13 | fix(core): PATCH sendet title/created nur bei Wert (paperless 400 bei null) — Resync nach Metadaten-Edit wieder ok — 92 Tests grün |
+| 2026-11-16 | 758bb68 | 13 | fix(ui): Wolken-Badge größer/deutlicher (13pt, volle Scheibe) — 92 Tests grün |
+| 2026-11-16 | 163e1b2 | 13 | fix(ui): unknown-Wolke als cloud+„?“ komponiert (cloud.questionmark fehlt im SF-Katalog → leer gerendert); Sync/Resync über echtes HTTP gegen Fake-paperless verifiziert (Upload mit document_type, PATCH nach Kategorie-Edit) — 92 Tests grün |
+| 2026-11-16 | de60b92 | 13 | fix(core): find-or-create-Fallback results.first lieferte bei ignoriertem name-Filter immer denselben Document Type („Arbeitsvertrag“) — jetzt nur exakter case-insensitiver Treffer — 92 Tests grün |
+| 2026-11-16 | 10c335f | 13 | feat(core): forceMetadata-Sync (PATCH auch bei unverändertem meta-Hash) — 92 Tests grün |
+| 2026-11-16 | a4002d6 | 13 | feat(ui): Dropdown am Sync-Toolbar-Button + Detail-Menü mit „Metadaten erzwingen“ — 92 Tests grün |
+| 2026-11-16 | f0d3fcd | 13 | feat(core): Pull-Import paperless→pless (Document Types→Kategorien, Correspondents→Korrespondenten, paginiert, idempotent) — 94 Tests grün |
+| 2026-11-16 | e2eb12d | 13 | feat(ui): Import-Eintrag im Sync-Dropdown (Toolbar) — 94 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
