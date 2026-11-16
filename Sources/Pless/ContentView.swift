@@ -261,8 +261,18 @@ struct SyncCloudBadge: View {
     static func symbol(_ state: SyncState) -> String {
         switch state {
         case .synced: return "cloud.fill"
-        case .notSynced: return "cloud"
-        case .unknown: return "cloud.questionmark"
+        case .notSynced, .unknown: return "cloud"   // unknown bekommt zusätzlich ein „?“ (s. icon)
+        }
+    }
+
+    /// Symbol-View: `cloud.questionmark` existiert nicht in jedem SF-Symbols-Katalog →
+    /// unknown wird als Wolke mit überlagertem „?“ gezeichnet (rendert garantiert).
+    static func icon(_ state: SyncState) -> some View {
+        ZStack {
+            Image(systemName: symbol(state))
+            if state == .unknown {
+                Text("?").font(.system(size: 8, weight: .bold))
+            }
         }
     }
 
@@ -283,7 +293,7 @@ struct SyncCloudBadge: View {
     }
 
     var body: some View {
-        Image(systemName: Self.symbol(state))
+        Self.icon(state)
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(Self.color(state))
             .padding(5)

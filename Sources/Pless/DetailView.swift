@@ -311,7 +311,8 @@ struct MetadataSummary: View {
         GridRow {
             Text(label).foregroundStyle(.secondary)
             HStack(spacing: 4) {
-                Image(systemName: SyncCloudBadge.symbol(syncState))
+                SyncCloudBadge.icon(syncState)
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(SyncCloudBadge.color(syncState))
                 Text(value)
             }
