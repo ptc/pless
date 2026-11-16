@@ -274,18 +274,20 @@ struct MetadataSummary: View {
             // Datums-Vorschläge aus dem Dokumenttext (auch ohne Edit-Modus sichtbar);
             // Klick übernimmt das Datum direkt im Edit-Modus
             if !dateSuggestions.isEmpty {
-                HStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: 6) {
                     Label("Datum-Vorschläge:", systemImage: "calendar.badge.plus")
                         .font(.caption).foregroundStyle(.secondary)
-                    ForEach(dateSuggestions, id: \.self) { d in
-                        Button(state.displayDate(d)) {
-                            state.beginEditing()
-                            state.draft?.date = d
+                    FlowLayout(spacing: 6) {
+                        ForEach(dateSuggestions, id: \.self) { d in
+                            Button(state.displayDate(d)) {
+                                state.beginEditing()
+                                state.draft?.date = d
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                            .tint(d == doc.documentDate ? .secondary : .accentColor)
+                            .help("Dieses Datum übernehmen (öffnet den Edit-Modus)")
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.mini)
-                        .tint(d == doc.documentDate ? .secondary : .accentColor)
-                        .help("Dieses Datum übernehmen (öffnet den Edit-Modus)")
                     }
                 }
             }
