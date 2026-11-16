@@ -70,6 +70,18 @@ public final class Database {
         if version < 2 { try applyV2() }
         if version < 3 { try applyV3() }
         if version < 4 { try applyV4() }
+        if version < 5 { try applyV5() }
+    }
+
+    /// V5: `sync_map.meta_sha256` — Hash der Metadaten (Titel, Datum, Korrespondent, Kategorie,
+    /// Tags, Notizen) beim letzten Push. NULL (Bestand vor V5) = unbekannt → einmalig per PATCH abgleichen.
+    func applyV5() throws {
+        try execute("""
+        BEGIN;
+        ALTER TABLE sync_map ADD COLUMN meta_sha256 TEXT;
+        PRAGMA user_version = 5;
+        COMMIT;
+        """)
     }
 
     /// V4: persistierter Sync-Stand pro Dokument (`sync_state`: synced / not_synced / unknown).

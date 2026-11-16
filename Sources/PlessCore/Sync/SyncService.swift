@@ -15,11 +15,13 @@ public struct SyncFailure: Equatable, Sendable {
 /// Ergebnis eines Sync-Durchlaufs.
 public struct SyncOutcome: Equatable, Sendable {
     public var uploaded: Int = 0
+    public var updated: Int = 0       // Metadaten per PATCH aktualisiert (Datei unverändert)
     public var skipped: Int = 0
     public var failed: [SyncFailure] = []
 
-    public init(uploaded: Int = 0, skipped: Int = 0, failed: [SyncFailure] = []) {
+    public init(uploaded: Int = 0, updated: Int = 0, skipped: Int = 0, failed: [SyncFailure] = []) {
         self.uploaded = uploaded
+        self.updated = updated
         self.skipped = skipped
         self.failed = failed
     }
@@ -28,7 +30,8 @@ public struct SyncOutcome: Equatable, Sendable {
 /// Ergebnis für ein einzelnes Dokument.
 public enum SyncStep: Equatable, Sendable {
     case uploaded(paperlessId: Int)
-    case skipped(paperlessId: Int)   // bereits gesynct und auf dem Server vorhanden
+    case updated(paperlessId: Int)    // Metadaten per PATCH nachgezogen (Datei war schon da)
+    case skipped(paperlessId: Int)    // bereits gesynct und auf dem Server vorhanden
 }
 
 /// Einweg-Push (Upload) in eine paperless-ngx-Instanz. Idempotent über `sync_map` + Checksum.
@@ -45,25 +48,71 @@ public final class SyncService {
         self.client = client
     }
 
-    /// Dokumente, die noch nie oder seit dem letzten Sync verändert wurden.
+    /// SHA-256 über die kanonischen Metadaten eines Dokuments (Titel, Datum, Korrespondent,
+    /// Kategorie, Notizen, Tag-IDs) — ändert sich bei jeder Metadaten-Änderung, nicht bei Datei-Änderung.
+    public static func metaHash(doc: Document, tagIds: [Int64]) -> String {
+        let canonical = [
+            doc.title ?? "",
+            doc.documentDate ?? "",
+            doc.correspondentId.map(String.init) ?? "",
+            doc.categoryId.map(String.init) ?? "",
+            doc.notes ?? "",
+            tagIds.sorted().map(String.init).joined(separator: ",")
+        ].joined(separator: "\u{1F}")
+        return FileHash.sha256(of: Data(canonical.utf8))
+    }
+
+    /// Hash der aktuellen Metadaten eines Dokuments (Tag-IDs aus der DB).
+    public func metaHash(of doc: Document) throws -> String {
+        guard let id = doc.id else { return Self.metaHash(doc: doc, tagIds: []) }
+        return Self.metaHash(doc: doc, tagIds: (try db.tags(for: id)).compactMap { $0.id })
+    }
+
+    /// Dokumente, die ein Push-Anlauf anfassen muss: noch nie gesynct, Datei geändert (sha256)
+    /// ODER Metadaten geändert (meta_sha256 weicht ab / fehlt — z. B. Kategorie nachträglich gesetzt).
     public func pendingDocuments() throws -> [Document] {
-        try db.documentsPendingSync()
+        var out: [Document] = []
+        for doc in try db.allDocuments() {
+            guard let id = doc.id else { continue }
+            let entry = try db.syncEntry(for: id)
+            let meta = try metaHash(of: doc)
+            if entry == nil || entry!.sha256 != doc.sha256 || entry!.metaSha256 != meta {
+                out.append(doc)
+            }
+        }
+        return out
     }
 
     /// Synchronisiert ein einzelnes Dokument. Wirft bei Netzwerk-/Serverfehlern.
     public func sync(documentId: Int64) async throws -> SyncStep {
-        guard let doc = try db.document(byId: documentId) else {
+        guard let doc = try db.document(byId: documentId), let id = doc.id else {
             throw PlessError.notFound("Dokument #\(documentId)")
         }
-        // Bereits gesynct und Datei unverändert? Dann nur prüfen, ob es auf dem Server noch existiert.
-        if let entry = try db.syncEntry(for: doc.id ?? 0), entry.sha256 == doc.sha256 {
-            if let remoteId = try await client.checksumExists(doc.sha256) {
-                return .skipped(paperlessId: remoteId)
+        let meta = try metaHash(of: doc)
+        // Bereits gesynct und Datei unverändert?
+        if let entry = try db.syncEntry(for: id), entry.sha256 == doc.sha256 {
+            if entry.metaSha256 == meta {
+                // Datei + Metadaten unverändert → nur prüfen, ob es auf dem Server noch existiert
+                if let remoteId = try await client.checksumExists(doc.sha256) {
+                    return .skipped(paperlessId: remoteId)
+                }
+                // auf dem Server nicht mehr vorhanden (gelöscht) → neu hochladen
+            } else {
+                // Metadaten geändert (z. B. Kategorie/Korrespondent/Tags nachträglich gesetzt)
+                // → bestehendes paperless-Dokument per PATCH aktualisieren
+                let (correspondentId, documentTypeId, tagIds) = try await resolveMapping(doc)
+                let pid = Int(entry.paperlessId)
+                let title = doc.title?.isEmpty == false ? doc.title! : (doc.filename as NSString).deletingPathExtension
+                try await client.updateDocument(paperlessId: pid, title: title,
+                                                created: doc.documentDate, correspondentId: correspondentId,
+                                                documentTypeId: documentTypeId, tagIds: tagIds)
+                try db.setSyncEntry(documentId: id, paperlessId: entry.paperlessId,
+                                    sha256: doc.sha256, metaSha256: meta)
+                return .updated(paperlessId: pid)
             }
-            // auf dem Server nicht mehr vorhanden (gelöscht) → neu hochladen
         }
         let paperlessId = try await upload(doc)
-        try db.setSyncEntry(documentId: doc.id ?? 0, paperlessId: Int64(paperlessId), sha256: doc.sha256)
+        try db.setSyncEntry(documentId: id, paperlessId: Int64(paperlessId), sha256: doc.sha256, metaSha256: meta)
         return .uploaded(paperlessId: paperlessId)
     }
 
@@ -76,6 +125,7 @@ public final class SyncService {
                 guard let id = doc.id else { continue }
                 switch try await sync(documentId: id) {
                 case .uploaded: outcome.uploaded += 1
+                case .updated: outcome.updated += 1
                 case .skipped: outcome.skipped += 1
                 }
             } catch {
@@ -87,17 +137,11 @@ public final class SyncService {
         return outcome
     }
 
-    // MARK: - Upload eines Dokuments
+    // MARK: - Mapping & Upload
 
-    private func upload(_ doc: Document) async throws -> Int {
+    /// Mapping: Korrespondent / Kategorie (→ Document Type) / Tags per Name → paperless-ID (find-or-create).
+    private func resolveMapping(_ doc: Document) async throws -> (correspondentId: Int?, documentTypeId: Int?, tagIds: [Int]) {
         guard let id = doc.id else { throw PlessError.invalidDocument("Dokument ohne ID") }
-        let fileURL = vault.root.appendingPathComponent(doc.relativePath)
-        guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            throw PlessError.io("Datei fehlt im Vault: \(doc.relativePath)")
-        }
-        let fileData = try Data(contentsOf: fileURL)
-
-        // Mapping: Korrespondent / Kategorie (→ Document Type) / Tags per Name → paperless-ID
         var correspondentId: Int?
         if let cid = doc.correspondentId, let corr = try db.correspondent(id: cid) {
             correspondentId = try await cached("corr:\(corr.name.lowercased())") {
@@ -117,6 +161,19 @@ public final class SyncService {
             }
             tagIds.append(tid)
         }
+        return (correspondentId, documentTypeId, tagIds)
+    }
+
+    /// Upload eines Dokuments (Datei + Metadaten per post_document).
+    private func upload(_ doc: Document) async throws -> Int {
+        guard doc.id != nil else { throw PlessError.invalidDocument("Dokument ohne ID") }
+        let fileURL = vault.root.appendingPathComponent(doc.relativePath)
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            throw PlessError.io("Datei fehlt im Vault: \(doc.relativePath)")
+        }
+        let fileData = try Data(contentsOf: fileURL)
+
+        let (correspondentId, documentTypeId, tagIds) = try await resolveMapping(doc)
 
         let title = doc.title?.isEmpty == false ? doc.title! : (doc.filename as NSString).deletingPathExtension
         let created = doc.documentDate ?? String(doc.addedAt.prefix(10))

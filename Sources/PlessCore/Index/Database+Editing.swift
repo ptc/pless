@@ -26,6 +26,7 @@ extension Database {
     }
 
     /// Setzt alle editierbaren Metadaten-Felder (nil = NULL). FTS-Trigger hält den Index synchron.
+    /// Metadaten-Änderung macht den Sync-Stand „not_synced" (Remote ist veraltet → nächster Sync per PATCH).
     public func updateMetadata(documentId: Int64, title: String?, documentDate: String?,
                                correspondentId: Int64?, categoryId: Int64?, notes: String?) throws {
         try exec("UPDATE documents SET title = ?, document_date = ?, correspondent_id = ?, category_id = ?, notes = ? WHERE id = ?") {
@@ -36,6 +37,7 @@ extension Database {
             bind($0, 5, notes)
             bind($0, 6, documentId)
         }
+        try setSyncState(.notSynced, for: documentId)
     }
 
     /// Aktualisiert filename + relative_path nach einem Datei-Umzug im Vault.
@@ -169,6 +171,7 @@ extension Database {
             bind($0, 1, documentId)
             bind($0, 2, tagId)
         }
+        try setSyncState(.notSynced, for: documentId)
     }
 
     public func removeTagFromDocument(documentId: Int64, tagId: Int64) throws {
@@ -176,5 +179,6 @@ extension Database {
             bind($0, 1, documentId)
             bind($0, 2, tagId)
         }
+        try setSyncState(.notSynced, for: documentId)
     }
 }

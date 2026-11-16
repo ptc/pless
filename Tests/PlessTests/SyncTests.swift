@@ -44,15 +44,16 @@ final class FakeTransport: HTTPTransport {
 
 enum SyncTests {
     static func register() {
-        MiniTest.test("DB: Migration V3 legt sync_map an (user_version=4 nach V4)") { try migrationV3() }
+        MiniTest.test("DB: Migration V3 legt sync_map an (user_version=5 nach V4+V5)") { try migrationV3() }
         MiniTest.test("DB: Migration V4: sync_state-Spalte + Backfill aus sync_map (synced/unknown)") { try migrationV4Backfill() }
         MiniTest.test("DB: sync_state-Transitionen (setSyncEntry→synced, setSyncState, markUnknownAsNotSynced)") { try syncStateTransitions() }
-        MiniTest.test("DB: sync_map set/get/delete + documentsPendingSync (sha-Vergleich)") { try syncMapCrud() }
+        MiniTest.test("DB: sync_map set/get/delete + meta_sha256-Roundtrip") { try syncMapCrud() }
+        MiniTest.test("Client: updateDocument baut PATCH-JSON (null bei leeren Referenzen, tags als Liste)") { try updateDocumentPatch() }
         MiniTest.test("Client: find-or-create legt an bzw. findet vorhanden (case-insensitiv), Token-Header") { try findOrCreate() }
         MiniTest.test("Client: checksumExists liefert ID bzw. nil") { try checksumLookup() }
         MiniTest.test("Client: postDocument baut multipart mit allen Feldern (Datei, Titel, created, IDs, Tags)") { try postDocumentMultipart() }
         MiniTest.test("Client: ping bei 200 true, bei 401 Fehler") { try pingTest() }
-        MiniTest.test("SyncService: Push legt sync_map, zweiter Lauf skipped, sha-Wechsel re-upload, Fehler landen in failed") { try syncServiceEndToEnd() }
+        MiniTest.test("SyncService: Push legt sync_map, zweiter Lauf skipped, sha-Wechsel re-upload, Metadaten-Änderung → PATCH, Fehler landen in failed") { try syncServiceEndToEnd() }
     }
 
     /// Führt einen async-Block synchron aus (MiniTest-Bodies sind nicht async) — wie in OCRTests.
@@ -86,14 +87,17 @@ enum SyncTests {
     private static func migrationV3() throws {
         let (db, root) = try makeDB()
         defer { try? FileManager.default.removeItem(at: root) }
-        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 4)
+        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 5)
         try MiniTest.expectEqual(
             try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='sync_map';"), 1)
+        try MiniTest.expectEqual(
+            try db.scalarInt("SELECT count(*) FROM pragma_table_info('sync_map') WHERE name='meta_sha256';"), 1)
     }
 
-    /// Baut eine DB auf Stand V3 zurück (Spalte weg, user_version=3), damit applyV4 erneut läuft.
+    /// Baut eine DB auf Stand V3 zurück (Spalten weg, user_version=3), damit applyV4/V5 erneut laufen.
     private static func rewindToV3(_ db: Database) throws {
         try db.execute("ALTER TABLE documents DROP COLUMN sync_state")
+        try db.execute("ALTER TABLE sync_map DROP COLUMN meta_sha256")
         try db.execute("PRAGMA user_version = 3")
     }
 
@@ -105,9 +109,9 @@ enum SyncTests {
         // sync_map-Eintrag per Roh-SQL, damit sync_state noch nicht gesetzt ist
         try db.execute("INSERT INTO sync_map(document_id, paperless_id, sha256) VALUES(\(synced), 42, 'sha-synced')")
         try rewindToV3(db)
-        // Reopen: Migration V4 läuft erneut (ADD COLUMN + Backfill)
+        // Reopen: Migration V4 + V5 laufen erneut (ADD COLUMN sync_state + Backfill, meta_sha256)
         let db2 = try Database(url: Vault(root: root).databaseURL)
-        try MiniTest.expectEqual(try db2.scalarInt("PRAGMA user_version;"), 4)
+        try MiniTest.expectEqual(try db2.scalarInt("PRAGMA user_version;"), 5)
         try MiniTest.expectEqual(try db2.document(byId: synced)?.syncState, .synced)
         try MiniTest.expectEqual(try db2.document(byId: other)?.syncState, .unknown)
         // frisches Dokument ohne sync_map-Eintrag: Default 'unknown'
@@ -123,8 +127,9 @@ enum SyncTests {
         let c = try db.insert(sampleDoc(sha: "sc"))
         try MiniTest.expectEqual(try db.document(byId: a)?.syncState, .unknown)
         // erfolgreicher Push → synced (setSyncEntry setzt beides)
-        try db.setSyncEntry(documentId: a, paperlessId: 7, sha256: "sa")
+        try db.setSyncEntry(documentId: a, paperlessId: 7, sha256: "sa", metaSha256: "meta-a")
         try MiniTest.expectEqual(try db.document(byId: a)?.syncState, .synced)
+        try MiniTest.expectEqual(try db.syncEntry(for: a)?.metaSha256, "meta-a")
         // expliziter State-Wechsel (z. B. Push fehlgeschlagen)
         try db.setSyncState(.notSynced, for: b)
         try MiniTest.expectEqual(try db.document(byId: b)?.syncState, .notSynced)
@@ -144,23 +149,51 @@ enum SyncTests {
         defer { try? FileManager.default.removeItem(at: root) }
         let id = try db.insert(sampleDoc(sha: "aaa"))
         try MiniTest.expectEqual(try db.syncEntry(for: id), nil)
-        try db.setSyncEntry(documentId: id, paperlessId: 42, sha256: "aaa")
+        try db.setSyncEntry(documentId: id, paperlessId: 42, sha256: "aaa", metaSha256: "m1")
         let e = try MiniTest.unwrap(try db.syncEntry(for: id))
         try MiniTest.expectEqual(e.paperlessId, 42)
         try MiniTest.expectEqual(e.sha256, "aaa")
+        try MiniTest.expectEqual(e.metaSha256, "m1")
         try MiniTest.expect(!e.syncedAt.isEmpty)
-        // Upsert: andere paperless-ID + sha
+        try MiniTest.expectEqual(try db.document(byId: id)?.syncState, .synced)
+        // Upsert: andere paperless-ID + sha + meta
+        try db.setSyncEntry(documentId: id, paperlessId: 43, sha256: "bbb", metaSha256: "m2")
+        let e2 = try MiniTest.unwrap(try db.syncEntry(for: id))
+        try MiniTest.expectEqual(e2.paperlessId, 43)
+        try MiniTest.expectEqual(e2.sha256, "bbb")
+        try MiniTest.expectEqual(e2.metaSha256, "m2")
+        // Upsert ohne meta (nil) → NULL in der Spalte
         try db.setSyncEntry(documentId: id, paperlessId: 43, sha256: "bbb")
-        try MiniTest.expectEqual(try db.syncEntry(for: id)?.paperlessId, 43)
-        // pending: gleicher sha → nicht pending; anderer sha → pending; ohne Eintrag → pending
-        try MiniTest.expectEqual(try db.documentsPendingSync().count, 1)   // sha bbb ≠ doc aaa
-        try db.setSyncEntry(documentId: id, paperlessId: 42, sha256: "aaa")
-        try MiniTest.expectEqual(try db.documentsPendingSync().count, 0)
+        try MiniTest.expectEqual(try db.syncEntry(for: id)?.metaSha256, nil)
         let id2 = try db.insert(sampleDoc(sha: "ccc"))
-        try MiniTest.expectEqual(try db.documentsPendingSync().map(\.id), [id2])
+        try db.setSyncEntry(documentId: id2, paperlessId: 7, sha256: "ccc", metaSha256: "m3")
+        try MiniTest.expectEqual(try db.allSyncEntries().count, 2)
         try db.deleteSyncEntry(for: id)
         try MiniTest.expectEqual(try db.syncEntry(for: id), nil)
-        try MiniTest.expectEqual(try db.allSyncEntries().count, 0)
+        try MiniTest.expectEqual(try db.allSyncEntries().count, 1)
+    }
+
+    private static func updateDocumentPatch() throws {
+        try awaitAsync {
+        let transport = FakeTransport { req in
+            if req.method == "PATCH" && req.path == "/api/documents/42/" { return (200, json(["id": 42])) }
+            return (404, Data())
+        }
+        let client = PaperlessClient(config: config(), transport: transport)
+        try await client.updateDocument(paperlessId: 42, title: "Neu", created: "2026-11-15",
+                                        correspondentId: 7, documentTypeId: nil, tagIds: [11, 12])
+        let req = try MiniTest.unwrap(transport.requests.first)
+        try MiniTest.expectEqual(req.method, "PATCH")
+        try MiniTest.expectEqual(req.path, "/api/documents/42/")
+        try MiniTest.expectEqual(req.contentType, "application/json")
+        try MiniTest.expectEqual(req.authorization, "Token test-token")
+        let obj = try JSONSerialization.jsonObject(with: req.body ?? Data()) as? [String: Any]
+        try MiniTest.expectEqual(try MiniTest.unwrap(obj)["title"] as? String, "Neu")
+        try MiniTest.expectEqual(obj!["created"] as? String, "2026-11-15")
+        try MiniTest.expectEqual(obj!["correspondent"] as? Int, 7)
+        try MiniTest.expect(obj!["document_type"] is NSNull, "document_type nil → null (löschen in paperless)")
+        try MiniTest.expectEqual((obj!["tags"] as? [NSNumber])?.map { $0.intValue }, [11, 12])
+        }
     }
 
     // MARK: - Client
@@ -300,6 +333,7 @@ enum SyncTests {
         var uploadedChecksums: Set<String> = []
         let transport = FakeTransport { req in
             let path = req.path
+            if req.method == "PATCH" && path == "/api/documents/42/" { return (200, json(["id": 42])) }
             if req.method == "GET" && path == "/api/documents/" {
                 let q = req.query ?? ""
                 if let range = q.range(of: "checksum=") {
@@ -339,6 +373,9 @@ enum SyncTests {
         try MiniTest.expectEqual(entry.sha256, sha)
         // persistierter Sync-Stand nach erfolgreichem Push
         try MiniTest.expectEqual(try db.document(byId: docId)?.syncState, .synced)
+        // Metadaten-Hash wurde mitgespeichert
+        try MiniTest.expectEqual(entry.metaSha256,
+                                SyncService.metaHash(doc: try db.document(byId: docId)!, tagIds: [tagId]))
         // Mapping wurde aufgelöst: correspondent + document_type + tag per find-or-create angelegt
         let post = try MiniTest.unwrap(transport.requests.first { $0.path == "/api/documents/post_document/" })
         let body = String(decoding: post.body ?? Data(), as: UTF8.self)
@@ -362,11 +399,38 @@ enum SyncTests {
         try MiniTest.expectEqual(step, .skipped(paperlessId: 42))
 
         // 4. sha-Wechsel (Datei ersetzt) → Eintrag passt nicht mehr → re-upload
-        try db.setSyncEntry(documentId: docId, paperlessId: 42, sha256: "alt")
+        try db.setSyncEntry(documentId: docId, paperlessId: 42, sha256: "alt", metaSha256: "alt-meta")
         try MiniTest.expectEqual(try service.pendingDocuments().count, 1)
         let outcome4 = try await service.syncAll()
         try MiniTest.expectEqual(outcome4.uploaded, 1)
         try MiniTest.expectEqual(try db.syncEntry(for: docId)?.sha256, sha)
+        try MiniTest.expect(try db.syncEntry(for: docId)?.metaSha256 != "alt-meta", "meta_sha256 wird beim Re-Upload neu gesetzt")
+
+        // 4b. Metadaten-Änderung nach dem Sync (Kategorie neu gesetzt) → PATCH, kein Re-Upload
+        let cat2 = try db.findOrCreateCategory(name: "Steuern")
+        let docBefore = try db.document(byId: docId)!
+        try db.updateMetadata(documentId: docId, title: docBefore.title, documentDate: docBefore.documentDate,
+                              correspondentId: docBefore.correspondentId, categoryId: cat2, notes: docBefore.notes)
+        try MiniTest.expectEqual(try db.document(byId: docId)?.syncState, .notSynced)   // Edit → not_synced
+        try MiniTest.expectEqual(try service.pendingDocuments().count, 1)
+        let outcome4b = try await service.syncAll()
+        try MiniTest.expectEqual(outcome4b.updated, 1)
+        try MiniTest.expectEqual(outcome4b.uploaded, 0)
+        try MiniTest.expectEqual(outcome4b.skipped, 0)
+        let patch = try MiniTest.unwrap(transport.requests.first { $0.method == "PATCH" })
+        try MiniTest.expectEqual(patch.path, "/api/documents/42/")
+        let patchBody = String(decoding: patch.body ?? Data(), as: UTF8.self)
+        try MiniTest.expect(patchBody.contains("\"document_type\":"), "Kategorie als document_type im PATCH: \(patchBody)")
+        try MiniTest.expect(!patchBody.contains("name=\"document\""), "kein Datei-Feld beim PATCH")
+        let entryAfter = try MiniTest.unwrap(try db.syncEntry(for: docId))
+        try MiniTest.expect(entryAfter.sha256 == sha, "Datei-sha bleibt beim PATCH gleich")
+        try MiniTest.expectEqual(entryAfter.metaSha256,
+                                SyncService.metaHash(doc: try db.document(byId: docId)!, tagIds: [tagId]))
+        try MiniTest.expectEqual(try db.document(byId: docId)?.syncState, .synced)   // PATCH erfolgreich → synced
+        // danach ist nichts mehr pending
+        let outcome4c = try await service.syncAll()
+        try MiniTest.expect(outcome4c.uploaded == 0 && outcome4c.updated == 0 && outcome4c.skipped == 0 && outcome4c.failed.isEmpty,
+                            "nach PATCH nichts mehr pending: \(outcome4c)")
 
         // 5. Server-Fehler beim Upload → failed, kein sync_map-Eintrag
         let id5 = try db.insert(sampleDoc(sha: "fehler-sha"))

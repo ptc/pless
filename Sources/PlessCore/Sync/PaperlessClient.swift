@@ -172,6 +172,23 @@ public final class PaperlessClient: Sendable {
 
     // MARK: - Dokument hochladen (multipart)
 
+    /// Metadaten eines vorhandenen paperless-Dokuments aktualisieren: `PATCH /api/documents/<id>/`.
+    /// nil-Referenzen (correspondent / document_type) werden als null gesendet → werden in paperless geleert.
+    public func updateDocument(paperlessId: Int, title: String?, created: String?,
+                               correspondentId: Int?, documentTypeId: Int?, tagIds: [Int]) async throws {
+        var body: [String: Any] = [
+            "title": title ?? NSNull(),
+            "created": created ?? NSNull(),
+            "correspondent": correspondentId.map { $0 as Any } ?? NSNull(),
+            "document_type": documentTypeId.map { $0 as Any } ?? NSNull(),
+            "tags": tagIds
+        ]
+        let data = try JSONSerialization.data(withJSONObject: body)
+        _ = try await send(request("PATCH", path: "/api/documents/\(paperlessId)/", body: data,
+                                   contentType: "application/json"),
+                            acceptable: 200...299)
+    }
+
     /// `POST /api/documents/post_document/` — Datei + Metadaten. Liefert die paperless-ID,
     /// soweit sie aus der Antwort gelesen werden kann (sonst nil → Aufrufer löst per Checksum auf).
     @discardableResult
