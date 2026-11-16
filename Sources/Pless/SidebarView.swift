@@ -204,9 +204,26 @@ struct SidebarView: View {
     }
 
     private func correspondentRow(_ c: Correspondent) -> some View {
-        Label(c.name, systemImage: "person")
-            .tag(SidebarSelection.correspondent(c.name))
-            .contextMenu {
+        // Zähler als trailing Text in der Zeile (nicht .badge — störte die native Auswahl-Markierung)
+        let count = c.id.flatMap { state.correspondentCounts[$0] } ?? 0
+        return HStack(spacing: 6) {
+            Label(c.name, systemImage: "person")
+            Spacer()
+            if count > 0 {
+                Text("\(count)").font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+        .tag(SidebarSelection.correspondent(c.name))
+        .onTapGesture {
+            // Klick filtert auf diesen Korrespondenten; erneuter Klick auf den aktiven → alle
+            if case .correspondent(let active) = state.sidebarSelection, active == c.name {
+                state.sidebarSelection = .all
+            } else {
+                state.sidebarSelection = .correspondent(c.name)
+            }
+            state.refresh()
+        }
+        .contextMenu {
                 Button("Umbenennen…") {
                     if let n = Prompts.askText(title: "Korrespondent umbenennen", message: "Neuer Name", defaultValue: c.name) {
                         if let id = c.id { state.renameCorrespondent(id: id, newName: n) }

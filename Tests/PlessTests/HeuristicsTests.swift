@@ -8,6 +8,7 @@ enum HeuristicsTests {
         MiniTest.test("Heuristik: alle Datums-Vorschläge (mehrere, dedupliziert, Reihenfolge)") { try datesAll() }
         MiniTest.test("Heuristik: Langform mit Monatsname (8. Oktober 2026 → 2026-10-08)") { try datesLongGerman() }
         MiniTest.test("Heuristik: US-Format MM/DD/YYYY (12/08/2026 → 2026-12-08)") { try datesUS() }
+        MiniTest.test("Heuristik: Korrespondent-Vorschlag (bekannt gewinnt, sonst Absender-Rechtsform)") { try correspondentSuggestion() }
         MiniTest.test("Heuristik: Korrespondent matchen (case-insensitive, längster gewinnt)") { try correspondent() }
         MiniTest.test("Heuristik: Titel = erste sinnvolle Zeile") { try title() }
         MiniTest.test("Heuristik: Kategorie per Schlüsselwort") { try category() }
@@ -61,6 +62,22 @@ enum HeuristicsTests {
         // ungültig: 02/30/2026 (Februar hat keine 30 Tage), 13/01/2026 (Monat 13)
         try MiniTest.expectEqual(Heuristics.extractDates(from: "02/30/2026"), [])
         try MiniTest.expectEqual(Heuristics.extractDates(from: "13/01/2026"), [])
+    }
+
+    private static func correspondentSuggestion() throws {
+        // bekannter Korrespondent gewinnt
+        try MiniTest.expectEqual(
+            Heuristics.suggestCorrespondent(from: "Rechnung der Allianz Versicherung vom 01.01.2026", known: ["Allianz Versicherung"]),
+            "Allianz Versicherung")
+        // unbekannt, aber Absender-Zeile mit Rechtsform in den ersten Zeilen
+        try MiniTest.expectEqual(
+            Heuristics.suggestCorrespondent(from: "Müller GmbH\nRechnung Nr. 5\nBetrag 100 EUR", known: []),
+            "Müller GmbH")
+        try MiniTest.expectEqual(
+            Heuristics.suggestCorrespondent(from: "Finanzamt Musterstadt\nBescheid", known: []),
+            "Finanzamt Musterstadt")
+        // nichts Passendes → nil
+        try MiniTest.expectEqual(Heuristics.suggestCorrespondent(from: "Hallo Welt\nirgendein Text", known: []), nil)
     }
 
     private static func correspondent() throws {

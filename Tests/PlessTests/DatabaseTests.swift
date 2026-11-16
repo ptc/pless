@@ -11,6 +11,26 @@ enum DatabaseTests {
         MiniTest.test("DB: Correspondent/Category/Tag Roundtrip (inkl. Hierarchie)") { try entityRoundtrip() }
         MiniTest.test("DB: categoryDocumentCounts zählt Dokumente pro Kategorie") { try categoryCountsTest() }
         MiniTest.test("DB: Kategorie ohne Farbe bekommt automatisch Palettenfarbe (eindeutig, explizite bleibt)") { try categoryAutoColor() }
+        MiniTest.test("DB: correspondentDocumentCounts zählt Dokumente pro Korrespondent") { try correspondentCountsTest() }
+    }
+
+    private static func correspondentCountsTest() throws {
+        let (db, root) = try makeDatabase()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let c1 = try db.insertCorrespondent(name: "Allianz")
+        let c2 = try db.insertCorrespondent(name: "Stadtwerke")
+        var d1 = sampleDocument()
+        d1.correspondentId = c1
+        var d2 = sampleDocument()
+        d2.correspondentId = c1
+        var d3 = sampleDocument()
+        d3.correspondentId = c2
+        _ = try db.insert(d1)
+        _ = try db.insert(d2)
+        _ = try db.insert(d3)
+        let counts = try db.correspondentDocumentCounts()
+        try MiniTest.expectEqual(counts[c1], 2)
+        try MiniTest.expectEqual(counts[c2], 1)
     }
 
     private static func categoryAutoColor() throws {

@@ -215,6 +215,18 @@ struct MetadataSummary: View {
                 row("OCR", doc.ocrDone ? "fertig" : "ausstehend")
             }
             .font(.caption)
+            // Korrespondent-Vorschlag aus dem Dokumenttext (bekannter Treffer oder Absender-Firma)
+            if let suggestion = state.correspondentSuggestion(for: doc) {
+                HStack(spacing: 6) {
+                    Text("Korrespondent-Vorschlag:").font(.caption2).foregroundStyle(.secondary)
+                    Button(suggestion) {
+                        if let id = doc.id { state.applyCorrespondentSuggestion(documentId: id, name: suggestion) }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .help("Diesen Korrespondenten anlegen und dem Dokument zuweisen")
+                }
+            }
             let tags = state.tagsOf(doc)
             if !tags.isEmpty {
                 HStack(spacing: 6) {

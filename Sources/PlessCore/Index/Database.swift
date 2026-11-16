@@ -233,6 +233,17 @@ public final class Database {
         return out
     }
 
+    /// Anzahl Dokumente pro Korrespondent-ID.
+    public func correspondentDocumentCounts() throws -> [Int64: Int] {
+        let stmt = try prepare("SELECT correspondent_id, COUNT(*) FROM documents WHERE deleted_at IS NULL AND correspondent_id IS NOT NULL GROUP BY correspondent_id")
+        defer { sqlite3_finalize(stmt) }
+        var out: [Int64: Int] = [:]
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            out[colInt(stmt, 0)] = Int(colInt(stmt, 1))
+        }
+        return out
+    }
+
     public func document(byUUID uuid: String) throws -> Document? {
         try fetchDocuments("SELECT \(Self.documentColumns) FROM documents WHERE uuid = ? AND deleted_at IS NULL", [uuid]).first
     }

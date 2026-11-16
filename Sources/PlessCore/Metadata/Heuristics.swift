@@ -148,6 +148,22 @@ public enum Heuristics {
         return nil
     }
 
+    /// Korrespondent-Vorschlag: bekannter Name (exakter Wortmatch) gewinnt; sonst wird in den
+    /// ersten Zeilen nach einer Absender-Firma mit Rechtsform gesucht (z. B. „Müller GmbH“).
+    public static func suggestCorrespondent(from text: String, known: [String] = []) -> String? {
+        if let m = matchCorrespondent(from: text, known: known) { return m }
+        let legal = #"\b(GmbH|AG|SE|UG|GbR|OHG|KG|PartG|PartGmbB|Ltd\.?|Inc\.?|LLC|S\.A\.|e\.K\.|Stiftung|Verein|Finanzamt|Amtsgericht|Landgericht|Stadtwerke|Ministerium|Behörde)\b"#
+        guard let re = try? NSRegularExpression(pattern: legal, options: [.caseInsensitive]) else { return nil }
+        for line in text.split(separator: "\n").prefix(10) {
+            let t = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard t.count >= 3, t.count <= 80 else { continue }
+            if re.firstMatch(in: t, range: NSRange(t.startIndex..., in: t)) != nil {
+                return String(t.prefix(60))
+            }
+        }
+        return nil
+    }
+
     /// Kombinierter Vorschlag aus einem Text.
     public static func suggest(from text: String, knownCorrespondents: [String] = []) -> MetadataSuggestion {
         MetadataSuggestion(

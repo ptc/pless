@@ -38,6 +38,8 @@ final class AppState: ObservableObject {
     @Published var categories: [PlessCore.Category] = []
     /// Dokumente pro Kategorie-ID (für das Zähler-Badge in der Sidebar)
     @Published var categoryCounts: [Int64: Int] = [:]
+    /// Dokumente pro Korrespondent-ID (für den Zähler in der Sidebar)
+    @Published var correspondentCounts: [Int64: Int] = [:]
     @Published var tags: [Tag] = []
     @Published var correspondents: [Correspondent] = []
     @Published var isEditing = false
@@ -114,6 +116,7 @@ final class AppState: ObservableObject {
             hits = try db.search(currentFilter())
             categories = try db.categories()
             categoryCounts = try db.categoryDocumentCounts()
+            correspondentCounts = try db.correspondentDocumentCounts()
             tags = try db.tags()
             correspondents = try db.correspondents()
             if !isEditing {
@@ -529,6 +532,28 @@ final class AppState: ObservableObject {
     func nameOfCorrespondent(_ id: Int64?) -> String {
         guard let id else { return "" }
         return correspondents.first { $0.id == id }?.name ?? ""
+    }
+
+    /// Korrespondent-Vorschlag für ein Dokument (nur wenn keines gesetzt): bekannter Treffer
+    /// oder Absender-Zeile mit Rechtsform aus dem OCR-/Textschicht-Text.
+    func correspondentSuggestion(for doc: Document) -> String? {
+        guard doc.correspondentId == nil, let text = doc.ocrText, !text.isEmpty else { return nil }
+        return Heuristics.suggestCorrespondent(from: text, known: correspondents.compactMap { $0.name })
+    }
+
+    /// „Übernehmen“ in den Details: Korrespondent anlegen/finden und dem Dokument setzen.
+    func applyCorrespondentSuggestion(documentId: Int64, name: String) {
+        guard let db, let metadata else { return }
+        do {
+            let corrId = try db.findOrCreateCorrespondent(name: name)
+            guard let doc = try db.document(byId: documentId) else { return }
+            _ = try metadata.saveMetadata(documentId: documentId, title: doc.title, documentDate: doc.documentDate,
+                                          correspondentId: corrId, categoryId: doc.categoryId, notes: doc.notes)
+            setStatus(.ok, "Korrespondent „\(name)“ gesetzt", autoIdleAfter: 6)
+        } catch {
+            errorMessage = "Korrespondent konnte nicht gesetzt werden: \(error.localizedDescription)"
+        }
+        refresh()
     }
 
     func nameOfCategory(_ id: Int64?) -> String {
