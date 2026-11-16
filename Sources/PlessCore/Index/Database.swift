@@ -68,7 +68,22 @@ public final class Database {
         let version = try scalarInt("PRAGMA user_version;")
         if version < 1 { try applyV1() }
         if version < 2 { try applyV2() }
-        // weitere Migrationen hier anhängen: if version < 3 { try applyV3() }
+        if version < 3 { try applyV3() }
+    }
+
+    /// V3: Sync-Mapping nach paperless-ngx (Phase 13) — pro Dokument die paperless-ID + Stand.
+    func applyV3() throws {
+        try execute("""
+        BEGIN;
+        CREATE TABLE IF NOT EXISTS sync_map(
+          document_id INTEGER PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+          paperless_id INTEGER NOT NULL,
+          sha256 TEXT NOT NULL,
+          synced_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now'))
+        );
+        PRAGMA user_version = 3;
+        COMMIT;
+        """)
     }
 
     /// V2: FTS5-Volltextindex über Titel + OCR-Text + Korrespondent, per Trigger synchron gehalten.

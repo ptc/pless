@@ -7,6 +7,7 @@ public enum PlessError: Error, Equatable {
     case duplicateSHA256(String)
     case notFound(String)
     case invalidDocument(String)
+    case sync(String)
 }
 
 extension PlessError: LocalizedError {
@@ -18,6 +19,7 @@ extension PlessError: LocalizedError {
         case .duplicateSHA256(let sha): return "Duplikat — SHA-256 bereits im Vault (\(sha.prefix(12))…)"
         case .notFound(let m): return "Nicht gefunden: \(m)"
         case .invalidDocument(let m): return "Ungültiges Dokument: \(m)"
+        case .sync(let m): return "Sync nach paperless-ngx: \(m)"
         }
     }
 }
