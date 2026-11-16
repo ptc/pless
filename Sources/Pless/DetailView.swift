@@ -92,7 +92,7 @@ struct DetailView: View {
                         .frame(height: 300)
                 } else {
                     MetadataSummary(doc: doc)
-                        .frame(height: 210)
+                        .frame(height: 230)
                 }
             }
         } else {
@@ -197,42 +197,66 @@ struct ThumbnailView: View {
     }
 }
 
-/// Read-only Metadaten-Anzeige (Edit-Modus kommt in Phase 7).
+/// Read-only Metadaten-Anzeige: Header mit Sync-Pill, Meta als Chips, technische Details eingeklappt.
 struct MetadataSummary: View {
     @EnvironmentObject var state: AppState
     let doc: PlessCore.Document
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(doc.title ?? doc.filename).font(.headline).lineLimit(1)
-            Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 4) {
-                row("Datei", doc.filename)
-                row("Im Vault", doc.relativePath)
-                row("Datum", doc.documentDate.map { state.displayDate($0) } ?? "—")
-                row("Korrespondent", state.nameOfCorrespondent(doc.correspondentId).isEmpty ? "—" : state.nameOfCorrespondent(doc.correspondentId))
-                row("Kategorie", state.nameOfCategory(doc.categoryId).isEmpty ? "—" : state.nameOfCategory(doc.categoryId))
-                row("Seiten", "\(doc.pageCount)")
-                row("OCR", doc.ocrDone ? "fertig" : "ausstehend")
-                // paperless-ngx Sync-Stand (Phase 13) — Wolke + Text je nach persistiertem Zustand
-                let syncState = state.effectiveSyncState(doc)
-                switch syncState {
-                case .synced:
-                    if let entry = doc.id.flatMap({ state.syncEntry(for: $0) }) {
-                        row("paperless", syncState, "#\(entry.paperlessId) · \(state.displayDate(String(entry.syncedAt.prefix(10))))")
-                    } else {
-                        row("paperless", syncState, "synchronisiert")
-                    }
-                case .notSynced:
-                    row("paperless", syncState, "nicht synchronisiert — Push über „Sync“ offen")
-                case .unknown:
-                    row("paperless", syncState, "unbekannt (paperless-ngx nicht konfiguriert)")
+        let syncState = state.effectiveSyncState(doc)
+        VStack(alignment: .leading, spacing: 10) {
+            // Header: Titel + Dateiname; rechts der Sync-Status als Pill
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(doc.title ?? doc.filename)
+                        .font(.title3).fontWeight(.semibold).lineLimit(2)
+                    Text(doc.filename)
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        .help("Im Vault: \(doc.relativePath)")
+                }
+                Spacer()
+                syncPill(syncState)
+            }
+            // Metadaten als Chips statt technischem Label/Value-Grid
+            FlowLayout(spacing: 6) {
+                if let cat = state.categories.first(where: { $0.id == doc.categoryId }) {
+                    Label(cat.name, systemImage: "folder.fill")
+                        .font(.caption).fontWeight(.medium)
+                        .foregroundStyle(Color(hex: cat.color)?.isLight == true ? .black : .white)
+                        .padding(.horizontal, 8).padding(.vertical, 3)
+                        .background(Capsule().fill(Color(hex: cat.color) ?? .accentColor))
+                }
+                let corr = state.nameOfCorrespondent(doc.correspondentId)
+                if !corr.isEmpty { chip(corr, systemImage: "person") }
+                if let d = doc.documentDate { chip(state.displayDate(d), systemImage: "calendar") }
+                chip("\(doc.pageCount) Seiten", systemImage: "doc.text")
+                if doc.ocrDone {
+                    chip("OCR fertig", systemImage: "checkmark.circle.fill", color: .green)
+                } else {
+                    chip("OCR offen", systemImage: "circle.dashed", color: .orange)
                 }
             }
+            // Technische Details (Pfad, paperless-ID, SHA) eingeklappt statt offener Grid-Zeilen
+            DisclosureGroup(content: {
+                VStack(alignment: .leading, spacing: 2) {
+                    techRow("Datei", doc.filename)
+                    techRow("Im Vault", doc.relativePath)
+                    if let entry = doc.id.flatMap({ state.syncEntry(for: $0) }) {
+                        techRow("paperless-ID", "#\(entry.paperlessId) · \(state.displayDate(String(entry.syncedAt.prefix(10))))")
+                    }
+                    techRow("SHA-256", String(doc.sha256.prefix(16)) + "…")
+                }
+                .padding(.top, 2)
+            }) {
+                Label("Details", systemImage: "info.circle")
+            }
             .font(.caption)
+            .foregroundStyle(.secondary)
             // Korrespondent-Vorschlag aus dem Dokumenttext (bekannter Treffer oder Absender-Firma)
             if let suggestion = state.correspondentSuggestion(for: doc) {
                 HStack(spacing: 6) {
-                    Text("Korrespondent-Vorschlag:").font(.caption2).foregroundStyle(.secondary)
+                    Label("Korrespondent-Vorschlag:", systemImage: "lightbulb")
+                        .font(.caption).foregroundStyle(.secondary)
                     Button(suggestion) {
                         if let id = doc.id { state.applyCorrespondentSuggestion(documentId: id, name: suggestion) }
                     }
@@ -243,17 +267,16 @@ struct MetadataSummary: View {
             }
             let tags = state.tagsOf(doc)
             if !tags.isEmpty {
-                HStack(spacing: 6) {
-                    ForEach(tags, id: \.id) {
-                        Label($0.name, systemImage: "tag").font(.caption2)
-                    }
+                FlowLayout(spacing: 6) {
+                    ForEach(tags, id: \.id) { chip($0.name, systemImage: "tag") }
                 }
             }
             // Datums-Vorschläge aus dem Dokumenttext (auch ohne Edit-Modus sichtbar);
             // Klick übernimmt das Datum direkt im Edit-Modus
             if !dateSuggestions.isEmpty {
                 HStack(spacing: 6) {
-                    Text("Datum-Vorschläge:").font(.caption2).foregroundStyle(.secondary)
+                    Label("Datum-Vorschläge:", systemImage: "calendar.badge.plus")
+                        .font(.caption).foregroundStyle(.secondary)
                     ForEach(dateSuggestions, id: \.self) { d in
                         Button(state.displayDate(d)) {
                             state.beginEditing()
@@ -286,6 +309,7 @@ struct MetadataSummary: View {
                 Button { state.beginEditing() } label: {
                     Label("Bearbeiten", systemImage: "pencil")
                 }
+                .buttonStyle(.borderedProminent)
                 .disabled(state.selection == nil)
                 .help("Metadaten bearbeiten (unten in den Details)")
             }
@@ -302,29 +326,91 @@ struct MetadataSummary: View {
         return []
     }
 
-    private func row(_ label: String, _ value: String) -> some View {
-        GridRow {
-            Text(label).foregroundStyle(.secondary)
-            Text(value)
-        }
+    /// Meta-Chip ( rund, dezente Füllung).
+    private func chip(_ text: String, systemImage: String, color: Color = .primary) -> some View {
+        Label(text, systemImage: systemImage)
+            .font(.caption)
+            .foregroundStyle(color)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(Capsule().fill(Color.secondary.opacity(0.14)))
     }
 
-    /// Zeile mit Wolken-Symbol davor (Sync-Stand).
-    private func row(_ label: String, _ syncState: SyncState, _ value: String) -> some View {
-        GridRow {
-            Text(label).foregroundStyle(.secondary)
-            HStack(spacing: 4) {
-                SyncCloudBadge.icon(syncState)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(SyncCloudBadge.color(syncState))
-                Text(value)
-            }
+    /// Sync-Status als Pill oben rechts im Header (Wolke + Klartext; Details im Tooltip).
+    private func syncPill(_ syncState: SyncState) -> some View {
+        let entry = doc.id.flatMap { state.syncEntry(for: $0) }
+        let text: String
+        switch syncState {
+        case .synced: text = "Synchronisiert"
+        case .notSynced: text = "Nicht synchronisiert"
+        case .unknown: text = "Sync unbekannt"
         }
+        let detail: String
+        switch syncState {
+        case .synced:
+            detail = entry.map { "paperless-#\($0.paperlessId) · \(state.displayDate(String($0.syncedAt.prefix(10))))" }
+                ?? "mit paperless-ngx abgeglichen"
+        case .notSynced: detail = "Push über „Sync“ in der Toolbar offen"
+        case .unknown: detail = "paperless-ngx nicht konfiguriert oder nie gelaufen"
+        }
+        return HStack(spacing: 4) {
+            SyncCloudBadge.icon(syncState)
+            Text(text)
+        }
+        .font(.caption).fontWeight(.medium)
+        .foregroundStyle(SyncCloudBadge.color(syncState))
+        .padding(.horizontal, 9).padding(.vertical, 4)
+        .background(Capsule().fill(SyncCloudBadge.color(syncState).opacity(0.15)))
+        .help("\(text) — \(detail)")
+    }
+
+    /// Eine Zeile im eingeklappten „Details“-Bereich (technisch, klein, kopierbar).
+    private func techRow(_ label: String, _ value: String) -> some View {
+        HStack(spacing: 6) {
+            Text(label).frame(width: 90, alignment: .leading)
+            Text(value).lineLimit(1).textSelection(.enabled)
+        }
+        .font(.caption2).foregroundStyle(.secondary)
     }
 
     private func reveal() {
         guard let vault = state.vault else { return }
         let path = vault.root.appendingPathComponent(doc.relativePath).path
         NSWorkspace.shared.selectFile(path, inFileViewerRootedAtPath: vault.root.path)
+    }
+}
+
+/// Einfaches Flow-Layout: Chips zeilenweise umbrechen (macOS 14: Layout-Protokoll verfügbar).
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, lineHeight: CGFloat = 0
+        for sv in subviews {
+            let s = sv.sizeThatFits(proposal)
+            if x > 0, x + s.width > maxWidth {
+                x = 0
+                y += lineHeight + spacing
+                lineHeight = 0
+            }
+            x += s.width + spacing
+            lineHeight = max(lineHeight, s.height)
+        }
+        return CGSize(width: maxWidth, height: y + lineHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX, y = bounds.minY, lineHeight: CGFloat = 0
+        for sv in subviews {
+            let s = sv.sizeThatFits(proposal)
+            if x > bounds.minX, x + s.width > bounds.maxX {
+                x = bounds.minX
+                y += lineHeight + spacing
+                lineHeight = 0
+            }
+            sv.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
+            x += s.width + spacing
+            lineHeight = max(lineHeight, s.height)
+        }
     }
 }
