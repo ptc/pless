@@ -10,7 +10,7 @@ struct DetailView: View {
     @EnvironmentObject var state: AppState
     @State private var pdfMode: PDFMode = .height  // Default: ganze skalierte Höhe
     @State private var pdfZoom: CGFloat = 1.0      // nur in .full wirksam (1.0 = 100 %)
-    @State private var showOCRText = true           // OCR-Text-Panel (markierbar) ein-/ausblenden
+    @State private var showOCRText = false          // OCR-Text-Panel (markierbar) erst auf Klick
 
     var doc: PlessCore.Document? {
         state.selectedDoc

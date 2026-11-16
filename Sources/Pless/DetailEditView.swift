@@ -123,9 +123,11 @@ struct MetadataEditView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Notizen").foregroundStyle(.secondary).font(.caption)
+                    // leer → klein, sobald Text drin → wächst mit
+                    let notesEmpty = (state.draft?.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     TextEditor(text: bind(\.notes, ""))
                         .font(.caption)
-                        .frame(height: 56)
+                        .frame(height: notesEmpty ? 30 : 56)
                         .scrollContentBackground(.hidden)
                         .background(Color.secondary.opacity(0.08))
                         .clipShape(RoundedRectangle(cornerRadius: 4))
