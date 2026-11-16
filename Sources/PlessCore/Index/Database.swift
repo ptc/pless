@@ -69,6 +69,20 @@ public final class Database {
         if version < 1 { try applyV1() }
         if version < 2 { try applyV2() }
         if version < 3 { try applyV3() }
+        if version < 4 { try applyV4() }
+    }
+
+    /// V4: persistierter Sync-Stand pro Dokument (`sync_state`: synced / not_synced / unknown).
+    /// Backfill: Dokumente mit passendem sync_map-Eintrag sind 'synced', alle anderen 'unknown'.
+    func applyV4() throws {
+        try execute("""
+        BEGIN;
+        ALTER TABLE documents ADD COLUMN sync_state TEXT NOT NULL DEFAULT 'unknown';
+        UPDATE documents SET sync_state = 'synced'
+        WHERE EXISTS (SELECT 1 FROM sync_map s WHERE s.document_id = documents.id AND s.sha256 = documents.sha256);
+        PRAGMA user_version = 4;
+        COMMIT;
+        """)
     }
 
     /// V3: Sync-Mapping nach paperless-ngx (Phase 13) — pro Dokument die paperless-ID + Stand.
@@ -194,7 +208,7 @@ public final class Database {
 
     // MARK: - Documents
 
-    static let documentColumns = "id, uuid, sha256, filename, relative_path, title, correspondent_id, category_id, document_date, added_at, page_count, ocr_text, ocr_done, needs_review, notes, deleted_at"
+    static let documentColumns = "id, uuid, sha256, filename, relative_path, title, correspondent_id, category_id, document_date, added_at, page_count, ocr_text, ocr_done, needs_review, notes, deleted_at, sync_state"
 
     func mapDocument(_ s: OpaquePointer) -> Document {
         Document(
@@ -213,7 +227,8 @@ public final class Database {
             ocrDone: colInt(s, 12) != 0,
             needsReview: colInt(s, 13) != 0,
             notes: colText(s, 14),
-            deletedAt: colText(s, 15)
+            deletedAt: colText(s, 15),
+            syncState: SyncState(rawValue: colText(s, 16) ?? "") ?? .unknown
         )
     }
 
@@ -286,8 +301,8 @@ public final class Database {
     @discardableResult
     public func insert(_ d: Document) throws -> Int64 {
         let stmt = try prepare("""
-        INSERT INTO documents(uuid, sha256, filename, relative_path, title, correspondent_id, category_id, document_date, added_at, page_count, ocr_text, ocr_done, needs_review, notes, deleted_at)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        INSERT INTO documents(uuid, sha256, filename, relative_path, title, correspondent_id, category_id, document_date, added_at, page_count, ocr_text, ocr_done, needs_review, notes, deleted_at, sync_state)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """)
         defer { sqlite3_finalize(stmt) }
         bind(stmt, 1, d.uuid)
@@ -305,6 +320,7 @@ public final class Database {
         bind(stmt, 13, d.needsReview)
         bind(stmt, 14, d.notes)
         bind(stmt, 15, d.deletedAt)
+        bind(stmt, 16, d.syncState.rawValue)
         let rc = sqlite3_step(stmt)
         if rc == SQLITE_CONSTRAINT {
             let msg = errMsg()

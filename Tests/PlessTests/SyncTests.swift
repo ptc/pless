@@ -44,7 +44,9 @@ final class FakeTransport: HTTPTransport {
 
 enum SyncTests {
     static func register() {
-        MiniTest.test("DB: Migration V3 legt sync_map an (user_version=3)") { try migrationV3() }
+        MiniTest.test("DB: Migration V3 legt sync_map an (user_version=4 nach V4)") { try migrationV3() }
+        MiniTest.test("DB: Migration V4: sync_state-Spalte + Backfill aus sync_map (synced/unknown)") { try migrationV4Backfill() }
+        MiniTest.test("DB: sync_state-Transitionen (setSyncEntry→synced, setSyncState, markUnknownAsNotSynced)") { try syncStateTransitions() }
         MiniTest.test("DB: sync_map set/get/delete + documentsPendingSync (sha-Vergleich)") { try syncMapCrud() }
         MiniTest.test("Client: find-or-create legt an bzw. findet vorhanden (case-insensitiv), Token-Header") { try findOrCreate() }
         MiniTest.test("Client: checksumExists liefert ID bzw. nil") { try checksumLookup() }
@@ -84,9 +86,57 @@ enum SyncTests {
     private static func migrationV3() throws {
         let (db, root) = try makeDB()
         defer { try? FileManager.default.removeItem(at: root) }
-        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 3)
+        try MiniTest.expectEqual(try db.scalarInt("PRAGMA user_version;"), 4)
         try MiniTest.expectEqual(
             try db.scalarInt("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='sync_map';"), 1)
+    }
+
+    /// Baut eine DB auf Stand V3 zurück (Spalte weg, user_version=3), damit applyV4 erneut läuft.
+    private static func rewindToV3(_ db: Database) throws {
+        try db.execute("ALTER TABLE documents DROP COLUMN sync_state")
+        try db.execute("PRAGMA user_version = 3")
+    }
+
+    private static func migrationV4Backfill() throws {
+        let (db, root) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let synced = try db.insert(sampleDoc(sha: "sha-synced"))
+        let other = try db.insert(sampleDoc(sha: "sha-other"))
+        // sync_map-Eintrag per Roh-SQL, damit sync_state noch nicht gesetzt ist
+        try db.execute("INSERT INTO sync_map(document_id, paperless_id, sha256) VALUES(\(synced), 42, 'sha-synced')")
+        try rewindToV3(db)
+        // Reopen: Migration V4 läuft erneut (ADD COLUMN + Backfill)
+        let db2 = try Database(url: Vault(root: root).databaseURL)
+        try MiniTest.expectEqual(try db2.scalarInt("PRAGMA user_version;"), 4)
+        try MiniTest.expectEqual(try db2.document(byId: synced)?.syncState, .synced)
+        try MiniTest.expectEqual(try db2.document(byId: other)?.syncState, .unknown)
+        // frisches Dokument ohne sync_map-Eintrag: Default 'unknown'
+        let fresh = try db2.insert(sampleDoc(sha: "sha-fresh"))
+        try MiniTest.expectEqual(try db2.document(byId: fresh)?.syncState, .unknown)
+    }
+
+    private static func syncStateTransitions() throws {
+        let (db, root) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let a = try db.insert(sampleDoc(sha: "sa"))
+        let b = try db.insert(sampleDoc(sha: "sb"))
+        let c = try db.insert(sampleDoc(sha: "sc"))
+        try MiniTest.expectEqual(try db.document(byId: a)?.syncState, .unknown)
+        // erfolgreicher Push → synced (setSyncEntry setzt beides)
+        try db.setSyncEntry(documentId: a, paperlessId: 7, sha256: "sa")
+        try MiniTest.expectEqual(try db.document(byId: a)?.syncState, .synced)
+        // expliziter State-Wechsel (z. B. Push fehlgeschlagen)
+        try db.setSyncState(.notSynced, for: b)
+        try MiniTest.expectEqual(try db.document(byId: b)?.syncState, .notSynced)
+        // Reconcile: unknown → not_synced (nur nicht gelöschte)
+        try db.setSyncState(.unknown, for: c)
+        try db.markUnknownAsNotSynced()
+        try MiniTest.expectEqual(try db.document(byId: c)?.syncState, .notSynced)
+        try MiniTest.expect(try db.document(byId: a)?.syncState == .synced, "synced bleibt synced")
+        try MiniTest.expect(try db.document(byId: b)?.syncState == .notSynced, "not_synced bleibt not_synced")
+        // auch über search()/SearchHit sichtbar
+        let hit = try db.search(SearchFilter(query: nil, limit: 10)).first { $0.document.id == a }
+        try MiniTest.expectEqual(hit?.document.syncState, .synced)
     }
 
     private static func syncMapCrud() throws {
@@ -287,6 +337,8 @@ enum SyncTests {
         let entry = try MiniTest.unwrap(try db.syncEntry(for: docId))
         try MiniTest.expectEqual(entry.paperlessId, 42)
         try MiniTest.expectEqual(entry.sha256, sha)
+        // persistierter Sync-Stand nach erfolgreichem Push
+        try MiniTest.expectEqual(try db.document(byId: docId)?.syncState, .synced)
         // Mapping wurde aufgelöst: correspondent + document_type + tag per find-or-create angelegt
         let post = try MiniTest.unwrap(transport.requests.first { $0.path == "/api/documents/post_document/" })
         let body = String(decoding: post.body ?? Data(), as: UTF8.self)
@@ -330,6 +382,7 @@ enum SyncTests {
         try MiniTest.expectEqual(outcome5.failed[0].filename, "test.pdf")
         try MiniTest.expect(outcome5.failed[0].message.contains("500"), "HTTP-Status in der Meldung: \(outcome5.failed[0].message)")
         try MiniTest.expectEqual(try db.syncEntry(for: id5), nil)
+        try MiniTest.expect(try db.document(byId: id5)?.syncState == .notSynced, "fehlgeschlagener Push → not_synced persistiert")
         }
     }
 }

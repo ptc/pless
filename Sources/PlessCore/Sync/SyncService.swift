@@ -80,6 +80,7 @@ public final class SyncService {
                 }
             } catch {
                 outcome.failed.append(SyncFailure(filename: doc.filename, message: error.localizedDescription))
+                if let docId = doc.id { try? db.setSyncState(.notSynced, for: docId) }   // persistiert: Push fehlgeschlagen
             }
             progress?(i + 1, pending.count)
         }

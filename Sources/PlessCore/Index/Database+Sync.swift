@@ -41,7 +41,7 @@ extension Database {
         return out
     }
 
-    /// Upsert des Sync-Eintrags nach erfolgreichem Push.
+    /// Upsert des Sync-Eintrags nach erfolgreichem Push — setzt zugleich `documents.sync_state = 'synced'`.
     public func setSyncEntry(documentId: Int64, paperlessId: Int64, sha256: String) throws {
         let stmt = try prepare("""
         INSERT INTO sync_map(document_id, paperless_id, sha256, synced_at)
@@ -56,6 +56,23 @@ extension Database {
         guard sqlite3_step(stmt) == SQLITE_DONE else {
             throw PlessError.database("setSyncEntry: \(errMsg())")
         }
+        try setSyncState(.synced, for: documentId)
+    }
+
+    /// Persistierten Sync-Stand eines Dokuments setzen (Spalte `sync_state`, Migration V4).
+    public func setSyncState(_ state: SyncState, for documentId: Int64) throws {
+        let stmt = try prepare("UPDATE documents SET sync_state = ? WHERE id = ?")
+        defer { sqlite3_finalize(stmt) }
+        bind(stmt, 1, state.rawValue)
+        bind(stmt, 2, documentId)
+        guard sqlite3_step(stmt) == SQLITE_DONE else {
+            throw PlessError.database("setSyncState: \(errMsg())")
+        }
+    }
+
+    /// Reconcile: Sobald Sync konfiguriert ist, sind „unknown“-Dokumente bekannt nicht gepusht.
+    public func markUnknownAsNotSynced() throws {
+        try execute("UPDATE documents SET sync_state = 'not_synced' WHERE sync_state = 'unknown' AND deleted_at IS NULL")
     }
 
     public func deleteSyncEntry(for documentId: Int64) throws {

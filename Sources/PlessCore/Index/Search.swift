@@ -62,7 +62,7 @@ extension Database {
         if let to = filter.toDate { clauses.append("d.document_date <= ?"); binds.append(.s(to)) }
         if filter.onlyNeedsReview { clauses.append("d.needs_review = 1") }
 
-        let cols = "d.id, d.uuid, d.sha256, d.filename, d.relative_path, d.title, d.correspondent_id, d.category_id, d.document_date, d.added_at, d.page_count, d.ocr_text, d.ocr_done, d.needs_review, d.notes, d.deleted_at"
+        let cols = "d.id, d.uuid, d.sha256, d.filename, d.relative_path, d.title, d.correspondent_id, d.category_id, d.document_date, d.added_at, d.page_count, d.ocr_text, d.ocr_done, d.needs_review, d.notes, d.deleted_at, d.sync_state"
         let match = Self.ftsQuery(filter.query ?? "")
 
         let sql: String
@@ -96,8 +96,8 @@ extension Database {
                 let doc = mapDocument(stmt)
                 if match != nil {
                     hits.append(SearchHit(document: doc,
-                                          snippet: colText(stmt, 16) ?? "",
-                                          rank: sqlite3_column_double(stmt, 17)))
+                                          snippet: colText(stmt, 17) ?? "",
+                                          rank: sqlite3_column_double(stmt, 18)))
                 } else {
                     hits.append(SearchHit(document: doc, snippet: "", rank: 0))
                 }
