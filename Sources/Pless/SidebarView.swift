@@ -102,8 +102,13 @@ struct SidebarView: View {
         }
         .tag(SidebarSelection.category(node.name))
         .onTapGesture {
-            // Klick filtert die Übersicht auf diese Kategorie (unabhängig von der List-Selection)
-            state.sidebarSelection = .category(node.name)
+            // Klick filtert die Übersicht auf diese Kategorie (und markiert sie in der Liste);
+            // erneuter Klick auf die aktive Kategorie → wieder alle Dokumente
+            if case .category(let active) = state.sidebarSelection, active == node.name {
+                state.sidebarSelection = .all
+            } else {
+                state.sidebarSelection = .category(node.name)
+            }
             state.refresh()
         }
         .onDrag {
