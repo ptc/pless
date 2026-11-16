@@ -37,6 +37,13 @@ public struct URLSessionTransport: HTTPTransport {
     }
 }
 
+/// Benannte paperless-Ressource (Correspondent / Document Type / Tag): id + name.
+public struct NamedResource: Equatable, Sendable {
+    public var id: Int
+    public var name: String
+    public init(id: Int, name: String) { self.id = id; self.name = name }
+}
+
 /// Antwort-Helfer: JSON-Objekt oder -Liste aus dem Body.
 public enum PaperlessResponse {
     public static func json(_ data: Data) throws -> Any {
@@ -79,10 +86,16 @@ public final class PaperlessClient: Sendable {
                          body: Data? = nil, contentType: String? = nil) -> URLRequest {
         // Pfad per String anhängen — appendPathComponent würde den nötigen trailing slash
         // („/api/documents/“) unterschlagen, paperless/Django verlangt ihn aber.
-        var base = config.baseURL.absoluteString
-        if !base.hasSuffix("/") { base += "/" }
-        let rel = path.hasPrefix("/") ? String(path.dropFirst()) : path
-        var components = URLComponents(string: base + rel)!
+        // `path` darf auch eine absolute URL sein (Paginierung: `next` aus der Server-Antwort).
+        var components: URLComponents
+        if path.hasPrefix("http://") || path.hasPrefix("https://") {
+            components = URLComponents(string: path)!
+        } else {
+            var base = config.baseURL.absoluteString
+            if !base.hasSuffix("/") { base += "/" }
+            let rel = path.hasPrefix("/") ? String(path.dropFirst()) : path
+            components = URLComponents(string: base + rel)!
+        }
         if !query.isEmpty {
             components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }
         }
@@ -105,10 +118,45 @@ public final class PaperlessClient: Sendable {
         return data
     }
 
-    /// GET auf eine paginierte Listen-Ressource → results-Array.
+    /// GET auf eine paginierte Listen-Ressource → results-Array (nur erste Seite).
     private func list(path: String, query: [String: String] = [:]) async throws -> [[String: Any]] {
         let data = try await send(request("GET", path: path, query: query), acceptable: 200...299)
         return try PaperlessResponse.results(data)
+    }
+
+    /// GET auf eine Listen-Ressource mit Paginierung: folgt `next`, bis null → alle results.
+    private func listAll(path: String, query: [String: String] = [:]) async throws -> [[String: Any]] {
+        var out: [[String: Any]] = []
+        var req = request("GET", path: path, query: query)
+        while true {
+            let data = try await send(req, acceptable: 200...299)
+            let obj = try PaperlessResponse.object(data)
+            if let arr = obj["results"] as? [[String: Any]] { out.append(contentsOf: arr) }
+            guard let next = obj["next"] as? String, !next.isEmpty else { break }
+            req = request("GET", path: next)   // absolute URL aus der Antwort
+        }
+        return out
+    }
+
+    /// Alle benannten Ressourcen eines Endpunkts (paginiert) — für Pull-Import.
+    public func listNamed(endpoint: String) async throws -> [NamedResource] {
+        try await listAll(path: endpoint).compactMap { item in
+            guard let id = item["id"] as? Int, let name = item["name"] as? String else { return nil }
+            return NamedResource(id: id, name: name)
+        }
+    }
+
+    public func listCorrespondents() async throws -> [NamedResource] {
+        try await listNamed(endpoint: "/api/correspondents/")
+    }
+
+    /// paperless Document Types (→ pless-Kategorien beim Pull-Import).
+    public func listDocumentTypes() async throws -> [NamedResource] {
+        try await listNamed(endpoint: "/api/document_types/")
+    }
+
+    public func listTags() async throws -> [NamedResource] {
+        try await listNamed(endpoint: "/api/tags/")
     }
 
     /// POST JSON → Antwort-Objekt.

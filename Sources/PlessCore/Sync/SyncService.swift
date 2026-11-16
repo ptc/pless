@@ -140,6 +140,35 @@ public final class SyncService {
         return outcome
     }
 
+    // MARK: - Pull: Stammdaten aus paperless-ngx importieren
+
+    /// Importiert Document Types als Kategorien und Correspondents als Korrespondenten in den Vault.
+    /// Bereits vorhandene Namen (case-insensitiv) werden nicht doppelt angelegt.
+    /// Liefert die Anzahl der neu angelegten (Kategorien, Korrespondenten).
+    public func pullMetadata() async throws -> (categories: Int, correspondents: Int) {
+        var newCategories = 0
+        var knownCat = Set((try db.categories()).map { $0.name.lowercased() })
+        for resource in try await client.listDocumentTypes() {
+            let name = resource.name
+            if !knownCat.contains(name.lowercased()) {
+                _ = try db.findOrCreateCategory(name: name)
+                knownCat.insert(name.lowercased())
+                newCategories += 1
+            }
+        }
+        var newCorrespondents = 0
+        var knownCorr = Set((try db.correspondents()).map { $0.name.lowercased() })
+        for resource in try await client.listCorrespondents() {
+            let name = resource.name
+            if !knownCorr.contains(name.lowercased()) {
+                _ = try db.findOrCreateCorrespondent(name: name)
+                knownCorr.insert(name.lowercased())
+                newCorrespondents += 1
+            }
+        }
+        return (newCategories, newCorrespondents)
+    }
+
     // MARK: - Mapping & Upload
 
     /// Mapping: Korrespondent / Kategorie (→ Document Type) / Tags per Name → paperless-ID (find-or-create).

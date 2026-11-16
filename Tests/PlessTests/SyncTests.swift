@@ -49,6 +49,8 @@ enum SyncTests {
         MiniTest.test("DB: sync_state-Transitionen (setSyncEntry→synced, setSyncState, markUnknownAsNotSynced)") { try syncStateTransitions() }
         MiniTest.test("DB: sync_map set/get/delete + meta_sha256-Roundtrip") { try syncMapCrud() }
         MiniTest.test("Client: updateDocument baut PATCH-JSON (null bei leeren Referenzen, tags als Liste)") { try updateDocumentPatch() }
+        MiniTest.test("Client: listDocumentTypes/listCorrespondents folgen der Paginierung (next)") { try listPagination() }
+        MiniTest.test("SyncService: pullMetadata importiert Document Types→Kategorien + Correspondents→Korrespondenten (paginiert, case-insensitiv idempotent)") { try pullMetadataImport() }
         MiniTest.test("Client: find-or-create legt an bzw. findet vorhanden (case-insensitiv), Token-Header") { try findOrCreate() }
         MiniTest.test("Client: checksumExists liefert ID bzw. nil") { try checksumLookup() }
         MiniTest.test("Client: postDocument baut multipart mit allen Feldern (Datei, Titel, created, IDs, Tags)") { try postDocumentMultipart() }
@@ -331,6 +333,72 @@ enum SyncTests {
         var thrown = false
         do { _ = try await clientBad.ping() } catch { thrown = true }
         try MiniTest.expect(thrown, "401 muss Fehler werfen")
+        }
+    }
+
+    private static func listPagination() throws {
+        try awaitAsync {
+        let transport = FakeTransport { req in
+            if req.path == "/api/document_types/" && (req.query ?? "").contains("page=2") {
+                return (200, json(["count": 2, "next": NSNull(), "results": [["id": 2, "name": "Steuern"]]]))
+            }
+            if req.path == "/api/document_types/" {
+                return (200, json(["count": 2, "next": "https://paperless.test/api/document_types/?page=2",
+                                  "results": [["id": 1, "name": "Arbeitsvertrag"]]]))
+            }
+            if req.path == "/api/correspondents/" {
+                return (200, json(["count": 1, "next": NSNull(), "results": [["id": 5, "name": "Allianz"]]]))
+            }
+            return (404, Data())
+        }
+        let client = PaperlessClient(config: config(), transport: transport)
+        try MiniTest.expectEqual(try await client.listDocumentTypes(),
+                                [NamedResource(id: 1, name: "Arbeitsvertrag"), NamedResource(id: 2, name: "Steuern")])
+        try MiniTest.expectEqual(try await client.listCorrespondents(), [NamedResource(id: 5, name: "Allianz")])
+        // page=2 wurde über die absolute next-URL abgerufen
+        try MiniTest.expect(transport.requests.contains { ($0.query ?? "").contains("page=2") })
+        }
+    }
+
+    private static func pullMetadataImport() throws {
+        try awaitAsync {
+        let root = PDFFixture.tempDir("pless-pull")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let vault = try Vault(root: root)
+        let db = try Database(url: vault.databaseURL)
+        // lokal schon vorhanden (andere Schreibweise): "steuern" / "allianz"
+        _ = try db.findOrCreateCategory(name: "steuern")
+        _ = try db.findOrCreateCorrespondent(name: "allianz")
+
+        let transport = FakeTransport { req in
+            if req.path == "/api/document_types/" && (req.query ?? "").contains("page=2") {
+                return (200, json(["count": 2, "next": NSNull(), "results": [["id": 2, "name": "Rechnungen"]]]))
+            }
+            if req.path == "/api/document_types/" {
+                return (200, json(["count": 2, "next": "https://paperless.test/api/document_types/?page=2",
+                                  "results": [["id": 1, "name": "Steuern"]]]))   // matcht lokal "steuern" case-insensitiv
+            }
+            if req.path == "/api/correspondents/" {
+                return (200, json(["count": 2, "next": NSNull(),
+                                  "results": [["id": 5, "name": "Allianz"], ["id": 6, "name": "Stadtwerke"]]]))
+            }
+            return (404, Data())
+        }
+        let client = PaperlessClient(config: config(), transport: transport)
+        let service = SyncService(db: db, vault: vault, client: client)
+
+        let r1 = try await service.pullMetadata()
+        try MiniTest.expectEqual(r1.categories, 1)       // nur "Rechnungen" neu — "Steuern" gab es schon als "steuern"
+        try MiniTest.expectEqual(r1.correspondents, 1)   // nur "Stadtwerke" neu — "Allianz" gab es schon als "allianz"
+        try MiniTest.expectEqual(try db.categories().map { $0.name.lowercased() }.sorted(), ["rechnungen", "steuern"])
+        try MiniTest.expectEqual(try db.correspondents().map { $0.name }.sorted(), ["Stadtwerke", "allianz"])
+
+        // idempotent: zweiter Lauf legt nichts mehr neu an
+        let r2 = try await service.pullMetadata()
+        try MiniTest.expectEqual(r2.categories, 0)
+        try MiniTest.expectEqual(r2.correspondents, 0)
+        try MiniTest.expectEqual(try db.categories().count, 2)
+        try MiniTest.expectEqual(try db.correspondents().count, 2)
         }
     }
 
