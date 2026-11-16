@@ -325,6 +325,7 @@ Kategorien
 | 2026-11-15 | 03910d8 | 6 | feat: Heuristik erkennt Langdaten wie „8. Oktober 2026“ (inkl. Abkürzungen) → Kurzform yyyy-MM-dd in den Datums-Vorschlägen — 77 Tests grün |
 | 2026-11-15 | f0d1413 | 6 | feat: Heuristik erkennt US-Datum 12/08/2026 (MM/DD/YYYY) → 2026-12-08, auch 2-stelliges Jahr — 78 Tests grün |
 | 2026-11-15 | bacf089 | 6 | feat: Kategorie-Klick filtert Übersicht; farbiges Kategorie-Tag auf den Karten; Auto-Farbe pro Kategorie (Palette) — 79 Tests grün |
+| 2026-11-15 | c0e6027 | 6 | feat: Kategorie-Auswahl wird in der Sidebar markiert; erneuter Klick → wieder alle Dokumente — 79 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
