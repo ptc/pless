@@ -388,6 +388,7 @@ Kategorien
 | 2026-11-17 | e7d961a | — | feat: App-Icon aus docs/pless-app-icon-svg.svg (qlmanage→PNG→iconset), Orientation-Fix kopfüber, README zeigt SVG — 96 Tests grün |
 | 2026-11-17 | 7dc2e75 | — | docs: englische Versionen aller Docs (.en.md) + Sprachumschalter in der README — 96 Tests grün |
 | 2026-11-17 | 80cd00d | — | feat: App-UI zweisprachig (de/en) — L10n-Tabelle in PlessCore, Sprachwahl in den Einstellungen → Allgemein — 98 Tests grün |
+| 2026-11-17 | 28ead0c | — | feat: UI-Sprache „System“ als Default (system/de/en) — OS-Sprache entscheidet ansonsten — 99 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
