@@ -377,6 +377,7 @@ Kategorien
 | 2026-11-16 | 730480d | 13/UI | feat: paperless-Einstellungen als Tab-Fenster, Token in Keychain; fix: EnvironmentObject-Crash im Settings-Sheet — 94 Tests grün |
 | 2026-11-16 | 21c4ef6 | UI | fix(ui): Spalten-Mindestbreiten im Split-View (Sidebar min. 230pt, Vorschau initial 400pt), Fenster min. 1000pt — 94 Tests grün |
 | 2026-11-16 | 1984e36 | UI | fix(ui): Datums-Vorschläge in den Details wrappen per FlowLayout statt in einer Zeile zu schrumpfen — 94 Tests grün |
+| 2026-11-17 | 7d43e7e | — | chore: LICENSE GPL-3.0-or-later + README-Lizenzabschnitt (Dual Licensing, Forks ok, keine externen Abhängigkeiten) — 94 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
