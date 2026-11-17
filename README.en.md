@@ -118,6 +118,18 @@ closed source or distribute it without source disclosure. Contact: dev@ptch.de
 pless has no external dependencies: only Apple system frameworks (loaded dynamically
 from macOS, not distributed with the app) and the system SQLite (public domain).
 
+## Disclaimer
+
+**Use at your own risk.** pless is a private project at an early stage of development
+(0.1.x) and is provided without any warranty — neither of functionality nor of data
+integrity. Before productive use, back up your vault regularly (the vault is a plain
+folder, e.g. via Time Machine or manually).
+
+pless is **not** affiliated with paperless-ngx and is not endorsed by it. “paperless” and
+“paperless-ngx” are trademarks of their respective organizations; pless is an independent
+project with no affiliation to them. The optional sync feature only uses the public API of
+paperless-ngx.
+
 ## Known limitations
 
 - Share extension (Apple share sheet) is still missing — shared PDFs are placed in the
