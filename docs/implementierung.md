@@ -391,6 +391,7 @@ Kategorien
 | 2026-11-17 | 28ead0c | — | feat: UI-Sprache „System“ als Default (system/de/en) — OS-Sprache entscheidet ansonsten — 99 Tests grün |
 | 2026-11-17 | 524a02a | — | feat: Datumsformat „System“ als Default — Anzeige folgt OS-Locale, DB bleibt ISO — 100 Tests grün |
 | 2026-11-17 | 50e9099 | — | docs: Disclaimer in README (de/en) — Benutzung auf eigene Gefahr, keine Verbindung zu paperless-ngx, Marken der jeweiligen Organisationen — 100 Tests grün |
+| 2026-11-17 | 6d86396 | — | docs: Dual-Licensing-Hinweis entschärft (noch Alpha, kein aktives Angebot) — 100 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
