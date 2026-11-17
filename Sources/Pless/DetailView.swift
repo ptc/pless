@@ -73,7 +73,9 @@ struct DetailView: View {
                 .padding(.vertical, 4)
                 Divider()
                 PDFViewRepresentable(url: vault.root.appendingPathComponent(doc.relativePath),
-                                     mode: $pdfMode, zoom: $pdfZoom)
+                                     mode: $pdfMode, zoom: $pdfZoom,
+                                     onSelectionAsTitle: { state.setTitleFromText(doc.id, $0) },
+                                     onSelectionAsCorrespondent: { state.setCorrespondentFromText(doc.id, $0) })
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 // OCR-Text (bei gescannten PDFs liegt der Text nur in der DB, nicht im PDF selbst)
                 // als markierbares, read-only Textfeld — Text kann ausgewählt und kopiert werden.
@@ -125,8 +127,11 @@ struct DetailView: View {
 }
 
 /// PDFView, das bei Modus „Höhe“ die Skalierung an die View-Höhe koppelt (auch bei Resize).
+/// Bietet bei Rechtsklick auf eine Textselektion „Als Titel/Korrespondent übernehmen“ an.
 final class ScaledPDFView: PDFView {
     var fitToHeight = false
+    var onSelectionAsTitle: ((String) -> Void)?
+    var onSelectionAsCorrespondent: ((String) -> Void)?
 
     override func layout() {
         super.layout()
@@ -137,18 +142,47 @@ final class ScaledPDFView: PDFView {
             }
         }
     }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = super.menu(for: event)
+        guard let sel = currentSelection?.string,
+              !sel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return menu }
+        let m = menu ?? NSMenu()
+        m.addItem(NSMenuItem.separator())
+        let t = NSMenuItem(title: "Als Titel übernehmen", action: #selector(useSelectionAsTitle(_:)), keyEquivalent: "")
+        t.target = self
+        m.addItem(t)
+        let c = NSMenuItem(title: "Als Korrespondent übernehmen", action: #selector(useSelectionAsCorrespondent(_:)), keyEquivalent: "")
+        c.target = self
+        m.addItem(c)
+        return m
+    }
+
+    @objc private func useSelectionAsTitle(_ sender: NSMenuItem) {
+        guard let s = currentSelection?.string else { return }
+        onSelectionAsTitle?(s)
+    }
+
+    @objc private func useSelectionAsCorrespondent(_ sender: NSMenuItem) {
+        guard let s = currentSelection?.string else { return }
+        onSelectionAsCorrespondent?(s)
+    }
 }
 
 struct PDFViewRepresentable: NSViewRepresentable {
     let url: URL
     @Binding var mode: PDFMode
     @Binding var zoom: CGFloat
+    var onSelectionAsTitle: ((String) -> Void)?
+    var onSelectionAsCorrespondent: ((String) -> Void)?
 
     func makeNSView(context: Context) -> PDFView {
         let v = ScaledPDFView()
         v.document = PDFDocument(url: url)
         v.autoScales = false
         v.fitToHeight = true
+        v.onSelectionAsTitle = onSelectionAsTitle
+        v.onSelectionAsCorrespondent = onSelectionAsCorrespondent
         return v
     }
 
@@ -157,6 +191,8 @@ struct PDFViewRepresentable: NSViewRepresentable {
             nsView.document = PDFDocument(url: url)
         }
         guard let v = nsView as? ScaledPDFView else { return }
+        v.onSelectionAsTitle = onSelectionAsTitle
+        v.onSelectionAsCorrespondent = onSelectionAsCorrespondent
         switch mode {
         case .fit:
             v.fitToHeight = false
