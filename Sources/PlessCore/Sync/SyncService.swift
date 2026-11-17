@@ -35,7 +35,9 @@ public enum SyncStep: Equatable, Sendable {
 }
 
 /// Einweg-Push (Upload) in eine paperless-ngx-Instanz. Idempotent über `sync_map` + Checksum.
-public final class SyncService {
+/// Läuft immer single-threaded pro Instanz (AppState guardt mit syncRunning und baut den
+/// Service pro Lauf frisch) — db/vault/client sind Sendable (Database via FULLMUTEX).
+public final class SyncService: @unchecked Sendable {
     private let db: Database
     private let vault: Vault
     private let client: PaperlessClient

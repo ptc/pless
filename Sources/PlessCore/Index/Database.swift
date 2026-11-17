@@ -7,7 +7,9 @@ private typealias SQLiteDestructor = @convention(c) (UnsafeMutableRawPointer?) -
 private let kSQLiteTransient: SQLiteDestructor? = unsafeBitCast(-1, to: SQLiteDestructor?.self)
 
 /// SQLite-Zugriff auf `pless.db` im Vault. Schema-Migrationen über `PRAGMA user_version`.
-public final class Database {
+/// Verbindung wird mit SQLITE_OPEN_FULLMUTEX geöffnet — alle Aufrufe auf dem Handle sind
+/// damit serverseitig serialisiert, die Klasse ist also bedenkenlos Sendable.
+public final class Database: @unchecked Sendable {
     private var handle: OpaquePointer?
 
     public init(url: URL) throws {

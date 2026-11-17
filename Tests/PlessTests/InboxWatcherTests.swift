@@ -74,7 +74,7 @@ enum InboxWatcherTests {
         let (vault, root) = try makeVault()
         defer { try? FileManager.default.removeItem(at: root) }
         let got = URLBox()
-        let watcher = InboxWatcher(vault: vault, pollInterval: 0.2) { url in got.append(url) }
+        let watcher = InboxWatcher(vault: vault, onNewFile: { url in got.append(url) }, pollInterval: 0.2)
         try watcher.start()
         defer { watcher.stop() }
 

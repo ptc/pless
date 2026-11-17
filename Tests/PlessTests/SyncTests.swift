@@ -4,7 +4,13 @@ import PlessCore
 
 // MARK: - Fake-Transport: zeichnet Anfragen auf und beantwortet sie aus einem Handler.
 
-final class FakeTransport: HTTPTransport {
+/// Referenzbox für mutable Test-Variablen, die in @Sendable-Closures captured werden.
+final class Box<T>: @unchecked Sendable {
+    var value: T
+    init(_ value: T) { self.value = value }
+}
+
+final class FakeTransport: @unchecked Sendable, HTTPTransport {
     struct Recorded: Sendable {
         var method: String
         var path: String
@@ -13,9 +19,9 @@ final class FakeTransport: HTTPTransport {
         var contentType: String?
         var body: Data?
     }
-    private let lock = NSLock()
+    // Tests laufen seriell (awaitAsync mit Semaphore) — daher ohne Lock.
     private var recorded: [Recorded] = []
-    var requests: [Recorded] { lock.lock(); defer { lock.unlock() }; return recorded }
+    var requests: [Recorded] { recorded }
     /// Antwort-Handler: bekommt die aufgezeichnete Anfrage, liefert (status, body).
     var handler: @Sendable (Recorded) -> (Int, Data)
 
@@ -37,7 +43,7 @@ final class FakeTransport: HTTPTransport {
             authorization: request.value(forHTTPHeaderField: "Authorization"),
             contentType: request.value(forHTTPHeaderField: "Content-Type"),
             body: request.httpBody)
-        lock.lock(); recorded.append(rec); lock.unlock()
+        recorded.append(rec)
         return handler(rec)
     }
 }
@@ -429,9 +435,9 @@ enum SyncTests {
 
         // Fake-Server: find-or-create vergibt IDs, post_document liefert 42,
         // Checksum-Suche kennt die „hochgeladenen“ sha256
-        var createdIds: [String: Int] = [:]
-        var nextId = 100
-        var uploadedChecksums: Set<String> = []
+        let createdIds = Box<[String: Int]>([:])
+        let nextId = Box(100)
+        let uploadedChecksums = Box<Set<String>>([])
         let transport = FakeTransport { req in
             let path = req.path
             if req.method == "PATCH" && path == "/api/documents/42/" { return (200, json(["id": 42])) }
@@ -439,7 +445,7 @@ enum SyncTests {
                 let q = req.query ?? ""
                 if let range = q.range(of: "checksum=") {
                     let sha = String(q[range.upperBound...])
-                    if uploadedChecksums.contains(sha) {
+                    if uploadedChecksums.value.contains(sha) {
                         return (200, json(["count": 1, "results": [["id": 42, "checksum": sha]]]))
                     }
                 }
@@ -452,9 +458,9 @@ enum SyncTests {
                 return (200, json(["id": 42]))
             }
             if req.method == "POST" {   // create-Ressource
-                nextId += 1
-                createdIds[path] = nextId
-                return (201, json(["id": nextId, "name": "neu"]))
+                nextId.value += 1
+                createdIds.value[path] = nextId.value
+                return (201, json(["id": nextId.value, "name": "neu"]))
             }
             return (404, Data())
         }
@@ -463,12 +469,12 @@ enum SyncTests {
 
         // 1. Durchlauf: 1 Dokument pending → Upload
         try MiniTest.expectEqual(try service.pendingDocuments().count, 1)
-        var progressCalls: [(Int, Int)] = []
-        let outcome1 = try await service.syncAll { done, total in progressCalls.append((done, total)) }
+        let progressCalls = Box<[(Int, Int)]>([])
+        let outcome1 = try await service.syncAll { done, total in progressCalls.value.append((done, total)) }
         try MiniTest.expectEqual(outcome1.uploaded, 1)
         try MiniTest.expectEqual(outcome1.skipped, 0)
         try MiniTest.expectEqual(outcome1.failed.count, 0)
-        try MiniTest.expect(progressCalls.count == 1 && progressCalls[0] == (1, 1), "Fortschritt 1/1 erwartet: \(progressCalls)")
+        try MiniTest.expect(progressCalls.value.count == 1 && progressCalls.value[0] == (1, 1), "Fortschritt 1/1 erwartet: \(progressCalls.value)")
         let entry = try MiniTest.unwrap(try db.syncEntry(for: docId))
         try MiniTest.expectEqual(entry.paperlessId, 42)
         try MiniTest.expectEqual(entry.sha256, sha)
@@ -495,7 +501,7 @@ enum SyncTests {
                             "zweiter Lauf leer erwartet: \(outcome2)")
 
         // 3. Einzel-Sync mit vorhandenem Eintrag + Server-Treffer → skipped
-        uploadedChecksums.insert(sha)
+        uploadedChecksums.value.insert(sha)
         let step = try await service.sync(documentId: docId)
         try MiniTest.expectEqual(step, .skipped(paperlessId: 42))
 

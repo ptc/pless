@@ -103,7 +103,7 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
-        .onChange(of: state.sidebarSelection) { _ in state.refresh() }
+        .onChange(of: state.sidebarSelection) { state.refresh() }
     }
 
     // MARK: - Zeilen

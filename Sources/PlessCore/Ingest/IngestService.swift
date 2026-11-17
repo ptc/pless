@@ -34,7 +34,7 @@ public struct IngestService: Sendable {
         }
         let sha = try FileHash.sha256(of: url)
         if let existing = try db.document(bySHA256: sha) {
-            try? moveToRejected(url)
+            _ = try? moveToRejected(url)
             return .duplicate(existing: existing)
         }
 
@@ -42,7 +42,7 @@ public struct IngestService: Sendable {
         do {
             extraction = try TextExtraction.extract(from: url)
         } catch {
-            try? moveToRejected(url)
+            _ = try? moveToRejected(url)
             return .rejected(reason: "kein gültiges PDF")
         }
 
@@ -61,7 +61,7 @@ public struct IngestService: Sendable {
         } catch let err as PlessError {
             // Race: derselbe Inhalt wurde inzwischen (anderer Thread) importiert
             if case .duplicateSHA256 = err {
-                try? moveToRejected(url)
+                _ = try? moveToRejected(url)
                 if let existing = try? db.document(bySHA256: sha) {
                     return .duplicate(existing: existing)
                 }

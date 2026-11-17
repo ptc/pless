@@ -57,7 +57,7 @@ final class AppState: ObservableObject {
     private var watcher: InboxWatcher?
     /// Posteingang-Dateien, die gerade verarbeitet werden — der Watcher kann dieselbe
     /// Datei mehrfach melden (write+rename, Poll), das darf nicht doppelt importieren.
-    private let inFlightLock = NSLock()
+    // AppState ist @MainActor — direkter Zugriff auf inFlightInbox ist actorsicher (kein NSLock nötig)
     private var inFlightInbox = Set<String>()
 
     let vaultPath: URL
@@ -379,10 +379,8 @@ final class AppState: ObservableObject {
     /// Datei liegt bereits in inbox/ (Watcher) → direkt in die Pipeline (asynchron).
     func ingestInboxFile(_ url: URL) {
         guard let ingest, FileManager.default.fileExists(atPath: url.path) else { return }
-        inFlightLock.lock()
-        if inFlightInbox.contains(url.path) { inFlightLock.unlock(); return }
+        if inFlightInbox.contains(url.path) { return }
         inFlightInbox.insert(url.path)
-        inFlightLock.unlock()
         setStatus(.busy, "Posteingang: \(url.lastPathComponent) erkannt — importiere…")
         DispatchQueue.global(qos: .userInitiated).async {
             var failure: String?
@@ -405,7 +403,7 @@ final class AppState: ObservableObject {
                 } else if case .rejected(let reason) = outcome {
                     self.setStatus(.error, "Posteingang: \(url.lastPathComponent) zurückgewiesen (\(reason)) — Datei → _abgelehnt/")
                 }
-                self.inFlightLock.lock(); self.inFlightInbox.remove(url.path); self.inFlightLock.unlock()
+                self.inFlightInbox.remove(url.path)
                 self.runOCR()
                 self.refresh()
             }
@@ -423,7 +421,7 @@ final class AppState: ObservableObject {
         for p in fileProviders {
             group.enter()
             // loadObject(ofClass:) — loadItem(forTypeIdentifier:) ist ab macOS 27 deprecated
-            p.loadObject(ofClass: URL.self) { url, _ in
+            _ = p.loadObject(ofClass: URL.self) { url, _ in
                 if let url { sink.add(url) }
                 group.leave()
             }

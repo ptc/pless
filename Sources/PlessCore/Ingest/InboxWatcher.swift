@@ -38,7 +38,7 @@ public final class InboxWatcher: @unchecked Sendable {
     private func startPolling() {
         poll?.cancel()
         let p = DispatchSource.makeTimerSource(queue: queue)
-        p.scheduleRepeating(deadline: .now() + pollInterval, interval: pollInterval)
+        p.schedule(deadline: .now() + pollInterval, repeating: pollInterval)
         p.setEventHandler { [weak self] in self?.scanNow() }
         p.resume()
         poll = p
