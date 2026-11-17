@@ -38,13 +38,15 @@ struct DetailView: View {
                         pdfMode = .full
                         pdfZoom = min(8, pdfZoom * 1.25)
                     } label: { Image(systemName: "plus.magnifyingglass") }
-                    if !doc.ocrDone {
-                        Button {
-                            if let id = doc.id { state.startOCR(for: id) }
-                        } label: { Label("OCR starten", systemImage: "text.viewfinder") }
-                        .disabled(state.ocrRunning)
-                        .help("OCR für dieses Dokument jetzt ausführen (Status „OCR offen“)")
+                    Button {
+                        if let id = doc.id { state.startOCR(for: id) }
+                    } label: {
+                        Label(doc.ocrDone ? "OCR erneut" : "OCR starten", systemImage: "text.viewfinder")
                     }
+                    .disabled(state.ocrRunning)
+                    .help(doc.ocrDone
+                          ? "OCR für dieses Dokument erneut ausführen (z. B. nach Änderung der OCR-Einstellungen) — überschreibt den bisherigen OCR-Text; bereits gesetzte Metadaten bleiben erhalten"
+                          : "OCR für dieses Dokument jetzt ausführen (Status „OCR offen“)")
                     if doc.ocrText != nil {
                         Button { showOCRText.toggle() } label: {
                             Label("OCR-Text", systemImage: "text.alignleft")
