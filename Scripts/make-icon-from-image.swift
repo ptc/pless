@@ -34,12 +34,14 @@ func render(size: Int, to name: String) throws {
         throw NSError(domain: "pless.icon", code: 1, userInfo: [NSLocalizedDescriptionKey: "kein CGContext"])
     }
     ctx.interpolationQuality = .high
-    // mittiger Quadrat-Crop (aspect-fill): CGContext ist y-up, Quelle zeichnen mit Crop-Offset
+    // mittiger Quadrat-Crop (aspect-fill), Quelle AUFRECHT zeichnen (kein y-Flip —
+    // CGContext.draw bildet das Bild sonst kopfüber in die PNG ab)
+    let scale = CGFloat(size) / side
     ctx.saveGState()
     ctx.clip(to: CGRect(x: 0, y: 0, width: CGFloat(size), height: CGFloat(size)))
-    ctx.translateBy(x: 0, y: CGFloat(size))
-    ctx.scaleBy(x: CGFloat(size) / side, y: -CGFloat(size) / side)
-    ctx.draw(img, in: CGRect(x: -cropRect.minX, y: -cropRect.minY, width: srcW, height: srcH))
+    ctx.translateBy(x: -cropRect.minX * scale, y: -cropRect.minY * scale)
+    ctx.scaleBy(x: scale, y: scale)
+    ctx.draw(img, in: CGRect(x: 0, y: 0, width: srcW, height: srcH))
     ctx.restoreGState()
 
     guard let out = ctx.makeImage() else {

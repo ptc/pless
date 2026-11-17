@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <clipPath id="squircle">
+      <rect x="0" y="0" width="1024" height="1024" rx="228"/>
+    </clipPath>
+    <linearGradient id="foldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8EEF4"/>
+      <stop offset="1" stop-color="#C9D6E2"/>
+    </linearGradient>
+    <filter id="sheetShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="24" flood-color="#04122B" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <g clip-path="url(#squircle)">
+    <!-- Triangulated mosaic background: squares split into triangles, diagonal gradient, Material blue palette, subtle per-facet variation -->
+    <path d="M 0 0 H 64 L 0 64 Z" fill="#5aa6e4"/>
+    <path d="M 64 0 V 64 H 0 Z" fill="#5fadeb"/>
+    <path d="M 64 0 H 128 L 64 64 Z" fill="#55a5e7"/>
+    <path d="M 128 0 V 64 H 64 Z" fill="#5baaea"/>
+    <path d="M 128 0 H 192 L 128 64 Z" fill="#51a6ec"/>
+    <path d="M 192 0 V 64 H 128 Z" fill="#53a2e3"/>
+    <path d="M 192 0 H 256 L 192 64 Z" fill="#49a1e9"/>
+    <path d="M 256 0 V 64 H 192 Z" fill="#50a6ec"/>
+    <path d="M 256 0 H 320 L 256 64 Z" fill="#439eea"/>
+    <path d="M 320 0 V 64 H 256 Z" fill="#49a0e9"/>
+    <path d="M 320 0 H 384 L 320 64 Z" fill="#3b96e3"/>
+    <path d="M 384 0 V 64 H 320 Z" fill="#3f95de"/>
+    <path d="M 384 0 H 448 L 384 64 Z" fill="#3492e2"/>
+    <path d="M 448 0 V 64 H 384 Z" fill="#3a96e3"/>
+    <path d="M 448 0 H 512 L 448 64 Z" fill="#2d8cde"/>
+    <path d="M 512 0 V 64 H 448 Z" fill="#3491e1"/>
+    <path d="M 512 0 H 576 L 512 64 Z" fill="#2686da"/>
+    <path d="M 576 0 V 64 H 512 Z" fill="#2e90e5"/>
+    <path d="M 576 0 H 640 L 576 64 Z" fill="#1f82d9"/>
+    <path d="M 640 0 V 64 H 576 Z" fill="#278ae1"/>
+    <path d="M 640 0 H 704 L 640 64 Z" fill="#1b7bd2"/>
+    <path d="M 704 0 V 64 H 640 Z" fill="#1e80d5"/>
+    <path d="M 704 0 H 768 L 704 64 Z" fill="#1a7bd5"/>
+    <path d="M 768 0 V 64 H 704 Z" fill="#1b7fd8"/>
+    <path d="M 768 0 H 832 L 768 64 Z" fill="#1872c9"/>
+    <path d="M 832 0 V 64 H 768 Z" fill="#1a7ad4"/>
+    <path d="M 832 0 H 896 L 832 64 Z" fill="#176cc4"/>
+    <path d="M 896 0 V 64 H 832 Z" fill="#1872cb"/>
+    <path d="M 896 0 H 960 L 896 64 Z" fill="#1568c1"/>
+    <path d="M 960 0 V 64 H 896 Z" fill="#166bc2"/>
+    <path d="M 960 0 H 1024 L 960 64 Z" fill="#1463bd"/>
+    <path d="M 1024 0 V 64 H 960 Z" fill="#1567c0"/>
+    <path d="M 0 64 H 64 L 0 128 Z" fill="#57aaee"/>
+    <path d="M 64 64 V 128 H 0 Z" fill="#5cabec"/>
+    <path d="M 64 64 H 128 L 64 128 Z" fill="#4d9ee2"/>
+    <path d="M 128 64 V 128 H 64 Z" fill="#55a6e8"/>
+    <path d="M 128 64 H 192 L 128 128 Z" fill="#4aa1ea"/>
+    <path d="M 192 64 V 128 H 128 Z" fill="#4c9ee1"/>
+    <path d="M 192 64 H 256 L 192 128 Z" fill="#429be6"/>
+    <path d="M 256 64 V 128 H 192 Z" fill="#469adf"/>
+    <path d="M 256 64 H 320 L 256 128 Z" fill="#3c98e6"/>
+    <path d="M 320 64 V 128 H 256 Z" fill="#419ae5"/>
+    <path d="M 320 64 H 384 L 320 128 Z" fill="#3492e2"/>
+    <path d="M 384 64 V 128 H 320 Z" fill="#3991dd"/>
+    <path d="M 384 64 H 448 L 384 128 Z" fill="#2f91e6"/>
+    <path d="M 448 64 V 128 H 384 Z" fill="#338fdf"/>
+    <path d="M 448 64 H 512 L 448 128 Z" fill="#288ce3"/>
+    <path d="M 512 64 V 128 H 448 Z" fill="#2b88d8"/>
+    <path d="M 512 64 H 576 L 512 128 Z" fill="#2187e0"/>
+    <path d="M 576 64 V 128 H 512 Z" fill="#2586d9"/>
+    <path d="M 576 64 H 640 L 576 128 Z" fill="#1c83de"/>
+    <path d="M 640 64 V 128 H 576 Z" fill="#2085de"/>
+    <path d="M 640 64 H 704 L 640 128 Z" fill="#1a7bd5"/>
+    <path d="M 704 64 V 128 H 640 Z" fill="#1c80da"/>
+    <path d="M 704 64 H 768 L 704 128 Z" fill="#1974cd"/>
+    <path d="M 768 64 V 128 H 704 Z" fill="#1975cb"/>
+    <path d="M 768 64 H 832 L 768 128 Z" fill="#166ac1"/>
+    <path d="M 832 64 V 128 H 768 Z" fill="#176fc5"/>
+    <path d="M 832 64 H 896 L 832 128 Z" fill="#1669c3"/>
+    <path d="M 896 64 V 128 H 832 Z" fill="#166ac0"/>
+    <path d="M 896 64 H 960 L 896 128 Z" fill="#135eb3"/>
+    <path d="M 960 64 V 128 H 896 Z" fill="#1464ba"/>
+    <path d="M 960 64 H 1024 L 960 128 Z" fill="#125cb5"/>
+    <path d="M 1024 64 V 128 H 960 Z" fill="#135db3"/>
+    <path d="M 0 128 H 64 L 0 192 Z" fill="#4d9ee1"/>
+    <path d="M 64 128 V 192 H 0 Z" fill="#57aaee"/>
+    <path d="M 64 128 H 128 L 64 192 Z" fill="#489ee5"/>
+    <path d="M 128 128 V 192 H 64 Z" fill="#4ea1e6"/>
+    <path d="M 128 128 H 192 L 128 192 Z" fill="#439ce8"/>
+    <path d="M 192 128 V 192 H 128 Z" fill="#479de4"/>
+    <path d="M 192 128 H 256 L 192 192 Z" fill="#3c98e6"/>
+    <path d="M 256 128 V 192 H 192 Z" fill="#4097e0"/>
+    <path d="M 256 128 H 320 L 256 192 Z" fill="#3491e1"/>
+    <path d="M 320 128 V 192 H 256 Z" fill="#3991dc"/>
+    <path d="M 320 128 H 384 L 320 192 Z" fill="#2e90e4"/>
+    <path d="M 384 128 V 192 H 320 Z" fill="#3493e4"/>
+    <path d="M 384 128 H 448 L 384 192 Z" fill="#278adf"/>
+    <path d="M 448 128 V 192 H 384 Z" fill="#2d8cdf"/>
+    <path d="M 448 128 H 512 L 448 192 Z" fill="#2086df"/>
+    <path d="M 512 128 V 192 H 448 Z" fill="#268ae0"/>
+    <path d="M 512 128 H 576 L 512 192 Z" fill="#1c80d9"/>
+    <path d="M 576 128 V 192 H 512 Z" fill="#2087e2"/>
+    <path d="M 576 128 H 640 L 576 192 Z" fill="#1a7bd5"/>
+    <path d="M 640 128 V 192 H 576 Z" fill="#1c80da"/>
+    <path d="M 640 128 H 704 L 640 192 Z" fill="#186fc5"/>
+    <path d="M 704 128 V 192 H 640 Z" fill="#1976cd"/>
+    <path d="M 704 128 H 768 L 704 192 Z" fill="#176fc9"/>
+    <path d="M 768 128 V 192 H 704 Z" fill="#1974ce"/>
+    <path d="M 768 128 H 832 L 768 192 Z" fill="#1566bd"/>
+    <path d="M 832 128 V 192 H 768 Z" fill="#166bc2"/>
+    <path d="M 832 128 H 896 L 832 192 Z" fill="#1461ba"/>
+    <path d="M 896 128 V 192 H 832 Z" fill="#1565bd"/>
+    <path d="M 896 128 H 960 L 896 192 Z" fill="#1158ad"/>
+    <path d="M 960 128 V 192 H 896 Z" fill="#135eb4"/>
+    <path d="M 960 128 H 1024 L 960 192 Z" fill="#1051a5"/>
+    <path d="M 1024 128 V 192 H 960 Z" fill="#125bb4"/>
+    <path d="M 0 192 H 64 L 0 256 Z" fill="#489fe7"/>
+    <path d="M 64 192 V 256 H 0 Z" fill="#4fa4e9"/>
+    <path d="M 64 192 H 128 L 64 256 Z" fill="#4198e1"/>
+    <path d="M 128 192 V 256 H 64 Z" fill="#49a0e9"/>
+    <path d="M 128 192 H 192 L 128 256 Z" fill="#3c98e6"/>
+    <path d="M 192 192 V 256 H 128 Z" fill="#3f95de"/>
+    <path d="M 192 192 H 256 L 192 256 Z" fill="#3491e0"/>
+    <path d="M 256 192 V 256 H 192 Z" fill="#3993e0"/>
+    <path d="M 256 192 H 320 L 256 256 Z" fill="#2c89d8"/>
+    <path d="M 320 192 V 256 H 256 Z" fill="#3492e3"/>
+    <path d="M 320 192 H 384 L 320 256 Z" fill="#2685d8"/>
+    <path d="M 384 192 V 256 H 320 Z" fill="#2d8cde"/>
+    <path d="M 384 192 H 448 L 384 256 Z" fill="#2085de"/>
+    <path d="M 448 192 V 256 H 384 Z" fill="#2586d9"/>
+    <path d="M 448 192 H 512 L 448 256 Z" fill="#1b7dd5"/>
+    <path d="M 512 192 V 256 H 448 Z" fill="#2086e0"/>
+    <path d="M 512 192 H 576 L 512 256 Z" fill="#1a78d0"/>
+    <path d="M 576 192 V 256 H 512 Z" fill="#1c80db"/>
+    <path d="M 576 192 H 640 L 576 256 Z" fill="#1873cc"/>
+    <path d="M 640 192 V 256 H 576 Z" fill="#1a7bd5"/>
+    <path d="M 640 192 H 704 L 640 256 Z" fill="#176cc4"/>
+    <path d="M 704 192 V 256 H 640 Z" fill="#1871c8"/>
+    <path d="M 704 192 H 768 L 704 256 Z" fill="#1565bc"/>
+    <path d="M 768 192 V 256 H 704 Z" fill="#176ec9"/>
+    <path d="M 768 192 H 832 L 768 256 Z" fill="#1463bd"/>
+    <path d="M 832 192 V 256 H 768 Z" fill="#1464ba"/>
+    <path d="M 832 192 H 896 L 832 256 Z" fill="#125cb5"/>
+    <path d="M 896 192 V 256 H 832 Z" fill="#1461bb"/>
+    <path d="M 896 192 H 960 L 896 256 Z" fill="#1051a5"/>
+    <path d="M 960 192 V 256 H 896 Z" fill="#1158ae"/>
+    <path d="M 960 192 H 1024 L 960 256 Z" fill="#0f4da4"/>
+    <path d="M 1024 192 V 256 H 960 Z" fill="#0f50a5"/>
+    <path d="M 0 256 H 64 L 0 320 Z" fill="#4096de"/>
+    <path d="M 64 256 V 320 H 0 Z" fill="#479be2"/>
+    <path d="M 64 256 H 128 L 64 320 Z" fill="#3a94e1"/>
+    <path d="M 128 256 V 320 H 64 Z" fill="#429de9"/>
+    <path d="M 128 256 H 192 L 128 320 Z" fill="#338ddb"/>
+    <path d="M 192 256 V 320 H 128 Z" fill="#3a95e2"/>
+    <path d="M 192 256 H 256 L 192 320 Z" fill="#2d8cdd"/>
+    <path d="M 256 256 V 320 H 192 Z" fill="#338fde"/>
+    <path d="M 256 256 H 320 L 256 320 Z" fill="#2687db"/>
+    <path d="M 320 256 V 320 H 256 Z" fill="#2c8bdd"/>
+    <path d="M 320 256 H 384 L 320 320 Z" fill="#2085de"/>
+    <path d="M 384 256 V 320 H 320 Z" fill="#2584d6"/>
+    <path d="M 384 256 H 448 L 384 320 Z" fill="#1c82dd"/>
+    <path d="M 448 256 V 320 H 384 Z" fill="#1f83db"/>
+    <path d="M 448 256 H 512 L 448 320 Z" fill="#1975cb"/>
+    <path d="M 512 256 V 320 H 448 Z" fill="#1b7ed7"/>
+    <path d="M 512 256 H 576 L 512 320 Z" fill="#1974cd"/>
+    <path d="M 576 256 V 320 H 512 Z" fill="#1977ce"/>
+    <path d="M 576 256 H 640 L 576 320 Z" fill="#176ec8"/>
+    <path d="M 640 256 V 320 H 576 Z" fill="#1975d0"/>
+    <path d="M 640 256 H 704 L 640 320 Z" fill="#1565bc"/>
+    <path d="M 704 256 V 320 H 640 Z" fill="#1669c0"/>
+    <path d="M 704 256 H 768 L 704 320 Z" fill="#1462bb"/>
+    <path d="M 768 256 V 320 H 704 Z" fill="#1565bc"/>
+    <path d="M 768 256 H 832 L 768 320 Z" fill="#125ab2"/>
+    <path d="M 832 256 V 320 H 768 Z" fill="#135eb4"/>
+    <path d="M 832 256 H 896 L 832 320 Z" fill="#1052a7"/>
+    <path d="M 896 256 V 320 H 832 Z" fill="#1158ae"/>
+    <path d="M 896 256 H 960 L 896 320 Z" fill="#0f4fa7"/>
+    <path d="M 960 256 V 320 H 896 Z" fill="#1051a5"/>
+    <path d="M 960 256 H 1024 L 960 320 Z" fill="#0d48a0"/>
+    <path d="M 1024 256 V 320 H 960 Z" fill="#0e4ca2"/>
+    <path d="M 0 320 H 64 L 0 384 Z" fill="#3b96e3"/>
+    <path d="M 64 320 V 384 H 0 Z" fill="#429be7"/>
+    <path d="M 64 320 H 128 L 64 384 Z" fill="#338edc"/>
+    <path d="M 128 320 V 384 H 64 Z" fill="#3991dc"/>
+    <path d="M 128 320 H 192 L 128 384 Z" fill="#2d8ddf"/>
+    <path d="M 192 320 V 384 H 128 Z" fill="#3492e2"/>
+    <path d="M 192 320 H 256 L 192 384 Z" fill="#2789de"/>
+    <path d="M 256 320 V 384 H 192 Z" fill="#2e90e4"/>
+    <path d="M 256 320 H 320 L 256 384 Z" fill="#1f80d4"/>
+    <path d="M 320 320 V 384 H 256 Z" fill="#2689df"/>
+    <path d="M 320 320 H 384 L 320 384 Z" fill="#1b7bd2"/>
+    <path d="M 384 320 V 384 H 320 Z" fill="#2085dd"/>
+    <path d="M 384 320 H 448 L 384 384 Z" fill="#1975cb"/>
+    <path d="M 448 320 V 384 H 384 Z" fill="#1b7dd4"/>
+    <path d="M 448 320 H 512 L 448 384 Z" fill="#1870c6"/>
+    <path d="M 512 320 V 384 H 448 Z" fill="#1977ce"/>
+    <path d="M 512 320 H 576 L 512 384 Z" fill="#176fc9"/>
+    <path d="M 576 320 V 384 H 512 Z" fill="#1871c9"/>
+    <path d="M 576 320 H 640 L 576 384 Z" fill="#1565bb"/>
+    <path d="M 640 320 V 384 H 576 Z" fill="#176dc7"/>
+    <path d="M 640 320 H 704 L 640 384 Z" fill="#135eb3"/>
+    <path d="M 704 320 V 384 H 640 Z" fill="#1463b9"/>
+    <path d="M 704 320 H 768 L 704 384 Z" fill="#1158ad"/>
+    <path d="M 768 320 V 384 H 704 Z" fill="#135eb5"/>
+    <path d="M 768 320 H 832 L 768 384 Z" fill="#1051a6"/>
+    <path d="M 832 320 V 384 H 768 Z" fill="#1158ad"/>
+    <path d="M 832 320 H 896 L 832 384 Z" fill="#0e4da3"/>
+    <path d="M 896 320 V 384 H 832 Z" fill="#1054ad"/>
+    <path d="M 896 320 H 960 L 896 384 Z" fill="#0d479e"/>
+    <path d="M 960 320 V 384 H 896 Z" fill="#0f4ea7"/>
+    <path d="M 960 320 H 1024 L 960 384 Z" fill="#0c4398"/>
+    <path d="M 1024 320 V 384 H 960 Z" fill="#0d459b"/>
+    <path d="M 0 384 H 64 L 0 448 Z" fill="#3594e5"/>
+    <path d="M 64 384 V 448 H 0 Z" fill="#3991dd"/>
+    <path d="M 64 384 H 128 L 64 448 Z" fill="#2e8fe3"/>
+    <path d="M 128 384 V 448 H 64 Z" fill="#328edc"/>
+    <path d="M 128 384 H 192 L 128 448 Z" fill="#2687db"/>
+    <path d="M 192 384 V 448 H 128 Z" fill="#2d8fe3"/>
+    <path d="M 192 384 H 256 L 192 448 Z" fill="#1f81d6"/>
+    <path d="M 256 384 V 448 H 192 Z" fill="#2586da"/>
+    <path d="M 256 384 H 320 L 256 448 Z" fill="#1b7fd8"/>
+    <path d="M 320 384 V 448 H 256 Z" fill="#1f81d7"/>
+    <path d="M 320 384 H 384 L 320 448 Z" fill="#1a7bd6"/>
+    <path d="M 384 384 V 448 H 320 Z" fill="#1b7dd5"/>
+    <path d="M 384 384 H 448 L 384 448 Z" fill="#1870c6"/>
+    <path d="M 448 384 V 448 H 384 Z" fill="#1974ca"/>
+    <path d="M 448 384 H 512 L 448 448 Z" fill="#176fc9"/>
+    <path d="M 512 384 V 448 H 448 Z" fill="#1873cc"/>
+    <path d="M 512 384 H 576 L 512 448 Z" fill="#1568c2"/>
+    <path d="M 576 384 V 448 H 512 Z" fill="#176dc5"/>
+    <path d="M 576 384 H 640 L 576 448 Z" fill="#135fb6"/>
+    <path d="M 640 384 V 448 H 576 Z" fill="#1567c0"/>
+    <path d="M 640 384 H 704 L 640 448 Z" fill="#1157ac"/>
+    <path d="M 704 384 V 448 H 640 Z" fill="#1360b9"/>
+    <path d="M 704 384 H 768 L 704 448 Z" fill="#1055ae"/>
+    <path d="M 768 384 V 448 H 704 Z" fill="#1157ab"/>
+    <path d="M 768 384 H 832 L 768 448 Z" fill="#0e4ca2"/>
+    <path d="M 832 384 V 448 H 768 Z" fill="#1054ac"/>
+    <path d="M 832 384 H 896 L 832 448 Z" fill="#0d48a0"/>
+    <path d="M 896 384 V 448 H 832 Z" fill="#0e4da3"/>
+    <path d="M 896 384 H 960 L 896 448 Z" fill="#0c4399"/>
+    <path d="M 960 384 V 448 H 896 Z" fill="#0c4599"/>
+    <path d="M 960 384 H 1024 L 960 448 Z" fill="#0c3f8f"/>
+    <path d="M 1024 384 V 448 H 960 Z" fill="#0c4193"/>
+    <path d="M 0 448 H 64 L 0 512 Z" fill="#2c89da"/>
+    <path d="M 64 448 V 512 H 0 Z" fill="#338edd"/>
+    <path d="M 64 448 H 128 L 64 512 Z" fill="#278ae0"/>
+    <path d="M 128 448 V 512 H 64 Z" fill="#2d8fe3"/>
+    <path d="M 128 448 H 192 L 128 512 Z" fill="#2084dc"/>
+    <path d="M 192 448 V 512 H 128 Z" fill="#2686db"/>
+    <path d="M 192 448 H 256 L 192 512 Z" fill="#1b7dd5"/>
+    <path d="M 256 448 V 512 H 192 Z" fill="#1f84dc"/>
+    <path d="M 256 448 H 320 L 256 512 Z" fill="#1b7cd6"/>
+    <path d="M 320 448 V 512 H 256 Z" fill="#1b7dd6"/>
+    <path d="M 320 448 H 384 L 320 512 Z" fill="#1975d0"/>
+    <path d="M 384 448 V 512 H 320 Z" fill="#1a7ad5"/>
+    <path d="M 384 448 H 448 L 384 512 Z" fill="#176dc5"/>
+    <path d="M 448 448 V 512 H 384 Z" fill="#1873cd"/>
+    <path d="M 448 448 H 512 L 448 512 Z" fill="#1463b9"/>
+    <path d="M 512 448 V 512 H 448 Z" fill="#1668bc"/>
+    <path d="M 512 448 H 576 L 512 512 Z" fill="#1462bb"/>
+    <path d="M 576 448 V 512 H 512 Z" fill="#1565bc"/>
+    <path d="M 576 448 H 640 L 576 512 Z" fill="#1259b1"/>
+    <path d="M 640 448 V 512 H 576 Z" fill="#135fb7"/>
+    <path d="M 640 448 H 704 L 640 512 Z" fill="#1055ad"/>
+    <path d="M 704 448 V 512 H 640 Z" fill="#1158ad"/>
+    <path d="M 704 448 H 768 L 704 512 Z" fill="#0e4ba0"/>
+    <path d="M 768 448 V 512 H 704 Z" fill="#1054ab"/>
+    <path d="M 768 448 H 832 L 768 512 Z" fill="#0d469b"/>
+    <path d="M 832 448 V 512 H 768 Z" fill="#0e4b9f"/>
+    <path d="M 832 448 H 896 L 832 512 Z" fill="#0c4193"/>
+    <path d="M 896 448 V 512 H 832 Z" fill="#0c4498"/>
+    <path d="M 896 448 H 960 L 896 512 Z" fill="#0b3d8c"/>
+    <path d="M 960 448 V 512 H 896 Z" fill="#0b3f90"/>
+    <path d="M 960 448 H 1024 L 960 512 Z" fill="#0b3981"/>
+    <path d="M 1024 448 V 512 H 960 Z" fill="#0b3d8a"/>
+    <path d="M 0 512 H 64 L 0 576 Z" fill="#2584d6"/>
+    <path d="M 64 512 V 576 H 0 Z" fill="#2d8ee2"/>
+    <path d="M 64 512 H 128 L 64 576 Z" fill="#2085dd"/>
+    <path d="M 128 512 V 576 H 64 Z" fill="#2689df"/>
+    <path d="M 128 512 H 192 L 128 576 Z" fill="#1b7ed7"/>
+    <path d="M 192 512 V 576 H 128 Z" fill="#1f81d7"/>
+    <path d="M 192 512 H 256 L 192 576 Z" fill="#1a7ad4"/>
+    <path d="M 256 512 V 576 H 192 Z" fill="#1b7ed7"/>
+    <path d="M 256 512 H 320 L 256 576 Z" fill="#1872cb"/>
+    <path d="M 320 512 V 576 H 256 Z" fill="#1977cf"/>
+    <path d="M 320 512 H 384 L 320 576 Z" fill="#176ec7"/>
+    <path d="M 384 512 V 576 H 320 Z" fill="#1871c9"/>
+    <path d="M 384 512 H 448 L 384 576 Z" fill="#1567bf"/>
+    <path d="M 448 512 V 576 H 384 Z" fill="#166cc4"/>
+    <path d="M 448 512 H 512 L 448 576 Z" fill="#135eb4"/>
+    <path d="M 512 512 V 576 H 448 Z" fill="#1462b6"/>
+    <path d="M 512 512 H 576 L 512 576 Z" fill="#1259b0"/>
+    <path d="M 576 512 V 576 H 512 Z" fill="#1360b9"/>
+    <path d="M 576 512 H 640 L 576 576 Z" fill="#1052a7"/>
+    <path d="M 640 512 V 576 H 576 Z" fill="#1156ab"/>
+    <path d="M 640 512 H 704 L 640 576 Z" fill="#0e4ba0"/>
+    <path d="M 704 512 V 576 H 640 Z" fill="#1055ae"/>
+    <path d="M 704 512 H 768 L 704 576 Z" fill="#0d479d"/>
+    <path d="M 768 512 V 576 H 704 Z" fill="#0e4da5"/>
+    <path d="M 768 512 H 832 L 768 576 Z" fill="#0c4398"/>
+    <path d="M 832 512 V 576 H 768 Z" fill="#0c4498"/>
+    <path d="M 832 512 H 896 L 832 576 Z" fill="#0b3c88"/>
+    <path d="M 896 512 V 576 H 832 Z" fill="#0b3f90"/>
+    <path d="M 896 512 H 960 L 896 576 Z" fill="#0b3981"/>
+    <path d="M 960 512 V 576 H 896 Z" fill="#0c3e8c"/>
+    <path d="M 960 512 H 1024 L 960 576 Z" fill="#0b377c"/>
+    <path d="M 1024 512 V 576 H 960 Z" fill="#0b3a84"/>
+    <path d="M 0 576 H 64 L 0 640 Z" fill="#1f81d6"/>
+    <path d="M 64 576 V 640 H 0 Z" fill="#2483d5"/>
+    <path d="M 64 576 H 128 L 64 640 Z" fill="#1b7dd5"/>
+    <path d="M 128 576 V 640 H 64 Z" fill="#2085df"/>
+    <path d="M 128 576 H 192 L 128 640 Z" fill="#1a78cf"/>
+    <path d="M 192 576 V 640 H 128 Z" fill="#1c80da"/>
+    <path d="M 192 576 H 256 L 192 640 Z" fill="#176fc5"/>
+    <path d="M 256 576 V 640 H 192 Z" fill="#1974ca"/>
+    <path d="M 256 576 H 320 L 256 640 Z" fill="#166cc3"/>
+    <path d="M 320 576 V 640 H 256 Z" fill="#1873cc"/>
+    <path d="M 320 576 H 384 L 320 640 Z" fill="#1565bc"/>
+    <path d="M 384 576 V 640 H 320 Z" fill="#1669bf"/>
+    <path d="M 384 576 H 448 L 384 640 Z" fill="#135db1"/>
+    <path d="M 448 576 V 640 H 384 Z" fill="#1462b6"/>
+    <path d="M 448 576 H 512 L 448 640 Z" fill="#1259af"/>
+    <path d="M 512 576 V 640 H 448 Z" fill="#135eb4"/>
+    <path d="M 512 576 H 576 L 512 640 Z" fill="#1052a7"/>
+    <path d="M 576 576 V 640 H 512 Z" fill="#125ab3"/>
+    <path d="M 576 576 H 640 L 576 640 Z" fill="#0e4da3"/>
+    <path d="M 640 576 V 640 H 576 Z" fill="#0f50a4"/>
+    <path d="M 640 576 H 704 L 640 640 Z" fill="#0c4497"/>
+    <path d="M 704 576 V 640 H 640 Z" fill="#0e4ba1"/>
+    <path d="M 704 576 H 768 L 704 640 Z" fill="#0c4195"/>
+    <path d="M 768 576 V 640 H 704 Z" fill="#0c4599"/>
+    <path d="M 768 576 H 832 L 768 640 Z" fill="#0b3c87"/>
+    <path d="M 832 576 V 640 H 768 Z" fill="#0c4398"/>
+    <path d="M 832 576 H 896 L 832 640 Z" fill="#0b3b86"/>
+    <path d="M 896 576 V 640 H 832 Z" fill="#0c3e8c"/>
+    <path d="M 896 576 H 960 L 896 640 Z" fill="#0b3579"/>
+    <path d="M 960 576 V 640 H 896 Z" fill="#0b387f"/>
+    <path d="M 960 576 H 1024 L 960 640 Z" fill="#0b3271"/>
+    <path d="M 1024 576 V 640 H 960 Z" fill="#0b3578"/>
+    <path d="M 0 640 H 64 L 0 704 Z" fill="#1b7bd1"/>
+    <path d="M 64 640 V 704 H 0 Z" fill="#1e7ed2"/>
+    <path d="M 64 640 H 128 L 64 704 Z" fill="#1a77cf"/>
+    <path d="M 128 640 V 704 H 64 Z" fill="#1b7bd1"/>
+    <path d="M 128 640 H 192 L 128 704 Z" fill="#1872ca"/>
+    <path d="M 192 640 V 704 H 128 Z" fill="#1a7ad3"/>
+    <path d="M 192 640 H 256 L 192 704 Z" fill="#176ec8"/>
+    <path d="M 256 640 V 704 H 192 Z" fill="#1871c9"/>
+    <path d="M 256 640 H 320 L 256 704 Z" fill="#1568c1"/>
+    <path d="M 320 640 V 704 H 256 Z" fill="#1668be"/>
+    <path d="M 320 640 H 384 L 320 704 Z" fill="#135eb4"/>
+    <path d="M 384 640 V 704 H 320 Z" fill="#1565bd"/>
+    <path d="M 384 640 H 448 L 384 704 Z" fill="#1157ab"/>
+    <path d="M 448 640 V 704 H 384 Z" fill="#135eb4"/>
+    <path d="M 448 640 H 512 L 448 704 Z" fill="#1050a4"/>
+    <path d="M 512 640 V 704 H 448 Z" fill="#125ab1"/>
+    <path d="M 512 640 H 576 L 512 704 Z" fill="#0e4a9d"/>
+    <path d="M 576 640 V 704 H 512 Z" fill="#1053a9"/>
+    <path d="M 576 640 H 640 L 576 704 Z" fill="#0c4497"/>
+    <path d="M 640 640 V 704 H 576 Z" fill="#0e4a9e"/>
+    <path d="M 640 640 H 704 L 640 704 Z" fill="#0c4195"/>
+    <path d="M 704 640 V 704 H 640 Z" fill="#0d469b"/>
+    <path d="M 704 640 H 768 L 704 704 Z" fill="#0c3f8f"/>
+    <path d="M 768 640 V 704 H 704 Z" fill="#0c4296"/>
+    <path d="M 768 640 H 832 L 768 704 Z" fill="#0b3982"/>
+    <path d="M 832 640 V 704 H 768 Z" fill="#0b3e8c"/>
+    <path d="M 832 640 H 896 L 832 704 Z" fill="#0b3578"/>
+    <path d="M 896 640 V 704 H 832 Z" fill="#0b3982"/>
+    <path d="M 896 640 H 960 L 896 704 Z" fill="#0b3271"/>
+    <path d="M 960 640 V 704 H 896 Z" fill="#0b3577"/>
+    <path d="M 960 640 H 1024 L 960 704 Z" fill="#0a2d66"/>
+    <path d="M 1024 640 V 704 H 960 Z" fill="#0b3272"/>
+    <path d="M 0 704 H 64 L 0 768 Z" fill="#1975cb"/>
+    <path d="M 64 704 V 768 H 0 Z" fill="#1b7bd2"/>
+    <path d="M 64 704 H 128 L 64 768 Z" fill="#1870c7"/>
+    <path d="M 128 704 V 768 H 64 Z" fill="#1974ca"/>
+    <path d="M 128 704 H 192 L 128 768 Z" fill="#166bc2"/>
+    <path d="M 192 704 V 768 H 128 Z" fill="#1873cb"/>
+    <path d="M 192 704 H 256 L 192 768 Z" fill="#1568c1"/>
+    <path d="M 256 704 V 768 H 192 Z" fill="#1669bf"/>
+    <path d="M 256 704 H 320 L 256 768 Z" fill="#135eb3"/>
+    <path d="M 320 704 V 768 H 256 Z" fill="#1565bd"/>
+    <path d="M 320 704 H 384 L 320 768 Z" fill="#1259af"/>
+    <path d="M 384 704 V 768 H 320 Z" fill="#1360b9"/>
+    <path d="M 384 704 H 448 L 384 768 Z" fill="#0f50a3"/>
+    <path d="M 448 704 V 768 H 384 Z" fill="#1157ad"/>
+    <path d="M 448 704 H 512 L 448 768 Z" fill="#0e4ca2"/>
+    <path d="M 512 704 V 768 H 448 Z" fill="#0f4fa2"/>
+    <path d="M 512 704 H 576 L 512 768 Z" fill="#0d479f"/>
+    <path d="M 576 704 V 768 H 512 Z" fill="#0e4a9e"/>
+    <path d="M 576 704 H 640 L 576 768 Z" fill="#0c4194"/>
+    <path d="M 640 704 V 768 H 576 Z" fill="#0c459a"/>
+    <path d="M 640 704 H 704 L 640 768 Z" fill="#0b3c88"/>
+    <path d="M 704 704 V 768 H 640 Z" fill="#0b4091"/>
+    <path d="M 704 704 H 768 L 704 768 Z" fill="#0b387f"/>
+    <path d="M 768 704 V 768 H 704 Z" fill="#0b3c89"/>
+    <path d="M 768 704 H 832 L 768 768 Z" fill="#0b377c"/>
+    <path d="M 832 704 V 768 H 768 Z" fill="#0b387f"/>
+    <path d="M 832 704 H 896 L 832 768 Z" fill="#0a316f"/>
+    <path d="M 896 704 V 768 H 832 Z" fill="#0a3475"/>
+    <path d="M 896 704 H 960 L 896 768 Z" fill="#0a2e68"/>
+    <path d="M 960 704 V 768 H 896 Z" fill="#0b3271"/>
+    <path d="M 960 704 H 1024 L 960 768 Z" fill="#0a2b60"/>
+    <path d="M 1024 704 V 768 H 960 Z" fill="#0a2e69"/>
+    <path d="M 0 768 H 64 L 0 832 Z" fill="#176fc4"/>
+    <path d="M 64 768 V 832 H 0 Z" fill="#1974ca"/>
+    <path d="M 64 768 H 128 L 64 832 Z" fill="#166ac0"/>
+    <path d="M 128 768 V 832 H 64 Z" fill="#176ec3"/>
+    <path d="M 128 768 H 192 L 128 832 Z" fill="#1566be"/>
+    <path d="M 192 768 V 832 H 128 Z" fill="#166cc4"/>
+    <path d="M 192 768 H 256 L 192 832 Z" fill="#135fb5"/>
+    <path d="M 256 768 V 832 H 192 Z" fill="#1566be"/>
+    <path d="M 256 768 H 320 L 256 832 Z" fill="#1259b0"/>
+    <path d="M 320 768 V 832 H 256 Z" fill="#135db2"/>
+    <path d="M 320 768 H 384 L 320 832 Z" fill="#1054ab"/>
+    <path d="M 384 768 V 832 H 320 Z" fill="#1156ab"/>
+    <path d="M 384 768 H 448 L 384 832 Z" fill="#0e4b9f"/>
+    <path d="M 448 768 V 832 H 384 Z" fill="#1052a9"/>
+    <path d="M 448 768 H 512 L 448 832 Z" fill="#0d459a"/>
+    <path d="M 512 768 V 832 H 448 Z" fill="#0f4ea6"/>
+    <path d="M 512 768 H 576 L 512 832 Z" fill="#0b3f8f"/>
+    <path d="M 576 768 V 832 H 512 Z" fill="#0c4498"/>
+    <path d="M 576 768 H 640 L 576 832 Z" fill="#0c3e8d"/>
+    <path d="M 640 768 V 832 H 576 Z" fill="#0b3f90"/>
+    <path d="M 640 768 H 704 L 640 832 Z" fill="#0b3982"/>
+    <path d="M 704 768 V 832 H 640 Z" fill="#0b3d8a"/>
+    <path d="M 704 768 H 768 L 704 832 Z" fill="#0b3477"/>
+    <path d="M 768 768 V 832 H 704 Z" fill="#0b377e"/>
+    <path d="M 768 768 H 832 L 768 832 Z" fill="#0b3372"/>
+    <path d="M 832 768 V 832 H 768 Z" fill="#0b3577"/>
+    <path d="M 832 768 H 896 L 832 832 Z" fill="#0a2f69"/>
+    <path d="M 896 768 V 832 H 832 Z" fill="#0b3271"/>
+    <path d="M 896 768 H 960 L 896 832 Z" fill="#0a295d"/>
+    <path d="M 960 768 V 832 H 896 Z" fill="#0a2d66"/>
+    <path d="M 960 768 H 1024 L 960 832 Z" fill="#0a2656"/>
+    <path d="M 1024 768 V 832 H 960 Z" fill="#0a2b60"/>
+    <path d="M 0 832 H 64 L 0 896 Z" fill="#166ac1"/>
+    <path d="M 64 832 V 896 H 0 Z" fill="#176dc2"/>
+    <path d="M 64 832 H 128 L 64 896 Z" fill="#1566be"/>
+    <path d="M 128 832 V 896 H 64 Z" fill="#166cc4"/>
+    <path d="M 128 832 H 192 L 128 896 Z" fill="#125baf"/>
+    <path d="M 192 832 V 896 H 128 Z" fill="#1567c0"/>
+    <path d="M 192 832 H 256 L 192 896 Z" fill="#1156a9"/>
+    <path d="M 256 832 V 896 H 192 Z" fill="#1361b9"/>
+    <path d="M 256 832 H 320 L 256 896 Z" fill="#1051a6"/>
+    <path d="M 320 832 V 896 H 256 Z" fill="#1259b1"/>
+    <path d="M 320 832 H 384 L 320 896 Z" fill="#0f4ea6"/>
+    <path d="M 384 832 V 896 H 320 Z" fill="#1054ac"/>
+    <path d="M 384 832 H 448 L 384 896 Z" fill="#0d48a0"/>
+    <path d="M 448 832 V 896 H 384 Z" fill="#0e4da5"/>
+    <path d="M 448 832 H 512 L 448 896 Z" fill="#0c4297"/>
+    <path d="M 512 832 V 896 H 448 Z" fill="#0d469b"/>
+    <path d="M 512 832 H 576 L 512 896 Z" fill="#0b3d8b"/>
+    <path d="M 576 832 V 896 H 512 Z" fill="#0b3f8f"/>
+    <path d="M 576 832 H 640 L 576 896 Z" fill="#0b3980"/>
+    <path d="M 640 832 V 896 H 576 Z" fill="#0b3d8a"/>
+    <path d="M 640 832 H 704 L 640 896 Z" fill="#0b3476"/>
+    <path d="M 704 832 V 896 H 640 Z" fill="#0b377e"/>
+    <path d="M 704 832 H 768 L 704 896 Z" fill="#0a306d"/>
+    <path d="M 768 832 V 896 H 704 Z" fill="#0b367a"/>
+    <path d="M 768 832 H 832 L 768 896 Z" fill="#0a2d65"/>
+    <path d="M 832 832 V 896 H 768 Z" fill="#0a316e"/>
+    <path d="M 832 832 H 896 L 832 896 Z" fill="#0a295d"/>
+    <path d="M 896 832 V 896 H 832 Z" fill="#0a2e67"/>
+    <path d="M 896 832 H 960 L 896 896 Z" fill="#0a2758"/>
+    <path d="M 960 832 V 896 H 896 Z" fill="#0a295d"/>
+    <path d="M 960 832 H 1024 L 960 896 Z" fill="#09224d"/>
+    <path d="M 1024 832 V 896 H 960 Z" fill="#0a2656"/>
+    <path d="M 0 896 H 64 L 0 960 Z" fill="#1566bd"/>
+    <path d="M 64 896 V 960 H 0 Z" fill="#176dc6"/>
+    <path d="M 64 896 H 128 L 64 960 Z" fill="#135eb4"/>
+    <path d="M 128 896 V 960 H 64 Z" fill="#1566bd"/>
+    <path d="M 128 896 H 192 L 128 960 Z" fill="#125ab1"/>
+    <path d="M 192 896 V 960 H 128 Z" fill="#135db2"/>
+    <path d="M 192 896 H 256 L 192 960 Z" fill="#1054ad"/>
+    <path d="M 256 896 V 960 H 192 Z" fill="#1259b0"/>
+    <path d="M 256 896 H 320 L 256 960 Z" fill="#0f4da4"/>
+    <path d="M 320 896 V 960 H 256 Z" fill="#1053ab"/>
+    <path d="M 320 896 H 384 L 320 960 Z" fill="#0c4598"/>
+    <path d="M 384 896 V 960 H 320 Z" fill="#0e4da3"/>
+    <path d="M 384 896 H 448 L 384 960 Z" fill="#0c4296"/>
+    <path d="M 448 896 V 960 H 384 Z" fill="#0d479f"/>
+    <path d="M 448 896 H 512 L 448 960 Z" fill="#0b3d8b"/>
+    <path d="M 512 896 V 960 H 448 Z" fill="#0b3f8f"/>
+    <path d="M 512 896 H 576 L 512 960 Z" fill="#0b3981"/>
+    <path d="M 576 896 V 960 H 512 Z" fill="#0b3c89"/>
+    <path d="M 576 896 H 640 L 576 960 Z" fill="#0b3578"/>
+    <path d="M 640 896 V 960 H 576 Z" fill="#0b377e"/>
+    <path d="M 640 896 H 704 L 640 960 Z" fill="#0a316f"/>
+    <path d="M 704 896 V 960 H 640 Z" fill="#0b367a"/>
+    <path d="M 704 896 H 768 L 704 960 Z" fill="#0a2f6a"/>
+    <path d="M 768 896 V 960 H 704 Z" fill="#0a306d"/>
+    <path d="M 768 896 H 832 L 768 960 Z" fill="#0a295d"/>
+    <path d="M 832 896 V 960 H 768 Z" fill="#0a2e69"/>
+    <path d="M 832 896 H 896 L 832 960 Z" fill="#092553"/>
+    <path d="M 896 896 V 960 H 832 Z" fill="#0a295d"/>
+    <path d="M 896 896 H 960 L 896 960 Z" fill="#09234e"/>
+    <path d="M 960 896 V 960 H 896 Z" fill="#0a2757"/>
+    <path d="M 960 896 H 1024 L 960 960 Z" fill="#091e43"/>
+    <path d="M 1024 896 V 960 H 960 Z" fill="#09214b"/>
+    <path d="M 0 960 H 64 L 0 1024 Z" fill="#135fb7"/>
+    <path d="M 64 960 V 1024 H 0 Z" fill="#1565bc"/>
+    <path d="M 64 960 H 128 L 64 1024 Z" fill="#1157ad"/>
+    <path d="M 128 960 V 1024 H 64 Z" fill="#135db2"/>
+    <path d="M 128 960 H 192 L 128 1024 Z" fill="#1054ac"/>
+    <path d="M 192 960 V 1024 H 128 Z" fill="#1155a9"/>
+    <path d="M 192 960 H 256 L 192 1024 Z" fill="#0e4ca1"/>
+    <path d="M 256 960 V 1024 H 192 Z" fill="#1052a9"/>
+    <path d="M 256 960 H 320 L 256 1024 Z" fill="#0c4498"/>
+    <path d="M 320 960 V 1024 H 256 Z" fill="#0e4ba0"/>
+    <path d="M 320 960 H 384 L 320 1024 Z" fill="#0c4296"/>
+    <path d="M 384 960 V 1024 H 320 Z" fill="#0d459b"/>
+    <path d="M 384 960 H 448 L 384 1024 Z" fill="#0b3d8b"/>
+    <path d="M 448 960 V 1024 H 384 Z" fill="#0c4296"/>
+    <path d="M 448 960 H 512 L 448 1024 Z" fill="#0b3982"/>
+    <path d="M 512 960 V 1024 H 448 Z" fill="#0c3e8c"/>
+    <path d="M 512 960 H 576 L 512 1024 Z" fill="#0b367b"/>
+    <path d="M 576 960 V 1024 H 512 Z" fill="#0b3981"/>
+    <path d="M 576 960 H 640 L 576 1024 Z" fill="#0b3271"/>
+    <path d="M 640 960 V 1024 H 576 Z" fill="#0b367a"/>
+    <path d="M 640 960 H 704 L 640 1024 Z" fill="#0a2f6a"/>
+    <path d="M 704 960 V 1024 H 640 Z" fill="#0a316e"/>
+    <path d="M 704 960 H 768 L 704 1024 Z" fill="#0a2b60"/>
+    <path d="M 768 960 V 1024 H 704 Z" fill="#0a2d65"/>
+    <path d="M 768 960 H 832 L 768 1024 Z" fill="#0a2758"/>
+    <path d="M 832 960 V 1024 H 768 Z" fill="#0a2a5e"/>
+    <path d="M 832 960 H 896 L 832 1024 Z" fill="#0a234e"/>
+    <path d="M 896 960 V 1024 H 832 Z" fill="#0a2655"/>
+    <path d="M 896 960 H 960 L 896 1024 Z" fill="#091f46"/>
+    <path d="M 960 960 V 1024 H 896 Z" fill="#09224c"/>
+    <path d="M 960 960 H 1024 L 960 1024 Z" fill="#091c3e"/>
+    <path d="M 1024 960 V 1024 H 960 Z" fill="#091e44"/>
+    <!-- Paper sheet with folded corner -->
+    <g filter="url(#sheetShadow)">
+      <path d="M 260 192 H 696 L 792 288 V 804 Q 792 832 764 832 H 260 Q 232 832 232 804 V 220 Q 232 192 260 192 Z" fill="#FFFFFF"/>
+    </g>
+    <path d="M 696 192 L 696 288 L 792 288 Z" fill="url(#foldGrad)"/>
+    <path d="M 696 288 L 696 192 L 792 288 Z" fill="none" stroke="#B4C1CC" stroke-width="3" stroke-linejoin="round"/>
+    <!-- Wordmark -->
+    <text x="512" y="332" text-anchor="middle" font-family="SF Pro Rounded, Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="700" font-size="108" fill="#0D2C54" letter-spacing="2">pless</text>
+    <!-- Suggested content lines -->
+    <rect x="282" y="396" width="460" height="18" rx="9" fill="#90A4AE"/>
+    <rect x="282" y="436" width="460" height="18" rx="9" fill="#CFD8DC"/>
+    <rect x="322" y="476" width="380" height="18" rx="9" fill="#CFD8DC"/>
+    <rect x="282" y="516" width="460" height="18" rx="9" fill="#CFD8DC"/>
+    <rect x="362" y="556" width="300" height="18" rx="9" fill="#CFD8DC"/>
+    <rect x="282" y="596" width="460" height="18" rx="9" fill="#CFD8DC"/>
+    <rect x="302" y="636" width="420" height="18" rx="9" fill="#CFD8DC"/>
+    <rect x="282" y="676" width="460" height="18" rx="9" fill="#CFD8DC"/>
+    <rect x="342" y="716" width="340" height="18" rx="9" fill="#CFD8DC"/>
+  </g>
+</svg>

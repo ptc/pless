@@ -1,6 +1,6 @@
 # pless
 
-<img src="docs/pless-icon.jpg" width="128" alt="pless Icon">
+<img src="docs/pless-app-icon-svg.svg" width="128" alt="pless Icon">
 
 Native macOS-App für lokales Dokumentenmanagement — Paperless, aber lokal & nativ:
 PDFs importieren, per On-Device-OCR indizieren, an einem Ort mit vernünftigen

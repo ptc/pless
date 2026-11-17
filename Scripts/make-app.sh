@@ -65,13 +65,20 @@ cat > "$STAGE/Contents/Info.plist" <<'XML'
 XML
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
 
-echo "==> Icon generieren (docs/pless-icon.jpg falls vorhanden, sonst Vektor-Icon; + iconutil)"
+echo "==> Icon generieren (docs/pless-app-icon-svg.svg → qlmanage → PNG, sonst pless-icon.jpg, sonst Vektor-Icon; + iconutil)"
 mkdir -p "$STAGE/Contents/Resources"
 ICONSET="$ROOT/.build/icon/pless.iconset"
 rm -rf "$ICONSET"
-ICON_SRC="$ROOT/docs/pless-icon.jpg"
-if [ -f "$ICON_SRC" ]; then
-	swift "$ROOT/Scripts/make-icon-from-image.swift" "$ICON_SRC" "$ICONSET"
+ICON_SVG="$ROOT/docs/pless-app-icon-svg.svg"
+ICON_JPG="$ROOT/docs/pless-icon.jpg"
+ICON_WORK="$ROOT/.build/icon"
+mkdir -p "$ICON_WORK"
+if [ -f "$ICON_SVG" ]; then
+	# SVG über QuickLook in 1024px-PNG rendern, dann alle iconset-Größen daraus
+	qlmanage -t -s 1024 "$ICON_SVG" -o "$ICON_WORK" >/dev/null 2>&1
+	swift "$ROOT/Scripts/make-icon-from-image.swift" "$ICON_WORK/pless-app-icon-svg.svg.png" "$ICONSET"
+elif [ -f "$ICON_JPG" ]; then
+	swift "$ROOT/Scripts/make-icon-from-image.swift" "$ICON_JPG" "$ICONSET"
 else
 	swift "$ROOT/Scripts/make-icon.swift" "$ICONSET"
 fi
