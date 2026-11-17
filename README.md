@@ -2,6 +2,8 @@
 
 <img src="docs/pless-app-icon-svg.svg" width="128" alt="pless Icon">
 
+English version: [README.en.md](README.en.md)
+
 Native macOS-App für lokales Dokumentenmanagement — Paperless, aber lokal & nativ:
 PDFs importieren, per On-Device-OCR indizieren, an einem Ort mit vernünftigen
 Dateinamen ablegen, durchsuchen und über **MCP** an eine lokale KI anbinden.
