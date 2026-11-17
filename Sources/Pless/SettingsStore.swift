@@ -10,6 +10,9 @@ enum SettingsKey {
     static let customInboxEnabled = "customInboxEnabled"
     static let customInboxPath = "customInboxPath"
     static let dateFormat = "dateFormat"
+    static let ocrQuality = "ocrQuality"               // "accurate" | "fast"
+    static let ocrLanguageCorrection = "ocrLanguageCorrection"
+    static let ocrResolutionDPI = "ocrResolutionDPI"
     static let paperlessURL = "paperlessURL"
     // paperlessToken liegt NICHT in UserDefaults, sondern in der Keychain (KeychainStore)
 }
@@ -33,6 +36,18 @@ final class SettingsStore: ObservableObject {
     }
     /// Anzeigeformat für Datumsfelder (DB bleibt ISO yyyy-MM-dd); Default deutsch.
     @Published var dateFormat: String {
+        didSet { save() }
+    }
+    /// OCR-Genauigkeit: "accurate" (Default, besser bei kleiner Schrift) oder "fast".
+    @Published var ocrQuality: String {
+        didSet { save() }
+    }
+    /// OCR-Sprachkorrektur (Vision usesLanguageCorrection).
+    @Published var ocrLanguageCorrection: Bool {
+        didSet { save() }
+    }
+    /// OCR-Render-Auflösung in dpi (200/300/400) — höhere Werte = feinere Erkennung, langsamer.
+    @Published var ocrResolutionDPI: Int {
         didSet { save() }
     }
     /// paperless-ngx Basis-URL (leer = Sync deaktiviert, kein Netzwerk-Zugriff).
@@ -61,6 +76,9 @@ final class SettingsStore: ObservableObject {
         self.customInboxEnabled = defaults.bool(forKey: SettingsKey.customInboxEnabled)
         self.customInboxPath = defaults.string(forKey: SettingsKey.customInboxPath) ?? ""
         self.dateFormat = defaults.string(forKey: SettingsKey.dateFormat) ?? "dd.MM.yyyy"
+        self.ocrQuality = defaults.string(forKey: SettingsKey.ocrQuality) ?? "accurate"
+        self.ocrLanguageCorrection = defaults.object(forKey: SettingsKey.ocrLanguageCorrection) as? Bool ?? true
+        self.ocrResolutionDPI = defaults.object(forKey: SettingsKey.ocrResolutionDPI) as? Int ?? 300
         self.paperlessURL = defaults.string(forKey: SettingsKey.paperlessURL) ?? ""
         self.paperlessToken = KeychainStore.loadToken() ?? ""
     }
@@ -72,8 +90,14 @@ final class SettingsStore: ObservableObject {
         defaults.set(customInboxEnabled, forKey: SettingsKey.customInboxEnabled)
         defaults.set(customInboxPath, forKey: SettingsKey.customInboxPath)
         defaults.set(dateFormat, forKey: SettingsKey.dateFormat)
+        defaults.set(ocrQuality, forKey: SettingsKey.ocrQuality)
+        defaults.set(ocrLanguageCorrection, forKey: SettingsKey.ocrLanguageCorrection)
+        defaults.set(ocrResolutionDPI, forKey: SettingsKey.ocrResolutionDPI)
         defaults.set(paperlessURL, forKey: SettingsKey.paperlessURL)
     }
+
+    /// OCR-Qualität als Enum (unbekannter Wert → .accurate).
+    var ocrQualityEnum: OCRQuality { OCRQuality(rawValue: ocrQuality) ?? .accurate }
 
     /// Sync-Konfiguration — nil, solange URL oder Token fehlt (dann: kein Netzwerk-Call möglich).
     func paperlessConfig() -> PaperlessConfig? {

@@ -90,5 +90,6 @@ Share Extension + App Group (braucht Xcode-Projekt).
   ist im Schema vorbereitet).
 - Sync ist Einweg-Push: Änderungen direkt in paperless-ngx spiegelt pless nicht zurück;
   ein remote gelöschtes Dokument wird beim nächsten Sync aber automatisch neu hochgeladen.
-- OCR: Sprachen de/en (Settings), `accurate`-Modus; Vision-Framework.
+- OCR (Vision, on-device): Sprachen, Genauigkeit (`accurate`/`fast`), Sprachkorrektur und
+  Render-Auflösung (200/300/400 dpi, Default 300) sind in den Einstellungen konfigurierbar.
 - Tests via MiniTest statt XCTest/Swift Testing (CLT-Altlast).

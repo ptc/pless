@@ -76,7 +76,10 @@ final class AppState: ObservableObject {
             metadata = MetadataService(vault: v, db: database, template: settings.namingTemplate)
             let langs = Array(settings.ocrLanguages).sorted()
             ocr = OCRService(vault: v, db: database,
-                             recognizer: VisionTextRecognizer(languages: langs.isEmpty ? ["de-DE", "en-US"] : langs),
+                             recognizer: VisionTextRecognizer(languages: langs.isEmpty ? ["de-DE", "en-US"] : langs,
+                                                               quality: settings.ocrQualityEnum,
+                                                               usesLanguageCorrection: settings.ocrLanguageCorrection,
+                                                               resolutionDPI: settings.ocrResolutionDPI),
                              metadata: metadata)
             // Crash-Recovery vor dem Watcher: DB und Dateisystem abgleichen, damit keine
             // Datei verloren geht, wenn die App mitten im Import abstürzt.

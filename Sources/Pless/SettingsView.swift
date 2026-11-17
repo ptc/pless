@@ -105,6 +105,28 @@ struct SettingsView: View {
                 Text("Die Texterkennung läuft per Vision vollständig lokal auf dem Mac — keine Daten gehen an externe Dienste.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section("Qualität") {
+                LabeledContent("Genauigkeit") {
+                    Picker("Genauigkeit", selection: $settings.ocrQuality) {
+                        Text("Genau (accurate) — empfohlen").tag("accurate")
+                        Text("Schnell (fast)").tag("fast")
+                    }
+                    .labelsHidden()
+                    .frame(width: 230)
+                }
+                LabeledContent("Auflösung") {
+                    Picker("Auflösung", selection: $settings.ocrResolutionDPI) {
+                        Text("200 dpi — schnell").tag(200)
+                        Text("300 dpi — Standard").tag(300)
+                        Text("400 dpi — feine Schrift").tag(400)
+                    }
+                    .labelsHidden()
+                    .frame(width: 230)
+                }
+                Toggle("Sprachkorrektur (Language Correction)", isOn: $settings.ocrLanguageCorrection)
+                Text("„Genau“ + höhere dpi erkennen kleine Schrift deutlich besser, kosten aber Rechenzeit. Gilt ab dem nächsten Start der App.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
         .padding()

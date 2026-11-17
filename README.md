@@ -117,4 +117,5 @@ geladen, nicht mit der App verteilt) und die systemeigene SQLite (Public Domain)
 - Kein Papierkorb in der UI (Soft Delete ist im Schema vorbereitet).
 - Der paperless-Sync ist ein Einweg-Push: Änderungen, die direkt in paperless-ngx
   gemacht werden, spiegelt pless nicht zurück.
-- OCR-Sprachen sind de/en (in den Einstellungen umschaltbar).
+- OCR: Sprachen (de/en), Genauigkeit (genau/schnell), Sprachkorrektur und Auflösung (dpi)
+  sind in den Einstellungen konfigurierbar — „genau“ + höhere dpi erkennen kleine Schrift besser.

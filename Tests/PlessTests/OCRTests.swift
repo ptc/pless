@@ -1,4 +1,5 @@
 import Foundation
+import Vision
 import MiniTest
 import PlessCore
 
@@ -10,6 +11,7 @@ enum OCRTests {
         MiniTest.test("OCR: cancel() stoppt async-Verarbeitung vorzeitig, Rest bleibt pending") { try cancelStopsAsync() }
         MiniTest.test("OCR: processAsync(documentId:) — manueller Einzelstart") { try singleDocAsync() }
         MiniTest.test("OCR: VisionTextRecognizer konstruierbar (de+en, fast/accurate)") { visionInit() }
+        MiniTest.test("OCR: Quality-Mapping fast/accurate + Defaults (Korrektur an, 300 dpi, accurate)") { try qualityMapping() }
     }
 
     /// Langsamer Recognizer, damit cancel() zwischen zwei Dokumenten greifen kann.
@@ -115,5 +117,21 @@ enum OCRTests {
     private static func visionInit() {
         _ = VisionTextRecognizer()
         _ = VisionTextRecognizer(languages: ["de-DE"], recognitionLevel: .fast)
+    }
+
+    private static func qualityMapping() throws {
+        try MiniTest.expectEqual(OCRQuality.accurate.recognitionLevel, .accurate)
+        try MiniTest.expectEqual(OCRQuality.fast.recognitionLevel, .fast)
+        try MiniTest.expectEqual(OCRQuality(rawValue: "fast"), .fast)
+        try MiniTest.expectEqual(OCRQuality(rawValue: "quatsch"), nil)
+        let r = VisionTextRecognizer()
+        try MiniTest.expectEqual(r.recognitionLevel, .accurate)
+        try MiniTest.expectEqual(r.usesLanguageCorrection, true)
+        try MiniTest.expectEqual(r.resolutionDPI, 300)
+        let custom = VisionTextRecognizer(languages: ["de-DE"], quality: .fast,
+                                          usesLanguageCorrection: false, resolutionDPI: 400)
+        try MiniTest.expectEqual(custom.recognitionLevel, .fast)
+        try MiniTest.expectEqual(custom.usesLanguageCorrection, false)
+        try MiniTest.expectEqual(custom.resolutionDPI, 400)
     }
 }
