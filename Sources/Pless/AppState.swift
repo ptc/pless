@@ -33,6 +33,8 @@ final class AppState: ObservableObject {
     @Published var searchText: String = ""
     @Published var sidebarSelection: SidebarSelection = .all
     @Published var errorMessage: String?
+    /// UI-Sprache ("de" | "en") — triggert über .id(state.language) ein Re-Render der Views.
+    @Published var language: String
     @Published var statusKind: StatusKind = .idle
     @Published var statusText = "Bereit"
     @Published var categories: [PlessCore.Category] = []
@@ -67,6 +69,8 @@ final class AppState: ObservableObject {
     init(vaultPath: URL, settings: SettingsStore) {
         self.vaultPath = vaultPath
         self.settings = settings
+        self.language = settings.language
+        L10n.language = settings.language
         do {
             let v = try Vault(root: vaultPath, inboxOverride: settings.inboxOverride())
             let database = try Database(url: v.databaseURL)
@@ -100,13 +104,13 @@ final class AppState: ObservableObject {
             refresh()
             setStatus(.idle, idleText)
             if let r = recovery, r.total > 0 {
-                setStatus(.warning, "Wiederherstellung: \(r.finalized) Dokument(e) finalisiert, \(r.relocated) Pfad(e) korrigiert, \(r.adopted) Datei(en) aus documents/ in den Posteingang übernommen")
+                setStatus(.warning, TF("Wiederherstellung: %d Dokument(e) finalisiert, %d Pfad(e) korrigiert, %d Datei(en) aus documents/ in den Posteingang übernommen", r.finalized, r.relocated, r.adopted))
             } else if removedThumbs > 0 {
-                setStatus(.ok, "\(removedThumbs) alte Thumbnail(s) entfernt — werden mit korrekter Orientierung neu gerendert", autoIdleAfter: 8)
+                setStatus(.ok, TF("%d alte Thumbnail(s) entfernt — werden mit korrekter Orientierung neu gerendert", removedThumbs), autoIdleAfter: 8)
             }
         } catch {
-            errorMessage = "Vault konnte nicht geöffnet werden: \(error)"
-            setStatus(.error, "Vault konnte nicht geöffnet werden: \(error)")
+            errorMessage = TF("Vault konnte nicht geöffnet werden: %@", "\(error)")
+            setStatus(.error, TF("Vault konnte nicht geöffnet werden: %@", "\(error)"))
         }
     }
 
@@ -137,13 +141,13 @@ final class AppState: ObservableObject {
             }
             selectionSet = selectionSet.intersection(Set(hits.compactMap { $0.document.id }))
         } catch {
-            errorMessage = "Aktualisieren fehlgeschlagen: \(error)"
+            errorMessage = TF("Aktualisieren fehlgeschlagen: %@", "\(error)")
         }
         updateInboxCount()
         if statusKind == .idle { statusText = idleText }
     }
 
-    var idleText: String { "Bereit — \(hits.count) Dokument(e) im Vault · Posteingang: \(inboxCount)" }
+    var idleText: String { TF("Bereit — %d Dokument(e) im Vault · Posteingang: %d", hits.count, inboxCount) }
 
     /// ISO-Datum (yyyy-MM-dd aus der DB) → Anzeigeformat aus den Einstellungen.
     func displayDate(_ iso: String?) -> String {
@@ -156,7 +160,7 @@ final class AppState: ObservableObject {
     /// Im Edit-Modus gesperrt — sonst würde sich die Detailansicht mitten im Bearbeiten ändern.
     func select(_ id: Int64, additive: Bool = false, range: Bool = false) {
         if isEditing {
-            setStatus(.warning, "Im Edit-Modus — bitte erst „Fertig“ oder „Abbrechen“")
+            setStatus(.warning, T("Im Edit-Modus — bitte erst „Fertig“ oder „Abbrechen“"))
             return
         }
         if range, let anchor = selection,
@@ -208,23 +212,23 @@ final class AppState: ObservableObject {
             let name = categories.first { $0.id == id }?.name ?? "?"
             let r = bulkAssign(ids: targets, categoryId: id, tagName: nil)
             setStatus(r.failed.isEmpty ? .ok : .error,
-                      "Kategorie „\(name)“ auf \(r.ok) Dokument(e) gesetzt" +
-                      (r.failed.isEmpty ? "" : " — \(r.failed.count) fehlgeschlagen"),
+                      TF("Kategorie „%@“ auf %d Dokument(e) gesetzt", name, r.ok) +
+                      (r.failed.isEmpty ? "" : TF(" — %d fehlgeschlagen", r.failed.count)),
                       autoIdleAfter: r.failed.isEmpty ? 6 : nil)
         } else if payload.hasPrefix("pless/tag/") {
             let name = String(payload.dropFirst("pless/tag/".count))
             let r = bulkAssign(ids: targets, categoryId: nil, tagName: name)
             setStatus(r.failed.isEmpty ? .ok : .error,
-                      "Tag „\(name)“ auf \(r.ok) Dokument(e) gesetzt" +
-                      (r.failed.isEmpty ? "" : " — \(r.failed.count) fehlgeschlagen"),
+                      TF("Tag „%@“ auf %d Dokument(e) gesetzt", name, r.ok) +
+                      (r.failed.isEmpty ? "" : TF(" — %d fehlgeschlagen", r.failed.count)),
                       autoIdleAfter: r.failed.isEmpty ? 6 : nil)
         } else if payload.hasPrefix("pless/correspondent/"),
                   let id = Int64(payload.dropFirst("pless/correspondent/".count)) {
             let name = correspondents.first { $0.id == id }?.name ?? "?"
             let r = bulkAssign(ids: targets, correspondentId: id)
             setStatus(r.failed.isEmpty ? .ok : .error,
-                      "Korrespondent „\(name)“ auf \(r.ok) Dokument(e) gesetzt" +
-                      (r.failed.isEmpty ? "" : " — \(r.failed.count) fehlgeschlagen"),
+                      TF("Korrespondent „%@“ auf %d Dokument(e) gesetzt", name, r.ok) +
+                      (r.failed.isEmpty ? "" : TF(" — %d fehlgeschlagen", r.failed.count)),
                       autoIdleAfter: r.failed.isEmpty ? 6 : nil)
         }
     }
@@ -232,7 +236,7 @@ final class AppState: ObservableObject {
     /// Bulk: Korrespondent auf eine Dokumentmenge setzen (andere Felder bleiben erhalten).
     @discardableResult
     func bulkAssign(ids: Set<Int64>, correspondentId: Int64) -> (ok: Int, failed: [String]) {
-        guard let db, let metadata else { return (0, ["kein Vault geladen"]) }
+        guard let db, let metadata else { return (0, [T("kein Vault geladen")]) }
         var ok = 0
         var failed: [String] = []
         for id in ids.sorted() {
@@ -254,7 +258,7 @@ final class AppState: ObservableObject {
     /// ggf. umbenannt, wenn das Template {category} enthält); Tag per findOrCreate + INSERT OR IGNORE.
     @discardableResult
     func bulkAssign(ids: Set<Int64>, categoryId: Int64?, tagName: String?) -> (ok: Int, failed: [String]) {
-        guard let db, let metadata else { return (0, ["kein Vault geladen"]) }
+        guard let db, let metadata else { return (0, [T("kein Vault geladen")]) }
         var ok = 0
         var failed: [String] = []
         for id in ids.sorted() {
@@ -329,8 +333,8 @@ final class AppState: ObservableObject {
     func importFiles(_ urls: [URL]) {
         guard let vault, let ingest else { return }
         setStatus(.busy, urls.count == 1
-                ? "Importiere \(urls[0].lastPathComponent)…"
-                : "Importiere \(urls.count) Dateien…")
+                ? TF("Importiere %@…", urls[0].lastPathComponent)
+                : TF("Importiere %d Dateien…", urls.count))
         // Schweres (SHA-256, PDFKit) nicht auf dem Main-Thread — sonst friert die UI.
         DispatchQueue.global(qos: .userInitiated).async {
             var failures: [String] = []
@@ -339,7 +343,7 @@ final class AppState: ObservableObject {
             var lastDoc: Document?
             for (i, url) in urls.enumerated() {
                 Task { @MainActor in
-                    self.setStatus(.busy, "Importiere \(i + 1)/\(urls.count): \(url.lastPathComponent)…")
+                    self.setStatus(.busy, TF("Importiere %d/%d: %@…", i + 1, urls.count, url.lastPathComponent))
                 }
                 do {
                     let staged = try vault.stageIntoInbox(fileAt: url)
@@ -350,23 +354,23 @@ final class AppState: ObservableObject {
                     case .duplicate(let existing):
                         duplicates.append(existing)
                     case .rejected(let reason):
-                        failures.append("\(url.lastPathComponent): \(reason)")
+                        failures.append(TF("%@: %@", url.lastPathComponent, reason))
                     }
                 } catch {
-                    failures.append("\(url.lastPathComponent): \(error.localizedDescription)")
+                    failures.append(TF("%@: %@", url.lastPathComponent, error.localizedDescription))
                 }
             }
             Task { @MainActor in
                 if !failures.isEmpty {
-                    self.setStatus(.error, "Import fehlgeschlagen — \(failures.joined(separator: "; "))")
-                    self.errorMessage = "Import fehlgeschlagen — \(failures.joined(separator: "; "))"
+                    self.setStatus(.error, TF("Import fehlgeschlagen — %@", failures.joined(separator: "; ")))
+                    self.errorMessage = TF("Import fehlgeschlagen — %@", failures.joined(separator: "; "))
                 } else if let dup = duplicates.last {
-                    var text = "Duplikat: „\(dup.title ?? dup.filename)“ ist bereits im Vault"
-                    if let doc = lastDoc { text = "Importiert: \(doc.title ?? doc.filename) · " + text }
-                    text += " — nicht erneut importiert (Datei → _abgelehnt/)"
+                    var text = TF("Duplikat: „%@“ ist bereits im Vault", dup.title ?? dup.filename)
+                    if let doc = lastDoc { text = TF("Importiert: %@", doc.title ?? doc.filename) + " · " + text }
+                    text += T(" — nicht erneut importiert (Datei → _abgelehnt/)")
                     self.setStatus(.warning, text)
                 } else if let doc = lastDoc {
-                    self.setStatus(.ok, "Importiert: \(doc.title ?? doc.filename) → \(doc.relativePath)", autoIdleAfter: 6)
+                    self.setStatus(.ok, TF("Importiert: %@ → %@", doc.title ?? doc.filename, doc.relativePath), autoIdleAfter: 6)
                 }
                 self.runOCR()
                 self.refresh()
@@ -381,27 +385,27 @@ final class AppState: ObservableObject {
         guard let ingest, FileManager.default.fileExists(atPath: url.path) else { return }
         if inFlightInbox.contains(url.path) { return }
         inFlightInbox.insert(url.path)
-        setStatus(.busy, "Posteingang: \(url.lastPathComponent) erkannt — importiere…")
+        setStatus(.busy, TF("Posteingang: %@ erkannt — importiere…", url.lastPathComponent))
         DispatchQueue.global(qos: .userInitiated).async {
             var failure: String?
             var outcome: IngestOutcome?
             do {
                 outcome = try ingest.process(fileAt: url)
             } catch {
-                failure = "\(url.lastPathComponent): \(error.localizedDescription)"
+                failure = TF("%@: %@", url.lastPathComponent, error.localizedDescription)
             }
             Task { @MainActor in
                 if let failure {
-                    self.setStatus(.error, "Import aus Posteingang fehlgeschlagen — \(failure)")
-                    self.errorMessage = "Import aus Posteingang fehlgeschlagen — \(failure)"
+                    self.setStatus(.error, TF("Import aus Posteingang fehlgeschlagen — %@", failure))
+                    self.errorMessage = TF("Import aus Posteingang fehlgeschlagen — %@", failure)
                 } else if case .imported(let doc) = outcome {
-                    self.setStatus(.ok, "Importiert: \(doc.title ?? doc.filename) → \(doc.relativePath)", autoIdleAfter: 6)
+                    self.setStatus(.ok, TF("Importiert: %@ → %@", doc.title ?? doc.filename, doc.relativePath), autoIdleAfter: 6)
                     if let id = doc.id { self.selection = id; self.selectionSet = [id] }
                 } else if case .duplicate(let existing) = outcome {
-                    self.setStatus(.warning, "Posteingang: Duplikat „\(existing.title ?? existing.filename)“ bereits im Vault — Datei → _abgelehnt/")
+                    self.setStatus(.warning, TF("Posteingang: Duplikat „%@“ bereits im Vault — Datei → _abgelehnt/", existing.title ?? existing.filename))
                     if let id = existing.id { self.selection = id; self.selectionSet = [id] } // vorhandenes Dokument in der Liste markieren
                 } else if case .rejected(let reason) = outcome {
-                    self.setStatus(.error, "Posteingang: \(url.lastPathComponent) zurückgewiesen (\(reason)) — Datei → _abgelehnt/")
+                    self.setStatus(.error, TF("Posteingang: %@ zurückgewiesen (%@) — Datei → _abgelehnt/", url.lastPathComponent, reason))
                 }
                 self.inFlightInbox.remove(url.path)
                 self.runOCR()
@@ -437,18 +441,18 @@ final class AppState: ObservableObject {
         guard let ocr, !ocr.isRunning else { return }
         ocrRunning = true
         ocr.processPendingAsync(onProgress: { done, total in
-            Task { @MainActor in self.setStatus(.busy, "OCR \(done)/\(total)…") }
+            Task { @MainActor in self.setStatus(.busy, TF("OCR %d/%d…", done, total)) }
         }, completion: { result in
             Task { @MainActor in
                 self.ocrRunning = false
                 switch result {
                 case .success(let done):
                     if self.ocrCancelled {
-                        self.setStatus(.warning, "OCR abgebrochen (\(done) erledigt) — offen gebliebene Dokumente in der Vorschau manuell starten")
+                        self.setStatus(.warning, TF("OCR abgebrochen (%d erledigt) — offen gebliebene Dokumente in der Vorschau manuell starten", done))
                     }
                 case .failure(let e):
-                    self.setStatus(.error, "OCR fehlgeschlagen: \(e)")
-                    self.errorMessage = "OCR fehlgeschlagen: \(e)"
+                    self.setStatus(.error, TF("OCR fehlgeschlagen: %@", "\(e)"))
+                    self.errorMessage = TF("OCR fehlgeschlagen: %@", "\(e)")
                 }
                 self.ocrCancelled = false
                 self.refresh()
@@ -460,7 +464,7 @@ final class AppState: ObservableObject {
     func cancelOCR() {
         ocrCancelled = true
         ocr?.cancel()
-        setStatus(.warning, "OCR wird abgebrochen…")
+        setStatus(.warning, T("OCR wird abgebrochen…"))
     }
 
     /// Startet OCR manuell für ein einzelnes Dokument (Vorschau: „OCR starten“ bei OCR-offen).
@@ -468,16 +472,16 @@ final class AppState: ObservableObject {
         guard let ocr, !ocr.isRunning else { return }
         let title = hits.first { $0.document.id == documentId }?.document.title
         ocrRunning = true
-        setStatus(.busy, "OCR läuft für „\(title ?? "Dokument")“…")
+        setStatus(.busy, TF("OCR läuft für „%@“…", title ?? "Dokument"))
         ocr.processAsync(documentId: documentId) { result in
             Task { @MainActor in
                 self.ocrRunning = false
                 switch result {
                 case .success:
-                    self.setStatus(.ok, "OCR abgeschlossen: „\(title ?? "Dokument")“ — Text ist indexiert", autoIdleAfter: 6)
+                    self.setStatus(.ok, TF("OCR abgeschlossen: „%@“ — Text ist indexiert", title ?? "Dokument"), autoIdleAfter: 6)
                 case .failure(let e):
-                    self.setStatus(.error, "OCR fehlgeschlagen: \(e)")
-                    self.errorMessage = "OCR fehlgeschlagen: \(e)"
+                    self.setStatus(.error, TF("OCR fehlgeschlagen: %@", "\(e)"))
+                    self.errorMessage = TF("OCR fehlgeschlagen: %@", "\(e)")
                 }
                 self.refresh()
             }
@@ -512,7 +516,7 @@ final class AppState: ObservableObject {
         if !draft.date.isEmpty {
             // Eingabe im Anzeigeformat (z. B. dd.MM.yyyy) oder ISO → intern ISO speichern
             guard let iso = DateDisplay.parse(draft.date, pattern: settings.dateFormat) else {
-                errorMessage = "Datum ungültig — bitte Format \(settings.dateFormat) verwenden"
+                errorMessage = TF("Datum ungültig — bitte Format %@ verwenden", settings.dateFormat)
                 return
             }
             draft.date = iso
@@ -539,7 +543,7 @@ final class AppState: ObservableObject {
             self.draft = nil
             refresh()
         } catch {
-            errorMessage = "Speichern fehlgeschlagen: \(error)"
+            errorMessage = TF("Speichern fehlgeschlagen: %@", "\(error)")
         }
     }
 
@@ -587,16 +591,16 @@ final class AppState: ObservableObject {
     func syncAll(forceMetadata: Bool = false) {
         guard let service = makeSyncService(), !syncRunning else {
             if !syncConfigured() {
-                setStatus(.warning, "Sync nicht konfiguriert — URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
+                setStatus(.warning, T("Sync nicht konfiguriert — URL + API-Token in den Einstellungen (Cmd+,) hinterlegen"))
             }
             return
         }
         syncRunning = true
-        let prefix = forceMetadata ? "Sync (erzwungen)" : "Sync"
+        let prefix = T(forceMetadata ? "Sync (erzwungen)" : "Sync")
         let total = (try? service.pendingDocuments(forceMetadata: forceMetadata).count) ?? 0
-        setStatus(.busy, total == 0 ? "\(prefix): prüfe paperless-ngx…" : "\(prefix): 0/\(total)…")
+        setStatus(.busy, total == 0 ? TF("%@: prüfe paperless-ngx…", prefix) : TF("%@: 0/%d…", prefix, total))
         let progress: @Sendable (Int, Int) -> Void = { done, tot in
-            DispatchQueue.main.async { self.setStatus(.busy, "\(prefix): \(done)/\(tot)…") }
+            DispatchQueue.main.async { self.setStatus(.busy, TF("%@: %d/%d…", prefix, done, tot)) }
         }
         DispatchQueue.global(qos: .userInitiated).async {
             Task {
@@ -608,17 +612,17 @@ final class AppState: ObservableObject {
                 Task { @MainActor in
                     self.syncRunning = false
                     if let thrown {
-                        self.setStatus(.error, "Sync fehlgeschlagen: \(thrown.localizedDescription)")
-                        self.errorMessage = "Sync nach paperless-ngx fehlgeschlagen: \(thrown)"
+                        self.setStatus(.error, TF("Sync fehlgeschlagen: %@", "\(thrown.localizedDescription)"))
+                        self.errorMessage = TF("Sync nach paperless-ngx fehlgeschlagen: %@", "\(thrown)")
                     } else if let o = outcome {
                         if o.failed.isEmpty {
                             if o.uploaded > 0 || o.updated > 0 {
-                                self.setStatus(.ok, "Sync: \(o.uploaded) hochgeladen, \(o.updated) aktualisiert, \(o.skipped) übersprungen", autoIdleAfter: 8)
+                                self.setStatus(.ok, TF("Sync: %d hochgeladen, %d aktualisiert, %d übersprungen", o.uploaded, o.updated, o.skipped), autoIdleAfter: 8)
                             } else {
-                                self.setStatus(.idle, "Sync: alles bereits aktuell (\(o.skipped) übersprungen)")
+                                self.setStatus(.idle, TF("Sync: alles bereits aktuell (%d übersprungen)", o.skipped))
                             }
                         } else {
-                            self.setStatus(.warning, "Sync: \(o.uploaded) hochgeladen, \(o.updated) aktualisiert, \(o.skipped) übersprungen, \(o.failed.count) fehlgeschlagen — \(o.failed.map(\.filename).joined(separator: ", "))")
+                            self.setStatus(.warning, TF("Sync: %d hochgeladen, %d aktualisiert, %d übersprungen, %d fehlgeschlagen — %@", o.uploaded, o.updated, o.skipped, o.failed.count, o.failed.map(\.filename).joined(separator: ", ")))
                         }
                     }
                     self.refresh()
@@ -631,12 +635,12 @@ final class AppState: ObservableObject {
     func pullFromPaperless() {
         guard let service = makeSyncService(), !syncRunning else {
             if !syncConfigured() {
-                setStatus(.warning, "Sync nicht konfiguriert — URL + API-Token in den Einstellungen (Cmd+,) hinterlegen")
+                setStatus(.warning, T("Sync nicht konfiguriert — URL + API-Token in den Einstellungen (Cmd+,) hinterlegen"))
             }
             return
         }
         syncRunning = true
-        setStatus(.busy, "Importiere Kategorien & Korrespondenten aus paperless-ngx…")
+        setStatus(.busy, T("Importiere Kategorien & Korrespondenten aus paperless-ngx…"))
         DispatchQueue.global(qos: .userInitiated).async {
             Task {
                 var result: (categories: Int, correspondents: Int)?
@@ -645,10 +649,10 @@ final class AppState: ObservableObject {
                 Task { @MainActor in
                     self.syncRunning = false
                     if let thrown {
-                        self.setStatus(.error, "Import fehlgeschlagen: \(thrown.localizedDescription)")
-                        self.errorMessage = "Import aus paperless-ngx fehlgeschlagen: \(thrown)"
+                        self.setStatus(.error, TF("Import fehlgeschlagen: %@", "\(thrown.localizedDescription)"))
+                        self.errorMessage = TF("Import aus paperless-ngx fehlgeschlagen: %@", "\(thrown)")
                     } else if let r = result {
-                        self.setStatus(.ok, "Importiert aus paperless-ngx: \(r.categories) Kategorie(n), \(r.correspondents) Korrespondent(en) neu", autoIdleAfter: 8)
+                        self.setStatus(.ok, TF("Importiert aus paperless-ngx: %d Kategorie(n), %d Korrespondent(en) neu", r.categories, r.correspondents), autoIdleAfter: 8)
                     }
                     self.refresh()
                 }
@@ -660,9 +664,9 @@ final class AppState: ObservableObject {
     /// `forceMetadata` erzwingt den Metadaten-Push (PATCH) auch bei unverändertem Hash.
     func syncDocument(_ documentId: Int64, forceMetadata: Bool = false) {
         guard let service = makeSyncService(), !syncRunning else { return }
-        let title = selectedDoc?.title ?? selectedDoc?.filename ?? "Dokument"
+        let title = selectedDoc?.title ?? selectedDoc?.filename ?? T("Dokument")
         syncRunning = true
-        setStatus(.busy, forceMetadata ? "Erzwinge Metadaten-Sync für „\(title)“…" : "Synchronisiere „\(title)“…")
+        setStatus(.busy, forceMetadata ? TF("Erzwinge Metadaten-Sync für „%@“…", title) : TF("Synchronisiere „%@“…", title))
         DispatchQueue.global(qos: .userInitiated).async {
             Task {
                 var step: SyncStep?
@@ -672,16 +676,16 @@ final class AppState: ObservableObject {
                     self.syncRunning = false
                     switch step {
                     case .uploaded(let pid):
-                        self.setStatus(.ok, "„\(title)“ synchronisiert → paperless #\(pid)", autoIdleAfter: 6)
+                        self.setStatus(.ok, TF("„%@“ synchronisiert → paperless #%d", title, pid), autoIdleAfter: 6)
                     case .updated(let pid):
-                        self.setStatus(.ok, "„\(title)“ aktualisiert → paperless #\(pid) (Metadaten per PATCH)", autoIdleAfter: 6)
+                        self.setStatus(.ok, TF("„%@“ aktualisiert → paperless #%d (Metadaten per PATCH)", title, pid), autoIdleAfter: 6)
                     case .skipped(let pid):
-                        self.setStatus(.idle, "„\(title)“ bereits synchronisiert (paperless #\(pid))")
+                        self.setStatus(.idle, TF("„%@“ bereits synchronisiert (paperless #%d)", title, pid))
                     case .none:
                         if let thrown {
                             if let db = self.db { try? db.setSyncState(.notSynced, for: documentId) }   // persistiert: Push fehlgeschlagen
-                            self.setStatus(.error, "Sync fehlgeschlagen: \(thrown.localizedDescription)")
-                            self.errorMessage = "Sync fehlgeschlagen: \(thrown)"
+                            self.setStatus(.error, TF("Sync fehlgeschlagen: %@", "\(thrown.localizedDescription)"))
+                            self.errorMessage = TF("Sync fehlgeschlagen: %@", "\(thrown)")
                         }
                     }
                     self.refresh()
@@ -693,7 +697,7 @@ final class AppState: ObservableObject {
     // MARK: - Anzeige-Helfer
 
     func nameOfCorrespondent(_ id: Int64?) -> String {
-        guard let id else { return "" }
+        guard let id else { return T("") }
         return correspondents.first { $0.id == id }?.name ?? ""
     }
 
@@ -712,9 +716,9 @@ final class AppState: ObservableObject {
             guard let doc = try db.document(byId: documentId) else { return }
             _ = try metadata.saveMetadata(documentId: documentId, title: doc.title, documentDate: doc.documentDate,
                                           correspondentId: corrId, categoryId: doc.categoryId, notes: doc.notes)
-            setStatus(.ok, "Korrespondent „\(name)“ gesetzt", autoIdleAfter: 6)
+            setStatus(.ok, TF("Korrespondent „%@“ gesetzt", name), autoIdleAfter: 6)
         } catch {
-            errorMessage = "Korrespondent konnte nicht gesetzt werden: \(error.localizedDescription)"
+            errorMessage = TF("Korrespondent konnte nicht gesetzt werden: %@", error.localizedDescription)
         }
         refresh()
     }
@@ -728,9 +732,9 @@ final class AppState: ObservableObject {
             guard let doc = try db.document(byId: documentId) else { return }
             _ = try metadata.saveMetadata(documentId: documentId, title: title, documentDate: doc.documentDate,
                                           correspondentId: doc.correspondentId, categoryId: doc.categoryId, notes: doc.notes)
-            setStatus(.ok, "Titel übernommen: „\(title)“", autoIdleAfter: 6)
+            setStatus(.ok, TF("Titel übernommen: „%@“", title), autoIdleAfter: 6)
         } catch {
-            errorMessage = "Titel konnte nicht gesetzt werden: \(error.localizedDescription)"
+            errorMessage = TF("Titel konnte nicht gesetzt werden: %@", error.localizedDescription)
         }
         refresh()
     }
@@ -743,8 +747,15 @@ final class AppState: ObservableObject {
         applyCorrespondentSuggestion(documentId: documentId, name: name)
     }
 
+    /// UI-Sprache wechseln (persistiert in Settings, aktualisiert L10n + published state).
+    func setLanguage(_ lang: String) {
+        language = lang
+        L10n.language = lang
+        settings.language = lang
+    }
+
     func nameOfCategory(_ id: Int64?) -> String {
-        guard let id else { return "" }
+        guard let id else { return T("") }
         return categories.first { $0.id == id }?.name ?? ""
     }
 

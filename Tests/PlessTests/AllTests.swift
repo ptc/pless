@@ -7,6 +7,7 @@ func registerAllTests() {
     NamingTests.register()
     IngestTests.register()
     OCRTests.register()
+    L10nTests.register()
     SearchTests.register()
     ThumbnailTests.register()
     MetadataTests.register()

@@ -18,6 +18,8 @@ No cloud, single user.
 - **Storage & metadata:** PDFs land in `documents/YYYY/MM/` with names following a
   template (`{date}_{correspondent}_{title}.pdf`); edit title, date, correspondent,
   category, tags and notes conveniently in the app, plus thumbnails and a detail view.
+- **Bilingual UI:** German and English, switchable in Settings → General
+  (applies immediately to the whole app UI).
 - **AI connection:** own MCP server over stdio — a local AI can search/read documents,
   change metadata and assign tags (config below).
 - **paperless-ngx sync (opt-in):** on request, push to a self-hosted paperless instance,

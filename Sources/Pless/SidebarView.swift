@@ -20,10 +20,10 @@ struct SidebarView: View {
     /// warten, und scannt auf Knopfdruck (der Watcher macht das sonst automatisch).
     private var inboxBar: some View {
         HStack(spacing: 8) {
-            Label("Posteingang", systemImage: "tray.arrow.down")
-                .help("Import-Ordner <Vault>/inbox — PDFs hier hineinlegen, sie werden automatisch importiert")
+            Label(T("Posteingang"), systemImage: "tray.arrow.down")
+                .help(T("Import-Ordner <Vault>/inbox — PDFs hier hineinlegen, sie werden automatisch importiert"))
             Spacer()
-            Text(state.inboxCount == 0 ? "leer" : "\(state.inboxCount) wartend")
+            Text(state.inboxCount == 0 ? T("leer") : TF("%d wartend", state.inboxCount))
                 .font(.caption)
                 .fontWeight(state.inboxCount == 0 ? .regular : .semibold)
                 .padding(.horizontal, 7)
@@ -32,23 +32,23 @@ struct SidebarView: View {
                                            ? Color.secondary.opacity(0.18)
                                            : Color.orange.opacity(0.35)))
             Button { state.scanInbox() } label: {
-                Label("Scannen", systemImage: "arrow.triangle.2.circlepath")
+                Label(T("Scannen"), systemImage: "arrow.triangle.2.circlepath")
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            .help("Posteingang jetzt scannen — importiert alle wartenden PDFs")
+            .help(T("Posteingang jetzt scannen — importiert alle wartenden PDFs"))
             Button { openInFinder(state.vault?.inboxURL) } label: {
                 Image(systemName: "folder")
             }
             .buttonStyle(.borderless)
-            .help("Posteingang-Ordner im Finder öffnen")
+            .help(T("Posteingang-Ordner im Finder öffnen"))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .background(.thickMaterial)
         .contextMenu {
-            Button("Jetzt scannen") { state.scanInbox() }
-            Button("Im Finder öffnen") { openInFinder(state.vault?.inboxURL) }
+            Button(T("Jetzt scannen")) { state.scanInbox() }
+            Button(T("Im Finder öffnen")) { openInFinder(state.vault?.inboxURL) }
         }
     }
 
@@ -56,14 +56,14 @@ struct SidebarView: View {
         List(selection: Binding(
             get: { state.sidebarSelection },
             set: { state.sidebarSelection = $0 ?? .all })) {
-            Section("Bibliothek") {
-                Label("Alle Dokumente", systemImage: "tray.full")
+            Section(T("Bibliothek")) {
+                Label(T("Alle Dokumente"), systemImage: "tray.full")
                     .badge(state.hits.count)
                     .tag(SidebarSelection.all)
-                Label("OCR ausstehend", systemImage: "doc.text.magnifyingglass").tag(SidebarSelection.pendingOCR)
+                Label(T("OCR ausstehend"), systemImage: "doc.text.magnifyingglass").tag(SidebarSelection.pendingOCR)
             }
             Section(header: sectionHeader("Kategorien") {
-                if let name = Prompts.askText(title: "Neue Kategorie", message: "Name") {
+                if let name = Prompts.askText(title: T("Neue Kategorie"), message: T("Name")) {
                     state.addCategory(name: name)
                 }
             }) {
@@ -72,7 +72,7 @@ struct SidebarView: View {
                 }
             }
             Section(header: sectionHeader("Tags") {
-                if let name = Prompts.askText(title: "Neuer Tag", message: "Name") {
+                if let name = Prompts.askText(title: T("Neuer Tag"), message: T("Name")) {
                     state.addTag(name: name)
                 }
             }) {
@@ -81,7 +81,7 @@ struct SidebarView: View {
                 }
             }
             Section(header: sectionHeader("Korrespondenten") {
-                if let name = Prompts.askText(title: "Neuer Korrespondent", message: "Name") {
+                if let name = Prompts.askText(title: T("Neuer Korrespondent"), message: T("Name")) {
                     state.addCorrespondent(name: name)
                 }
             }) {
@@ -89,7 +89,7 @@ struct SidebarView: View {
                     correspondentRow(c)
                 }
             }
-            Section("Vault") {
+            Section(T("Vault")) {
                 HStack(spacing: 4) {
                     Text(state.vaultPath.path)
                         .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
@@ -98,7 +98,7 @@ struct SidebarView: View {
                         Image(systemName: "arrow.up.right.square").font(.caption2)
                     }
                     .buttonStyle(.borderless)
-                    .help("Vault im Finder öffnen")
+                    .help(T("Vault im Finder öffnen"))
                 }
             }
         }
@@ -132,7 +132,7 @@ struct SidebarView: View {
             }
             Spacer()
             if count > 0 {
-                Text("\(count)").font(.caption2).foregroundStyle(.secondary)
+                Text(TF("%d", count)).font(.caption2).foregroundStyle(.secondary)
             }
         }
         .tag(SidebarSelection.category(node.name))
@@ -152,13 +152,13 @@ struct SidebarView: View {
             return NSItemProvider(object: "pless/category/\(id)" as NSString)
         }
         .contextMenu {
-            Button("Umbenennen…") {
+            Button(T("Umbenennen…")) {
                 guard let id = node.id,
-                      let n = Prompts.askText(title: "Kategorie umbenennen", message: "Neuer Name", defaultValue: node.name) else { return }
+                      let n = Prompts.askText(title: T("Kategorie umbenennen"), message: T("Neuer Name"), defaultValue: node.name) else { return }
                 state.updateCategory(id: id, name: n, parentId: node.parentId, color: node.color)
             }
-            Menu("Farbe wählen") {
-                Button("Keine Farbe") {
+            Menu(T("Farbe wählen")) {
+                Button(T("Keine Farbe")) {
                     if let id = node.id { state.updateCategory(id: id, name: node.name, parentId: node.parentId, color: nil) }
                 }
                 ForEach(ColorPalette.presets, id: \.self) { hex in
@@ -169,8 +169,8 @@ struct SidebarView: View {
                     }
                 }
             }
-            Menu("Überordnen unter…") {
-                Button("— ohne Elternkategorie —") {
+            Menu(T("Überordnen unter…")) {
+                Button(T("— ohne Elternkategorie —")) {
                     if let id = node.id { state.updateCategory(id: id, name: node.name, parentId: nil, color: node.color) }
                 }
                 let forbidden = descendants(of: node.id, in: state.categories).union([node.id].compactMap { $0 })
@@ -184,9 +184,9 @@ struct SidebarView: View {
                 }
             }
             Divider()
-            Button("Löschen", role: .destructive) {
-                if Prompts.confirm(title: "Kategorie „\(node.name)“ löschen?",
-                                   message: "Dokumente mit dieser Kategorie verlieren die Zuordnung.") {
+            Button(T("Löschen"), role: .destructive) {
+                if Prompts.confirm(title: TF("Kategorie „%@“ löschen?", node.name),
+                                   message: T("Dokumente mit dieser Kategorie verlieren die Zuordnung.")) {
                     if let id = node.id { state.deleteCategory(id: id) }
                 }
             }
@@ -205,13 +205,13 @@ struct SidebarView: View {
             NSItemProvider(object: "pless/tag/\(tag.name)" as NSString)
         }
         .contextMenu {
-            Button("Umbenennen…") {
-                if let n = Prompts.askText(title: "Tag umbenennen", message: "Neuer Name", defaultValue: tag.name) {
+            Button(T("Umbenennen…")) {
+                if let n = Prompts.askText(title: T("Tag umbenennen"), message: T("Neuer Name"), defaultValue: tag.name) {
                     if let id = tag.id { state.updateTag(id: id, name: n, color: tag.color) }
                 }
             }
-            Menu("Farbe wählen") {
-                Button("Keine Farbe") { if let id = tag.id { state.updateTag(id: id, name: tag.name, color: nil) } }
+            Menu(T("Farbe wählen")) {
+                Button(T("Keine Farbe")) { if let id = tag.id { state.updateTag(id: id, name: tag.name, color: nil) } }
                 ForEach(ColorPalette.presets, id: \.self) { hex in
                     Button {
                         if let id = tag.id { state.updateTag(id: id, name: tag.name, color: hex) }
@@ -221,9 +221,9 @@ struct SidebarView: View {
                 }
             }
             Divider()
-            Button("Löschen", role: .destructive) {
-                if Prompts.confirm(title: "Tag „\(tag.name)“ löschen?",
-                                   message: "Der Tag wird von allen Dokumenten entfernt.") {
+            Button(T("Löschen"), role: .destructive) {
+                if Prompts.confirm(title: TF("Tag „%@“ löschen?", tag.name),
+                                   message: T("Der Tag wird von allen Dokumenten entfernt.")) {
                     if let id = tag.id { state.deleteTag(id: id) }
                 }
             }
@@ -237,7 +237,7 @@ struct SidebarView: View {
             Label(c.name, systemImage: "person")
             Spacer()
             if count > 0 {
-                Text("\(count)").font(.caption2).foregroundStyle(.secondary)
+                Text(TF("%d", count)).font(.caption2).foregroundStyle(.secondary)
             }
         }
         .tag(SidebarSelection.correspondent(c.name))
@@ -253,7 +253,7 @@ struct SidebarView: View {
         .onTapGesture(count: 2) {
             // Doppelklick → Korrespondent bearbeiten (umbenennen)
             if let id = c.id,
-               let n = Prompts.askText(title: "Korrespondent umbenennen", message: "Neuer Name", defaultValue: c.name) {
+               let n = Prompts.askText(title: T("Korrespondent umbenennen"), message: T("Neuer Name"), defaultValue: c.name) {
                 state.renameCorrespondent(id: id, newName: n)
             }
         }
@@ -263,15 +263,15 @@ struct SidebarView: View {
             return NSItemProvider(object: "pless/correspondent/\(id)" as NSString)
         }
         .contextMenu {
-                Button("Umbenennen…") {
-                    if let n = Prompts.askText(title: "Korrespondent umbenennen", message: "Neuer Name", defaultValue: c.name) {
+                Button(T("Umbenennen…")) {
+                    if let n = Prompts.askText(title: T("Korrespondent umbenennen"), message: T("Neuer Name"), defaultValue: c.name) {
                         if let id = c.id { state.renameCorrespondent(id: id, newName: n) }
                     }
                 }
                 Divider()
-                Button("Löschen", role: .destructive) {
-                    if Prompts.confirm(title: "Korrespondent „\(c.name)“ löschen?",
-                                       message: "Dokumente verlieren die Korrespondenten-Angabe.") {
+                Button(T("Löschen"), role: .destructive) {
+                    if Prompts.confirm(title: TF("Korrespondent „%@“ löschen?", c.name),
+                                       message: T("Dokumente verlieren die Korrespondenten-Angabe.")) {
                         if let id = c.id { state.deleteCorrespondent(id: id) }
                     }
                 }
@@ -286,7 +286,7 @@ struct SidebarView: View {
             Spacer()
             Button { add() } label: { Image(systemName: "plus") }
                 .buttonStyle(.borderless)
-                .help("Neu anlegen")
+                .help(T("Neu anlegen"))
         }
     }
 

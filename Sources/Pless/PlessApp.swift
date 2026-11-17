@@ -61,22 +61,22 @@ struct PlessApp: App {
                 }
         }
         .commands {
-            CommandMenu("Ablage") {
-                Button("Importieren…") { importPanel() }
+            CommandMenu(T("Ablage")) {
+                Button(T("Importieren…")) { importPanel() }
                     .keyboardShortcut("I", modifiers: .command)
-                Button("Posteingang jetzt scannen") { state.scanInbox() }
+                Button(T("Posteingang jetzt scannen")) { state.scanInbox() }
                 Divider()
-                Button("Zu paperless-ngx synchronisieren") { state.syncAll() }
+                Button(T("Zu paperless-ngx synchronisieren")) { state.syncAll() }
                     .disabled(!state.syncConfigured())
             }
-            CommandMenu("Auswahl") {
-                Button("Alle auswählen") { state.selectAll() }
+            CommandMenu(T("Auswahl")) {
+                Button(T("Alle auswählen")) { state.selectAll() }
                     .keyboardShortcut("a", modifiers: .command)
-                Button("Auswahl aufheben") { state.clearSelection() }
+                Button(T("Auswahl aufheben")) { state.clearSelection() }
                     .keyboardShortcut("a", modifiers: [.command, .shift])
             }
             CommandGroup(replacing: .appSettings) {
-                Button("Einstellungen…") { state.showSettings = true }
+                Button(T("Einstellungen…")) { state.showSettings = true }
                     .keyboardShortcut(",", modifiers: .command)
             }
         }

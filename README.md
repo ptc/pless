@@ -18,6 +18,8 @@ Kein Cloud, Single User.
 - **Ablage & Metadaten:** PDFs landen in `documents/YYYY/MM/` mit Namen nach Schema
   (`{date}_{correspondent}_{title}.pdf`); Titel, Datum, Korrespondent, Kategorie, Tags
   und Notizen bequem in der App bearbeiten, dazu Thumbnails und eine Detailansicht.
+- **Zweisprachige UI:** Deutsch und Englisch, umschaltbar in den
+  Einstellungen → Allgemein (gilt ab sofort für die gesamte App-Oberfläche).
 - **KI-Anbindung:** eigener MCP-Server über stdio — eine lokale KI kann Dokumente
   suchen/lesen, Metadaten ändern und Tags zuweisen (Config unten).
 - **paperless-ngx Sync (opt-in):** Push zu einer selbst gehosteten paperless-Instanz,

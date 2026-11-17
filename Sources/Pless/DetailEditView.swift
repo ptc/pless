@@ -21,11 +21,11 @@ struct MetadataEditView: View {
 
                 Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
                     GridRow {
-                        Text("Titel").foregroundStyle(.secondary)
-                        TextField("Titel", text: bind(\.title, "")).textFieldStyle(.roundedBorder)
+                        Text(T("Titel")).foregroundStyle(.secondary)
+                        TextField(T("Titel"), text: bind(\.title, "")).textFieldStyle(.roundedBorder)
                     }
                     GridRow {
-                        Text("Datum").foregroundStyle(.secondary)
+                        Text(T("Datum")).foregroundStyle(.secondary)
                         // Anzeige im eingestellten Format; Eingabe darf ISO oder Anzeigeformat sein
                         TextField(state.settings.dateFormat, text: Binding(
                             get: { state.displayDate(state.draft?.date) },
@@ -35,7 +35,7 @@ struct MetadataEditView: View {
                     // Datums-Vorschläge aus dem OCR-/Textschicht-Text: jedes Datum anwählbar (im Anzeigeformat)
                     if !dateSuggestions.isEmpty {
                         GridRow {
-                            Text("Vorschläge").foregroundStyle(.secondary)
+                            Text(T("Vorschläge")).foregroundStyle(.secondary)
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 6) {
                                     ForEach(dateSuggestions, id: \.self) { d in
@@ -43,22 +43,22 @@ struct MetadataEditView: View {
                                             .buttonStyle(.bordered)
                                             .controlSize(.small)
                                             .tint(state.draft?.date == d ? .accentColor : .secondary)
-                                            .help("Datum übernehmen")
+                                            .help(T("Datum übernehmen"))
                                     }
                                 }
                             }
                         }
                     }
                     GridRow {
-                        Text("Korrespondent").foregroundStyle(.secondary)
-                        Picker("Korrespondent", selection: Binding(
+                        Text(T("Korrespondent")).foregroundStyle(.secondary)
+                        Picker(T("Korrespondent"), selection: Binding(
                             get: { state.draft?.correspondentId },
                             set: { state.draft?.correspondentId = $0 })) {
-                            Text("Keiner").tag(nil as Int64?)
+                            Text(T("Keiner")).tag(nil as Int64?)
                             ForEach(state.correspondents, id: \.id) { Text($0.name).tag($0.id) }
                             Divider()
-                            Button("Neu…") {
-                                if let name = Prompts.askText(title: "Neuer Korrespondent", message: "Name") {
+                            Button(T("Neu…")) {
+                                if let name = Prompts.askText(title: T("Neuer Korrespondent"), message: T("Name")) {
                                     state.run {
                                         if let id = try state.db?.findOrCreateCorrespondent(name: name) {
                                             state.draft?.correspondentId = id
@@ -71,15 +71,15 @@ struct MetadataEditView: View {
                         .frame(maxWidth: 260)
                     }
                     GridRow {
-                        Text("Kategorie").foregroundStyle(.secondary)
-                        Picker("Kategorie", selection: Binding(
+                        Text(T("Kategorie")).foregroundStyle(.secondary)
+                        Picker(T("Kategorie"), selection: Binding(
                             get: { state.draft?.categoryId },
                             set: { state.draft?.categoryId = $0 })) {
-                            Text("Keine").tag(nil as Int64?)
+                            Text(T("Keine")).tag(nil as Int64?)
                             ForEach(state.categories, id: \.id) { Text($0.name).tag($0.id) }
                             Divider()
-                            Button("Neu…") {
-                                if let name = Prompts.askText(title: "Neue Kategorie", message: "Name") {
+                            Button(T("Neu…")) {
+                                if let name = Prompts.askText(title: T("Neue Kategorie"), message: T("Name")) {
                                     state.run {
                                         if let id = try state.db?.findOrCreateCategory(name: name) {
                                             state.draft?.categoryId = id
@@ -95,7 +95,7 @@ struct MetadataEditView: View {
                 .font(.caption)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Tags").foregroundStyle(.secondary).font(.caption)
+                    Text(T("Tags")).foregroundStyle(.secondary).font(.caption)
                     ForEach(Array((state.draft?.tagNames ?? []).enumerated()), id: \.offset) { i, name in
                         HStack {
                             Label(name, systemImage: "tag").font(.caption2)
@@ -107,10 +107,10 @@ struct MetadataEditView: View {
                         }
                     }
                     HStack {
-                        TextField("Tag hinzufügen…", text: $newTag)
+                        TextField(T("Tag hinzufügen…"), text: $newTag)
                             .textFieldStyle(.roundedBorder)
                             .font(.caption)
-                        Button("Hinzufügen") {
+                        Button(T("Hinzufügen")) {
                             let n = newTag.trimmingCharacters(in: .whitespacesAndNewlines)
                             if !n.isEmpty, state.draft?.tagNames.contains(n) != true {
                                 state.draft?.tagNames.append(n)
@@ -122,7 +122,7 @@ struct MetadataEditView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Notizen").foregroundStyle(.secondary).font(.caption)
+                    Text(T("Notizen")).foregroundStyle(.secondary).font(.caption)
                     // leer → klein, sobald Text drin → wächst mit
                     let notesEmpty = (state.draft?.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     TextEditor(text: bind(\.notes, ""))
@@ -135,10 +135,10 @@ struct MetadataEditView: View {
 
                 HStack {
                     Spacer()
-                    Button("Abbrechen") { state.cancelEditing() }
-                    Button("Fertig — speichern") { state.saveEditing() }
+                    Button(T("Abbrechen")) { state.cancelEditing() }
+                    Button(T("Fertig — speichern")) { state.saveEditing() }
                         .buttonStyle(.borderedProminent)
-                        .help("Speichern (Datei wird ggf. umbenannt)")
+                        .help(T("Speichern (Datei wird ggf. umbenannt)"))
                 }
             }
             .padding()

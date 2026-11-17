@@ -10,6 +10,7 @@ enum SettingsKey {
     static let customInboxEnabled = "customInboxEnabled"
     static let customInboxPath = "customInboxPath"
     static let dateFormat = "dateFormat"
+    static let uiLanguage = "uiLanguage"             // "de" | "en"
     static let ocrQuality = "ocrQuality"               // "accurate" | "fast"
     static let ocrLanguageCorrection = "ocrLanguageCorrection"
     static let ocrResolutionDPI = "ocrResolutionDPI"
@@ -36,6 +37,10 @@ final class SettingsStore: ObservableObject {
     }
     /// Anzeigeformat für Datumsfelder (DB bleibt ISO yyyy-MM-dd); Default deutsch.
     @Published var dateFormat: String {
+        didSet { save() }
+    }
+    /// UI-Sprache ("de" | "en"); Default deutsch.
+    @Published var language: String {
         didSet { save() }
     }
     /// OCR-Genauigkeit: "accurate" (Default, besser bei kleiner Schrift) oder "fast".
@@ -76,6 +81,7 @@ final class SettingsStore: ObservableObject {
         self.customInboxEnabled = defaults.bool(forKey: SettingsKey.customInboxEnabled)
         self.customInboxPath = defaults.string(forKey: SettingsKey.customInboxPath) ?? ""
         self.dateFormat = defaults.string(forKey: SettingsKey.dateFormat) ?? "dd.MM.yyyy"
+        self.language = defaults.string(forKey: SettingsKey.uiLanguage) ?? "de"
         self.ocrQuality = defaults.string(forKey: SettingsKey.ocrQuality) ?? "accurate"
         self.ocrLanguageCorrection = defaults.object(forKey: SettingsKey.ocrLanguageCorrection) as? Bool ?? true
         self.ocrResolutionDPI = defaults.object(forKey: SettingsKey.ocrResolutionDPI) as? Int ?? 300
@@ -90,6 +96,7 @@ final class SettingsStore: ObservableObject {
         defaults.set(customInboxEnabled, forKey: SettingsKey.customInboxEnabled)
         defaults.set(customInboxPath, forKey: SettingsKey.customInboxPath)
         defaults.set(dateFormat, forKey: SettingsKey.dateFormat)
+        defaults.set(language, forKey: SettingsKey.uiLanguage)
         defaults.set(ocrQuality, forKey: SettingsKey.ocrQuality)
         defaults.set(ocrLanguageCorrection, forKey: SettingsKey.ocrLanguageCorrection)
         defaults.set(ocrResolutionDPI, forKey: SettingsKey.ocrResolutionDPI)

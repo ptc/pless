@@ -22,10 +22,10 @@ struct DetailView: View {
             VStack(spacing: 0) {
                 // Zoom-Leiste: Modus (Anpassen / Höhe / 100 %) + Stufen
                 HStack(spacing: 8) {
-                    Picker("Ansicht", selection: $pdfMode) {
-                        Text("Anpassen").tag(PDFMode.fit)
-                        Text("Höhe").tag(PDFMode.height)
-                        Text("100 %").tag(PDFMode.full)
+                    Picker(T("Ansicht"), selection: $pdfMode) {
+                        Text(T("Anpassen")).tag(PDFMode.fit)
+                        Text(T("Höhe")).tag(PDFMode.height)
+                        Text(T("100 %")).tag(PDFMode.full)
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
@@ -34,7 +34,7 @@ struct DetailView: View {
                         pdfMode = .full
                         pdfZoom = max(0.25, pdfZoom / 1.25)
                     } label: { Image(systemName: "minus.magnifyingglass") }
-                    Text("\(Int(pdfZoom * 100)) %").font(.caption).frame(width: 44)
+                    Text(TF("%d %%", Int(pdfZoom * 100))).font(.caption).frame(width: 44)
                     Button {
                         pdfMode = .full
                         pdfZoom = min(8, pdfZoom * 1.25)
@@ -42,14 +42,14 @@ struct DetailView: View {
                     // OCR als kompaktes Icon-Dropdown (wie Sync in der Toolbar)
                     Menu {
                         Button { if let id = doc.id { state.startOCR(for: id) } } label: {
-                            Label(doc.ocrDone ? "OCR erneut ausführen" : "OCR starten",
+                            Label(doc.ocrDone ? T("OCR erneut ausführen") : T("OCR starten"),
                                   systemImage: "text.viewfinder")
                         }
                         .disabled(state.ocrRunning)
                         if doc.ocrText != nil {
                             Divider()
                             Button { showOCRText.toggle() } label: {
-                                Label(showOCRText ? "OCR-Text ausblenden" : "OCR-Text anzeigen",
+                                Label(showOCRText ? T("OCR-Text ausblenden") : T("OCR-Text anzeigen"),
                                       systemImage: "text.alignleft")
                             }
                         }
@@ -63,8 +63,8 @@ struct DetailView: View {
                     }
                     .menuStyle(.borderlessButton)
                     .help(doc.ocrDone
-                          ? "OCR für dieses Dokument erneut ausführen (z. B. nach Änderung der OCR-Einstellungen) — überschreibt den bisherigen OCR-Text; Metadaten bleiben erhalten. Menü: OCR-Text ein-/ausblenden"
-                          : "OCR für dieses Dokument starten (Status „OCR offen“) — Menü: OCR-Text ein-/ausblenden")
+                          ? T("OCR für dieses Dokument erneut ausführen (z. B. nach Änderung der OCR-Einstellungen) — überschreibt den bisherigen OCR-Text; Metadaten bleiben erhalten. Menü: OCR-Text ein-/ausblenden")
+                          : T("OCR für dieses Dokument starten (Status „OCR offen“) — Menü: OCR-Text ein-/ausblenden"))
                     Spacer()
                 }
                 .buttonStyle(.borderless)
@@ -83,13 +83,13 @@ struct DetailView: View {
                     Divider()
                     VStack(spacing: 2) {
                         HStack {
-                            Text("OCR-Text").font(.caption).foregroundStyle(.secondary)
+                            Text(T("OCR-Text")).font(.caption).foregroundStyle(.secondary)
                             Spacer()
                             Button { showOCRText = false } label: {
                                 Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                             }
                             .buttonStyle(.borderless)
-                            .help("OCR-Text ausblenden")
+                            .help(T("OCR-Text ausblenden"))
                         }
                         .padding(.horizontal, 8)
                         SelectableTextView(text: text, selectedText: $ocrSelection)
@@ -98,11 +98,11 @@ struct DetailView: View {
                             .contextMenu {
                                 let sel = ocrSelection.trimmingCharacters(in: .whitespacesAndNewlines)
                                 Button { state.setTitleFromText(doc.id, ocrSelection) } label: {
-                                    Label("Als Titel übernehmen", systemImage: "textformat")
+                                    Label(T("Als Titel übernehmen"), systemImage: "textformat")
                                 }
                                 .disabled(sel.isEmpty)
                                 Button { state.setCorrespondentFromText(doc.id, ocrSelection) } label: {
-                                    Label("Als Korrespondent übernehmen", systemImage: "person")
+                                    Label(T("Als Korrespondent übernehmen"), systemImage: "person")
                                 }
                                 .disabled(sel.isEmpty)
                             }
@@ -120,8 +120,8 @@ struct DetailView: View {
                 }
             }
         } else {
-            ContentUnavailableView("Dokument wählen", systemImage: "doc.text",
-                                   description: Text("In der Übersicht ein PDF auswählen."))
+            ContentUnavailableView(T("Dokument wählen"), systemImage: "doc.text",
+                                   description: Text(T("In der Übersicht ein PDF auswählen.")))
         }
     }
 }
@@ -149,10 +149,10 @@ final class ScaledPDFView: PDFView {
               !sel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return menu }
         let m = menu ?? NSMenu()
         m.addItem(NSMenuItem.separator())
-        let t = NSMenuItem(title: "Als Titel übernehmen", action: #selector(useSelectionAsTitle(_:)), keyEquivalent: "")
+        let t = NSMenuItem(title: T("Als Titel übernehmen"), action: #selector(useSelectionAsTitle(_:)), keyEquivalent: "")
         t.target = self
         m.addItem(t)
-        let c = NSMenuItem(title: "Als Korrespondent übernehmen", action: #selector(useSelectionAsCorrespondent(_:)), keyEquivalent: "")
+        let c = NSMenuItem(title: T("Als Korrespondent übernehmen"), action: #selector(useSelectionAsCorrespondent(_:)), keyEquivalent: "")
         c.target = self
         m.addItem(c)
         return m
@@ -270,7 +270,7 @@ struct MetadataSummary: View {
                         .font(.title3).fontWeight(.semibold).lineLimit(2)
                     Text(doc.filename)
                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                        .help("Im Vault: \(doc.relativePath)")
+                        .help(TF("Im Vault: %@", doc.relativePath))
                 }
                 Spacer()
                 syncPill(syncState)
@@ -287,40 +287,40 @@ struct MetadataSummary: View {
                 let corr = state.nameOfCorrespondent(doc.correspondentId)
                 if !corr.isEmpty { chip(corr, systemImage: "person") }
                 if let d = doc.documentDate { chip(state.displayDate(d), systemImage: "calendar") }
-                chip("\(doc.pageCount) Seiten", systemImage: "doc.text")
+                chip(TF("%d Seiten", doc.pageCount), systemImage: "doc.text")
                 if doc.ocrDone {
-                    chip("OCR fertig", systemImage: "checkmark.circle.fill", color: .green)
+                    chip(T("OCR fertig"), systemImage: "checkmark.circle.fill", color: .green)
                 } else {
-                    chip("OCR offen", systemImage: "circle.dashed", color: .orange)
+                    chip(T("OCR offen"), systemImage: "circle.dashed", color: .orange)
                 }
             }
             // Technische Details (Pfad, paperless-ID, SHA) eingeklappt statt offener Grid-Zeilen
             DisclosureGroup(content: {
                 VStack(alignment: .leading, spacing: 2) {
-                    techRow("Datei", doc.filename)
-                    techRow("Im Vault", doc.relativePath)
+                    techRow(T("Datei"), doc.filename)
+                    techRow(T("Im Vault"), doc.relativePath)
                     if let entry = doc.id.flatMap({ state.syncEntry(for: $0) }) {
-                        techRow("paperless-ID", "#\(entry.paperlessId) · \(state.displayDate(String(entry.syncedAt.prefix(10))))")
+                        techRow(T("paperless-ID"), "#\(entry.paperlessId) · \(state.displayDate(String(entry.syncedAt.prefix(10))))")
                     }
                     techRow("SHA-256", String(doc.sha256.prefix(16)) + "…")
                 }
                 .padding(.top, 2)
             }) {
-                Label("Details", systemImage: "info.circle")
+                Label(T("Details"), systemImage: "info.circle")
             }
             .font(.caption)
             .foregroundStyle(.secondary)
             // Korrespondent-Vorschlag aus dem Dokumenttext (bekannter Treffer oder Absender-Firma)
             if let suggestion = state.correspondentSuggestion(for: doc) {
                 HStack(spacing: 6) {
-                    Label("Korrespondent-Vorschlag:", systemImage: "lightbulb")
+                    Label(T("Korrespondent-Vorschlag:"), systemImage: "lightbulb")
                         .font(.caption).foregroundStyle(.secondary)
                     Button(suggestion) {
                         if let id = doc.id { state.applyCorrespondentSuggestion(documentId: id, name: suggestion) }
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.mini)
-                    .help("Diesen Korrespondenten anlegen und dem Dokument zuweisen")
+                    .help(T("Diesen Korrespondenten anlegen und dem Dokument zuweisen"))
                 }
             }
             let tags = state.tagsOf(doc)
@@ -333,7 +333,7 @@ struct MetadataSummary: View {
             // Klick übernimmt das Datum direkt im Edit-Modus
             if !dateSuggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("Datum-Vorschläge:", systemImage: "calendar.badge.plus")
+                    Label(T("Datum-Vorschläge:"), systemImage: "calendar.badge.plus")
                         .font(.caption).foregroundStyle(.secondary)
                     FlowLayout(spacing: 6) {
                         ForEach(dateSuggestions, id: \.self) { d in
@@ -344,38 +344,38 @@ struct MetadataSummary: View {
                             .buttonStyle(.bordered)
                             .controlSize(.mini)
                             .tint(d == doc.documentDate ? .secondary : .accentColor)
-                            .help("Dieses Datum übernehmen (öffnet den Edit-Modus)")
+                            .help(T("Dieses Datum übernehmen (öffnet den Edit-Modus)"))
                         }
                     }
                 }
             }
             HStack {
-                Button("Im Finder zeigen") { reveal() }
+                Button(T("Im Finder zeigen")) { reveal() }
                 if state.syncConfigured(), let id = doc.id {
                     Menu {
                         Button { state.syncDocument(id) } label: {
-                            Label("Jetzt synchronisieren", systemImage: "cloud.arrow.up.fill")
+                            Label(T("Jetzt synchronisieren"), systemImage: "cloud.arrow.up.fill")
                         }
                         Button { state.syncDocument(id, forceMetadata: true) } label: {
-                            Label("Metadaten aktualisieren", systemImage: "pencil.circle.fill")
+                            Label(T("Metadaten aktualisieren"), systemImage: "pencil.circle.fill")
                         }
                     } label: {
                         if state.syncRunning {
                             ProgressView().controlSize(.mini)
                         } else {
-                            Label("Synchronisieren", systemImage: "cloud.arrow.up.fill")
+                            Label(T("Synchronisieren"), systemImage: "cloud.arrow.up.fill")
                         }
                     }
                     .disabled(state.syncRunning)
-                    .help("Dieses Dokument zu paperless-ngx hochladen — „Metadaten aktualisieren“ pusht Kategorie/Korrespondent/Tags per PATCH, auch ohne Änderung")
+                    .help(T("Dieses Dokument zu paperless-ngx hochladen — „Metadaten aktualisieren“ pusht Kategorie/Korrespondent/Tags per PATCH, auch ohne Änderung"))
                 }
                 Spacer()
                 Button { state.beginEditing() } label: {
-                    Label("Bearbeiten", systemImage: "pencil")
+                    Label(T("Bearbeiten"), systemImage: "pencil")
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(state.selection == nil)
-                .help("Metadaten bearbeiten (unten in den Details)")
+                .help(T("Metadaten bearbeiten (unten in den Details)"))
             }
         }
         .padding()
@@ -404,17 +404,17 @@ struct MetadataSummary: View {
         let entry = doc.id.flatMap { state.syncEntry(for: $0) }
         let text: String
         switch syncState {
-        case .synced: text = "Synchronisiert"
-        case .notSynced: text = "Nicht synchronisiert"
-        case .unknown: text = "Sync unbekannt"
+        case .synced: text = T("Synchronisiert")
+        case .notSynced: text = T("Nicht synchronisiert")
+        case .unknown: text = T("Sync unbekannt")
         }
         let detail: String
         switch syncState {
         case .synced:
             detail = entry.map { "paperless-#\($0.paperlessId) · \(state.displayDate(String($0.syncedAt.prefix(10))))" }
-                ?? "mit paperless-ngx abgeglichen"
-        case .notSynced: detail = "Push über „Sync“ in der Toolbar offen"
-        case .unknown: detail = "paperless-ngx nicht konfiguriert oder nie gelaufen"
+                ?? T("mit paperless-ngx abgeglichen")
+        case .notSynced: detail = T("Push über „Sync“ in der Toolbar offen")
+        case .unknown: detail = T("paperless-ngx nicht konfiguriert oder nie gelaufen")
         }
         return HStack(spacing: 4) {
             SyncCloudBadge.icon(syncState)
@@ -424,7 +424,7 @@ struct MetadataSummary: View {
         .foregroundStyle(SyncCloudBadge.color(syncState))
         .padding(.horizontal, 9).padding(.vertical, 4)
         .background(Capsule().fill(SyncCloudBadge.color(syncState).opacity(0.15)))
-        .help("\(text) — \(detail)")
+        .help(TF("%@ — %@", text, detail))
     }
 
     /// Eine Zeile im eingeklappten „Details“-Bereich (technisch, klein, kopierbar).

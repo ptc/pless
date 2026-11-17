@@ -14,82 +14,94 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             TabView {
+                // .id(language) am Root erzwingt Re-Render aller T()-Strings bei Sprachwechsel
                 generalTab
-                    .tabItem { Label("Allgemein", systemImage: "gear") }
+                    .tabItem { Label(T("Allgemein"), systemImage: "gear") }
                 ocrTab
-                    .tabItem { Label("OCR", systemImage: "doc.text.viewfinder") }
+                    .tabItem { Label(T("OCR"), systemImage: "doc.text.viewfinder") }
                 paperlessTab
-                    .tabItem { Label("paperless-ngx", systemImage: "cloud") }
+                    .tabItem { Label(T("paperless-ngx"), systemImage: "cloud") }
                 mcpTab
-                    .tabItem { Label("MCP · KI", systemImage: "sparkles") }
+                    .tabItem { Label(T("MCP · KI"), systemImage: "sparkles") }
             }
             Divider()
             HStack {
-                Text("Änderungen werden sofort gespeichert.")
+                Text(T("Änderungen werden sofort gespeichert."))
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button("Schließen") { dismiss() }
+                Button(T("Schließen")) { dismiss() }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.cancelAction)
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
+        .id(state.language)   // Sprachwechsel → komplettes Re-Render aller T()-Strings
     }
 
     // MARK: - Tabs
 
     private var generalTab: some View {
         Form {
-            Section("Vault") {
-                LabeledContent("Pfad") {
-                    HStack(spacing: 6) {
-                        TextField("Vault-Ordner", text: $settings.vaultPath)
-                            .textFieldStyle(.roundedBorder)
-                        Button("Wählen…") { pickDirectory { settings.vaultPath = $0 } }
-                    }
+            Section(T("Sprache")) {
+                Picker(T("Sprache"), selection: Binding(get: { state.language }, set: { state.setLanguage($0) })) {
+                    Text(T("Deutsch")).tag("de")
+                    Text(T("English")).tag("en")
                 }
-                Text("Vault-Pfad und Import-Ordner werden beim nächsten Start wirksam.")
+                .labelsHidden()
+                .frame(width: 160)
+                Text(T("Gilt ab sofort für die gesamte App-Oberfläche."))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Section("Import-Ordner") {
-                Toggle("Eigenen Import-Ordner verwenden", isOn: $settings.customInboxEnabled)
-                LabeledContent("Pfad") {
+            Section(T("Vault")) {
+                LabeledContent(T("Pfad")) {
                     HStack(spacing: 6) {
-                        TextField("Import-Ordner", text: $settings.customInboxPath)
+                        TextField(T("Vault-Ordner"), text: $settings.vaultPath)
                             .textFieldStyle(.roundedBorder)
-                        Button("Wählen…") { pickDirectory { settings.customInboxPath = $0 } }
+                        Button(T("Wählen…")) { pickDirectory { settings.vaultPath = $0 } }
+                    }
+                }
+                Text(T("Vault-Pfad und Import-Ordner werden beim nächsten Start wirksam."))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section(T("Import-Ordner")) {
+                Toggle(T("Eigenen Import-Ordner verwenden"), isOn: $settings.customInboxEnabled)
+                LabeledContent(T("Pfad")) {
+                    HStack(spacing: 6) {
+                        TextField(T("Import-Ordner"), text: $settings.customInboxPath)
+                            .textFieldStyle(.roundedBorder)
+                        Button(T("Wählen…")) { pickDirectory { settings.customInboxPath = $0 } }
                     }
                 }
                 .disabled(!settings.customInboxEnabled)
-                Text("Default: <Vault>/inbox — PDFs hier hineinlegen, sie werden automatisch importiert.")
+                Text(T("Default: <Vault>/inbox — PDFs hier hineinlegen, sie werden automatisch importiert."))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Section("Dateinamen") {
-                LabeledContent("Schema") {
-                    TextField("Template", text: $settings.namingTemplate)
+            Section(T("Dateinamen")) {
+                LabeledContent(T("Schema")) {
+                    TextField(T("Template"), text: $settings.namingTemplate)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.body, design: .monospaced))
                 }
-                LabeledContent("Vorschau") {
+                LabeledContent(T("Vorschau")) {
                     Text(preview)
                         .font(.system(.body, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
-                Text("Platzhalter: {date} {correspondent} {category} {title} {tags}")
+                Text(T("Platzhalter: {date} {correspondent} {category} {title} {tags}"))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Section("Anzeige") {
-                LabeledContent("Datumsformat") {
-                    Picker("Datumsformat", selection: $settings.dateFormat) {
-                        Text("Deutsch (dd.MM.yyyy)").tag("dd.MM.yyyy")
-                        Text("ISO (yyyy-MM-dd)").tag("yyyy-MM-dd")
-                        Text("US (MM/dd/yyyy)").tag("MM/dd/yyyy")
+            Section(T("Anzeige")) {
+                LabeledContent(T("Datumsformat")) {
+                    Picker(T("Datumsformat"), selection: $settings.dateFormat) {
+                        Text(T("Deutsch (dd.MM.yyyy)")).tag("dd.MM.yyyy")
+                        Text(T("ISO (yyyy-MM-dd)")).tag("yyyy-MM-dd")
+                        Text(T("US (MM/dd/yyyy)")).tag("MM/dd/yyyy")
                     }
                     .labelsHidden()
                     .frame(width: 200)
                 }
-                Text("Betrifft Anzeige in Liste, Details und Bearbeitungsmodus — gespeichert wird immer ISO (yyyy-MM-dd).")
+                Text(T("Betrifft Anzeige in Liste, Details und Bearbeitungsmodus — gespeichert wird immer ISO (yyyy-MM-dd)."))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -99,32 +111,32 @@ struct SettingsView: View {
 
     private var ocrTab: some View {
         Form {
-            Section("Sprachen") {
-                Toggle("Deutsch (de-DE)", isOn: langBinding("de-DE"))
-                Toggle("Englisch (en-US)", isOn: langBinding("en-US"))
-                Text("Die Texterkennung läuft per Vision vollständig lokal auf dem Mac — keine Daten gehen an externe Dienste.")
+            Section(T("Sprachen")) {
+                Toggle(T("Deutsch (de-DE)"), isOn: langBinding("de-DE"))
+                Toggle(T("Englisch (en-US)"), isOn: langBinding("en-US"))
+                Text(T("Die Texterkennung läuft per Vision vollständig lokal auf dem Mac — keine Daten gehen an externe Dienste."))
                     .font(.caption).foregroundStyle(.secondary)
             }
-            Section("Qualität") {
-                LabeledContent("Genauigkeit") {
-                    Picker("Genauigkeit", selection: $settings.ocrQuality) {
-                        Text("Genau (accurate) — empfohlen").tag("accurate")
-                        Text("Schnell (fast)").tag("fast")
+            Section(T("Qualität")) {
+                LabeledContent(T("Genauigkeit")) {
+                    Picker(T("Genauigkeit"), selection: $settings.ocrQuality) {
+                        Text(T("Genau (accurate) — empfohlen")).tag("accurate")
+                        Text(T("Schnell (fast)")).tag("fast")
                     }
                     .labelsHidden()
                     .frame(width: 230)
                 }
-                LabeledContent("Auflösung") {
-                    Picker("Auflösung", selection: $settings.ocrResolutionDPI) {
-                        Text("200 dpi — schnell").tag(200)
-                        Text("300 dpi — Standard").tag(300)
-                        Text("400 dpi — feine Schrift").tag(400)
+                LabeledContent(T("Auflösung")) {
+                    Picker(T("Auflösung"), selection: $settings.ocrResolutionDPI) {
+                        Text(T("200 dpi — schnell")).tag(200)
+                        Text(T("300 dpi — Standard")).tag(300)
+                        Text(T("400 dpi — feine Schrift")).tag(400)
                     }
                     .labelsHidden()
                     .frame(width: 230)
                 }
-                Toggle("Sprachkorrektur (Language Correction)", isOn: $settings.ocrLanguageCorrection)
-                Text("„Genau“ + höhere dpi erkennen kleine Schrift deutlich besser, kosten aber Rechenzeit. Gilt ab dem nächsten Start der App.")
+                Toggle(T("Sprachkorrektur (Language Correction)"), isOn: $settings.ocrLanguageCorrection)
+                Text(T("„Genau“ + höhere dpi erkennen kleine Schrift deutlich besser, kosten aber Rechenzeit. Gilt ab dem nächsten Start der App."))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -134,23 +146,23 @@ struct SettingsView: View {
 
     private var paperlessTab: some View {
         Form {
-            Section("Verbindung (opt-in)") {
-                LabeledContent("URL") {
-                    TextField("https://paperless.example.local", text: $settings.paperlessURL)
+            Section(T("Verbindung (opt-in)")) {
+                LabeledContent(T("URL")) {
+                    TextField(T("https://paperless.example.local"), text: $settings.paperlessURL)
                         .textFieldStyle(.roundedBorder)
                 }
-                LabeledContent("API-Token") {
-                    SecureField("Token", text: $settings.paperlessToken)
+                LabeledContent(T("API-Token")) {
+                    SecureField(T("Token"), text: $settings.paperlessToken)
                         .textFieldStyle(.roundedBorder)
                 }
-                Text("Das Token liegt sicher in der macOS-Keychain, nicht in der pless.db. Ohne URL + Token wird kein Netzwerk-Zugriff ausgeführt.")
+                Text(T("Das Token liegt sicher in der macOS-Keychain, nicht in der pless.db. Ohne URL + Token wird kein Netzwerk-Zugriff ausgeführt."))
                     .font(.caption).foregroundStyle(.secondary)
                 HStack(spacing: 8) {
                     Button { testConnection() } label: {
                         if testingConnection {
                             ProgressView().controlSize(.small)
                         } else {
-                            Label("Verbindung testen", systemImage: "bolt.fill")
+                            Label(T("Verbindung testen"), systemImage: "bolt.fill")
                         }
                     }
                     .disabled(testingConnection || settings.paperlessConfig() == nil)
@@ -162,13 +174,13 @@ struct SettingsView: View {
                     Spacer()
                 }
             }
-            Section("Sync & Import") {
+            Section(T("Sync & Import")) {
                 Button { state.pullFromPaperless() } label: {
-                    Label("Kategorien & Korrespondenten aus paperless importieren", systemImage: "tray.and.arrow.down")
+                    Label(T("Kategorien & Korrespondenten aus paperless importieren"), systemImage: "tray.and.arrow.down")
                 }
                 .disabled(testingConnection || state.syncRunning || settings.paperlessConfig() == nil)
-                .help("Pull aus paperless-ngx: Document Types → Kategorien, Correspondents → Korrespondenten (bestehende Namen bleiben erhalten)")
-                Text("Push (Einweg): Kategorie → Document Type, Tags → Tags, Korrespondent → Correspondent (jeweils find-or-create in paperless). Der Dateiname bleibt als original_filename erhalten; bereits gesyncte Dokumente werden per SHA-256 übersprungen, reine Metadaten-Änderungen per PATCH nachgesendet.")
+                .help(T("Pull aus paperless-ngx: Document Types → Kategorien, Correspondents → Korrespondenten (bestehende Namen bleiben erhalten)"))
+                Text(T("Push (Einweg): Kategorie → Document Type, Tags → Tags, Korrespondent → Correspondent (jeweils find-or-create in paperless). Der Dateiname bleibt als original_filename erhalten; bereits gesyncte Dokumente werden per SHA-256 übersprungen, reine Metadaten-Änderungen per PATCH nachgesendet."))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -178,7 +190,7 @@ struct SettingsView: View {
 
     private var mcpTab: some View {
         Form {
-            Section("MCP-Server (stdio) — z. B. für Claude Desktop") {
+            Section(T("MCP-Server (stdio) — z. B. für Claude Desktop")) {
                 Text(settings.mcpConfigSnippet(binaryPath: "<Pfad-zum-Binary>/Pless"))
                     .font(.system(.caption, design: .monospaced))
                     .textSelection(.enabled)
@@ -186,9 +198,9 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .textBackgroundColor)))
                 Button { copyMCPConfig() } label: {
-                    Label("Config kopieren", systemImage: "doc.on.doc")
+                    Label(T("Config kopieren"), systemImage: "doc.on.doc")
                 }
-                Text("Server starten: Pless mcp --vault <Pfad> — JSON-RPC 2.0 über stdio, eine Nachricht pro Zeile.")
+                Text(T("Server starten: Pless mcp --vault <Pfad> — JSON-RPC 2.0 über stdio, eine Nachricht pro Zeile."))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -201,7 +213,7 @@ struct SettingsView: View {
     private var preview: String {
         NamingEngine.render(template: settings.namingTemplate, context: NamingContext(
             date: "2026-02-14", correspondent: "Allianz", category: "Rechnungen",
-            title: "KFZ-Versicherung 2026", tags: ["wichtig"]))
+            title: T("KFZ-Versicherung 2026"), tags: ["wichtig"]))
     }
 
     private func langBinding(_ lang: String) -> Binding<Bool> {
@@ -229,7 +241,7 @@ struct SettingsView: View {
                 _ = try await client.ping()
                 connectionResult = "OK — verbunden"
             } catch {
-                connectionResult = "Fehler: \(error.localizedDescription)"
+                connectionResult = TF("Fehler: %@", error.localizedDescription)
             }
             testingConnection = false
         }

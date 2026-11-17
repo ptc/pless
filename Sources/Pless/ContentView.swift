@@ -30,15 +30,15 @@ struct ContentView: View {
                     // das Menü, „Jetzt synchronisieren“ ist der Default-Eintrag (Enter)
                     Menu {
                         Button { state.syncAll() } label: {
-                            Label("Jetzt synchronisieren", systemImage: "cloud.arrow.up.fill")
+                            Label(T("Jetzt synchronisieren"), systemImage: "cloud.arrow.up.fill")
                         }
                         .keyboardShortcut(.defaultAction)
                         Button { state.syncAll(forceMetadata: true) } label: {
-                            Label("Metadaten aktualisieren", systemImage: "pencil.circle.fill")
+                            Label(T("Metadaten aktualisieren"), systemImage: "pencil.circle.fill")
                         }
                         Divider()
                         Button { state.pullFromPaperless() } label: {
-                            Label("Aus paperless importieren", systemImage: "tray.and.arrow.down.fill")
+                            Label(T("Aus paperless importieren"), systemImage: "tray.and.arrow.down.fill")
                         }
                     } label: {
                         HStack(spacing: 4) {
@@ -47,28 +47,28 @@ struct ContentView: View {
                             } else {
                                 syncCloudIcon
                             }
-                            Text("Sync")
+                            Text(T("Sync"))
                         }
                     }
                     .menuStyle(.borderlessButton)
                     .disabled(state.syncRunning)
                     .help(state.syncConfigured()
-                          ? "Zu paperless-ngx synchronisieren (Einweg-Push) — Menü: jetzt synchronisieren, Metadaten aktualisieren, Import aus paperless"
-                          : "paperless-URL + API-Token in den Einstellungen (Cmd+,) konfigurieren")
+                          ? T("Zu paperless-ngx synchronisieren (Einweg-Push) — Menü: jetzt synchronisieren, Metadaten aktualisieren, Import aus paperless")
+                          : T("paperless-URL + API-Token in den Einstellungen (Cmd+,) konfigurieren"))
                 }
                 ToolbarItem(placement: .primaryAction) {
                     // Bearbeiten/Fertig liegt in der Detail-Vorschau (DetailView-Toolbar)
-                    TextField("Suchen…", text: Binding(
+                    TextField(T("Suchen…"), text: Binding(
                         get: { state.searchText },
                         set: { state.searchText = $0; state.refresh() }))
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 200)
                 }
             }
-            .alert("Hinweis", isPresented: Binding(
+            .alert(T("Hinweis"), isPresented: Binding(
                 get: { state.errorMessage != nil },
                 set: { if !$0 { state.errorMessage = nil } })) {
-                Button("OK") { state.errorMessage = nil }
+                Button(T("OK")) { state.errorMessage = nil }
             } message: {
                 Text(state.errorMessage ?? "")
             }
@@ -83,6 +83,7 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             state.dropFiles(providers)
         }
+        .id(state.language)   // Sprachwechsel → komplettes Re-Render aller T()-Strings
         .overlay {
             if dropTargeted {
                 ZStack {
@@ -92,7 +93,7 @@ struct ContentView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 3, dash: [10]))
                         .padding(10)
-                    Label("PDF hier ablegen zum Importieren", systemImage: "tray.and.arrow.down.fill")
+                    Label(T("PDF hier ablegen zum Importieren"), systemImage: "tray.and.arrow.down.fill")
                         .font(.title2).padding(16)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
                 }
@@ -138,14 +139,14 @@ struct StatusBarView: View {
                                 : state.statusKind == .warning ? .orange : .secondary)
                 .lineLimit(1)
             if state.ocrRunning, state.statusKind == .busy {
-                Button("Abbrechen") { state.cancelOCR() }
+                Button(T("Abbrechen")) { state.cancelOCR() }
                     .buttonStyle(.borderless)
                     .font(.caption)
                     .foregroundStyle(.red)
-                    .help("Laufenden OCR-Durchlauf abbrechen")
+                    .help(T("Laufenden OCR-Durchlauf abbrechen"))
             }
             Spacer()
-            Text("\(state.hits.count) Dokument(e) · Posteingang: \(state.inboxCount)")
+            Text(TF("%d Dokument(e) · Posteingang: %d", state.hits.count, state.inboxCount))
                 .font(.caption).foregroundStyle(.secondary)
         }
         .padding(.horizontal, 10)
@@ -162,27 +163,27 @@ struct BulkActionBar: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Label("\(state.selectionSet.count) ausgewählt", systemImage: "checkmark.circle.fill")
+            Label(TF("%d ausgewählt", state.selectionSet.count), systemImage: "checkmark.circle.fill")
                 .font(.caption).foregroundStyle(.tint)
-            Picker("Kategorie", selection: $categoryId) {
-                Text("Kategorie nicht ändern").tag(nil as Int64?)
+            Picker(T("Kategorie"), selection: $categoryId) {
+                Text(T("Kategorie nicht ändern")).tag(nil as Int64?)
                 ForEach(state.categories.filter { $0.id != nil }, id: \.id) { c in
                     Text(c.name).tag(c.id)
                 }
             }
             .labelsHidden()
             .frame(width: 190)
-            TextField("Tag zuweisen…", text: $tag)
+            TextField(T("Tag zuweisen…"), text: $tag)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 170)
                 .onSubmit(apply)
-            Button("Zuweisen") { apply() }
+            Button(T("Zuweisen")) { apply() }
                 .disabled(categoryId == nil && tag.trimmingCharacters(in: .whitespaces).isEmpty)
-                .help("Kategorie und/oder Tag auf alle ausgewählten Dokumente setzen")
+                .help(T("Kategorie und/oder Tag auf alle ausgewählten Dokumente setzen"))
             Spacer()
-            Button("Alle auswählen") { state.selectAll() }
-                .help("Alle sichtbaren Dokumente auswählen (Cmd+A)")
-            Button("Aufheben") { state.clearSelection() }
+            Button(T("Alle auswählen")) { state.selectAll() }
+                .help(T("Alle sichtbaren Dokumente auswählen (Cmd+A)"))
+            Button(T("Aufheben")) { state.clearSelection() }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
@@ -193,10 +194,10 @@ struct BulkActionBar: View {
         let cleanTag = tag.trimmingCharacters(in: .whitespaces)
         let r = state.bulkAssign(categoryId: categoryId, tagName: cleanTag.isEmpty ? nil : cleanTag)
         if r.failed.isEmpty {
-            state.setStatus(.ok, "\(r.ok) Dokument(e) aktualisiert (Kategorie/Tag)", autoIdleAfter: 6)
+            state.setStatus(.ok, TF("%d Dokument(e) aktualisiert (Kategorie/Tag)", r.ok), autoIdleAfter: 6)
         } else {
-            state.setStatus(.error, "Bulk: \(r.ok) ok, \(r.failed.count) fehlgeschlagen — \(r.failed.joined(separator: "; "))")
-            state.errorMessage = "Bulk-Operation: \(r.failed.joined(separator: "; "))"
+            state.setStatus(.error, TF("Bulk: %d ok, %d fehlgeschlagen — %@", r.ok, r.failed.count, r.failed.joined(separator: "; ")))
+            state.errorMessage = TF("Bulk-Operation: %@", r.failed.joined(separator: "; "))
         }
         tag = ""
         categoryId = nil
@@ -280,8 +281,8 @@ struct DocumentListView: View {
                           systemImage: state.searchText.isEmpty ? "doc.text" : "magnifyingglass")
                 } description: {
                     Text(state.searchText.isEmpty
-                         ? "PDFs per Drag & Drop, über „Ablage > Importieren…“ oder in den Posteingang legen: \(state.vault?.inboxURL.path ?? "<Vault>/inbox")"
-                         : "Die Suche „\(state.searchText)“ hat nichts gefunden — Filter in der Sidebar prüfen.")
+                         ? TF("PDFs per Drag & Drop, über „Ablage > Importieren…“ oder in den Posteingang legen: %@", state.vault?.inboxURL.path ?? "<Vault>/inbox")
+                         : TF("Die Suche „%@“ hat nichts gefunden — Filter in der Sidebar prüfen.", state.searchText))
                 }
             }
         }
@@ -292,8 +293,8 @@ struct DocumentListView: View {
 enum SyncCloudBadge {
     static func symbol(_ state: SyncState) -> String {
         switch state {
-        case .synced: return "cloud.fill"
-        case .notSynced, .unknown: return "cloud"   // unknown bekommt zusätzlich ein „?“ (s. icon)
+        case .synced: return T("cloud.fill")
+        case .notSynced, .unknown: return T("cloud")   // unknown bekommt zusätzlich ein „?“ (s. icon)
         }
     }
 
@@ -303,7 +304,7 @@ enum SyncCloudBadge {
         ZStack {
             Image(systemName: symbol(state))
             if state == .unknown {
-                Text("?").font(.system(size: 8, weight: .bold))
+                Text(T("?")).font(.system(size: 8, weight: .bold))
             }
         }
     }
@@ -318,9 +319,9 @@ enum SyncCloudBadge {
 
     static func help(_ state: SyncState) -> String {
         switch state {
-        case .synced: return "Synchronisiert mit paperless-ngx"
-        case .notSynced: return "Noch nicht synchronisiert — Push über „Sync“ in der Toolbar"
-        case .unknown: return "Sync-Stand unbekannt (paperless-ngx nicht konfiguriert oder nie gelaufen)"
+        case .synced: return T("Synchronisiert mit paperless-ngx")
+        case .notSynced: return T("Noch nicht synchronisiert — Push über „Sync“ in der Toolbar")
+        case .unknown: return T("Sync-Stand unbekannt (paperless-ngx nicht konfiguriert oder nie gelaufen)")
         }
     }
 }
@@ -346,7 +347,7 @@ struct DocumentCard: View {
                         .foregroundStyle(.secondary).frame(height: 170)
                 }
                 if doc.needsReview && !doc.ocrDone {
-                    Label("OCR", systemImage: "doc.text.magnifyingglass")
+                    Label(T("OCR"), systemImage: "doc.text.magnifyingglass")
                         .font(.caption2).padding(4)
                         .background(.orange.opacity(0.9), in: Capsule())
                         .foregroundStyle(.white).padding(4)
