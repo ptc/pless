@@ -65,11 +65,16 @@ cat > "$STAGE/Contents/Info.plist" <<'XML'
 XML
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
 
-echo "==> Icon generieren (pless.icns via Scripts/make-icon.swift + iconutil)"
+echo "==> Icon generieren (docs/pless-icon.jpg falls vorhanden, sonst Vektor-Icon; + iconutil)"
 mkdir -p "$STAGE/Contents/Resources"
 ICONSET="$ROOT/.build/icon/pless.iconset"
 rm -rf "$ICONSET"
-swift "$ROOT/Scripts/make-icon.swift" "$ICONSET"
+ICON_SRC="$ROOT/docs/pless-icon.jpg"
+if [ -f "$ICON_SRC" ]; then
+	swift "$ROOT/Scripts/make-icon-from-image.swift" "$ICON_SRC" "$ICONSET"
+else
+	swift "$ROOT/Scripts/make-icon.swift" "$ICONSET"
+fi
 iconutil -c icns "$ICONSET" -o "$STAGE/Contents/Resources/pless.icns"
 
 mkdir -p "$ROOT/dist"
