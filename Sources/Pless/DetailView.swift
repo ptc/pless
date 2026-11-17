@@ -38,22 +38,32 @@ struct DetailView: View {
                         pdfMode = .full
                         pdfZoom = min(8, pdfZoom * 1.25)
                     } label: { Image(systemName: "plus.magnifyingglass") }
-                    Button {
-                        if let id = doc.id { state.startOCR(for: id) }
-                    } label: {
-                        Label(doc.ocrDone ? "OCR erneut" : "OCR starten", systemImage: "text.viewfinder")
-                    }
-                    .disabled(state.ocrRunning)
-                    .help(doc.ocrDone
-                          ? "OCR für dieses Dokument erneut ausführen (z. B. nach Änderung der OCR-Einstellungen) — überschreibt den bisherigen OCR-Text; bereits gesetzte Metadaten bleiben erhalten"
-                          : "OCR für dieses Dokument jetzt ausführen (Status „OCR offen“)")
-                    if doc.ocrText != nil {
-                        Button { showOCRText.toggle() } label: {
-                            Label("OCR-Text", systemImage: "text.alignleft")
-                                .foregroundStyle(showOCRText ? Color.accentColor : .secondary)
+                    // OCR als kompaktes Icon-Dropdown (wie Sync in der Toolbar)
+                    Menu {
+                        Button { if let id = doc.id { state.startOCR(for: id) } } label: {
+                            Label(doc.ocrDone ? "OCR erneut ausführen" : "OCR starten",
+                                  systemImage: "text.viewfinder")
                         }
-                        .help("OCR-Text ein-/ausblenden — der Text ist markierbar/kopierbar")
+                        .disabled(state.ocrRunning)
+                        if doc.ocrText != nil {
+                            Divider()
+                            Button { showOCRText.toggle() } label: {
+                                Label(showOCRText ? "OCR-Text ausblenden" : "OCR-Text anzeigen",
+                                      systemImage: "text.alignleft")
+                            }
+                        }
+                    } label: {
+                        if state.ocrRunning {
+                            ProgressView().controlSize(.mini)
+                        } else {
+                            Image(systemName: "doc.text.viewfinder")
+                                .foregroundStyle(doc.ocrDone ? Color.secondary : Color.accentColor)
+                        }
                     }
+                    .menuStyle(.borderlessButton)
+                    .help(doc.ocrDone
+                          ? "OCR für dieses Dokument erneut ausführen (z. B. nach Änderung der OCR-Einstellungen) — überschreibt den bisherigen OCR-Text; Metadaten bleiben erhalten. Menü: OCR-Text ein-/ausblenden"
+                          : "OCR für dieses Dokument starten (Status „OCR offen“) — Menü: OCR-Text ein-/ausblenden")
                     Spacer()
                 }
                 .buttonStyle(.borderless)
