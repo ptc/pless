@@ -395,6 +395,7 @@ Categories
 | 2026-11-17 | 80cd00d | — | feat: App-UI zweisprachig (de/en) — L10n-Tabelle in PlessCore, Sprachwahl in den Einstellungen → Allgemein — 98 Tests grün |
 | 2026-11-17 | 28ead0c | — | feat: UI-Sprache „System“ als Default (system/de/en) — OS-Sprache entscheidet ansonsten — 99 Tests grün |
 | 2026-11-17 | 524a02a | — | feat: Datumsformat „System“ als Default — Anzeige folgt OS-Locale, DB bleibt ISO — 100 Tests grün |
+| 2026-11-17 | 50e9099 | — | docs: Disclaimer in README (de/en) — Benutzung auf eigene Gefahr, keine Verbindung zu paperless-ngx, Marken der jeweiligen Organisationen — 100 Tests grün |
 
 ## Open points / later ideas
 - Implement MCP protocolVersion `2025-06-18`
