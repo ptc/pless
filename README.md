@@ -98,6 +98,19 @@ Config-Snippet (auch in den App-Settings unter „MCP“ zum Kopieren):
 - [docs/implementierung.md](docs/implementierung.md) — Roadmap & Fortschritts-Log
 - `AGENTS.md` — Vorgehen & Konventionen im Repo
 
+## Lizenz
+
+pless ist Open Source unter **GPL-3.0-or-later** — siehe [LICENSE](LICENSE)
+(SPDX: `GPL-3.0-or-later`). **Forks sind ausdrücklich willkommen**; Änderungen an einem
+Fork fallen automatisch unter dieselbe Lizenz. Externe Commits/PRs werden nicht angenommen.
+
+**Kommerzielle Lizenz (Dual Licensing):** Der Autor ist alleiniger Copyright-Holder und
+bietet auf Anfrage eine kommerzielle Lizenz an — für Firmen, die pless geschlossen einsetzen
+oder ohne Source-Offenlegung vertreiben wollen. Kontakt: dev@ptch.de
+
+Externe Abhängigkeiten hat pless keine: nur Apple-System-Frameworks (dynamisch aus macOS
+geladen, nicht mit der App verteilt) und die systemeigene SQLite (Public Domain).
+
 ## Bekannte Einschränkungen
 
 - Share Extension (Apple-Teilen) fehlt noch — geteilte PDFs landen manuell im Posteingang.
