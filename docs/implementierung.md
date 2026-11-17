@@ -382,6 +382,7 @@ Kategorien
 | 2026-11-17 | c5c6895 | 9/UI | feat(ui): OCR pro Dokument erneut anstoßen („OCR erneut“ in der Detail-Vorschau, auch wenn schon done) — 95 Tests grün |
 | 2026-11-17 | 3750379 | 9/UI | fix(ui): OCR in der Detail-Leiste als Icon-Dropdown (doc.text.viewfinder) statt Text-Buttons — 95 Tests grün |
 | 2026-11-17 | a82dbd5 | — | fix: alle Build-Warnings beseitigt (Sendable via FULLMUTEX, deprecated APIs, try?-Results, NSLock in @MainActor) — 0 Warnings Debug+Release, 95 Tests grün |
+| 2026-11-17 | 2a51dd7 | 9/UI | feat(ui): OCR-Text in der Vorschau markieren → Rechtsklick „Als Titel/Korrespondent übernehmen“ — 96 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
