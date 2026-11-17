@@ -4,8 +4,20 @@ import Foundation
 /// Schlüssel ist der deutsche Ausgangstext; `en` hält die englische Übersetzung.
 /// Unbekannte Keys liefern den Key zurück (Deutsch), damit z. B. SF-Symbol-Namen durchfallen.
 public enum L10n {
-    /// Aktive UI-Sprache ("de" | "en").
+    /// Aktive UI-Sprache ("de" | "en") — wird aus der Einstellung via `resolve` ermittelt.
     public static var language: String = "de"
+
+    /// Löst die Roh-Einstellung ("system" | "de" | "en") zur effektiven Sprache auf.
+    public static func resolve(_ preference: String) -> String {
+        if preference == "system" { return systemLanguage() }
+        return preference == "en" ? "en" : "de"
+    }
+
+    /// Sprache des Betriebssystems (erste bevorzugte Sprache; alles außer Englisch → Deutsch).
+    public static func systemLanguage() -> String {
+        let lang = Locale.preferredLanguages.first ?? "de"
+        return lang.hasPrefix("en") ? "en" : "de"
+    }
 
     public static func t(_ key: String) -> String {
         guard language == "en" else { return key }
@@ -241,6 +253,8 @@ public enum L10n {
         "Korrespondent „%@“ löschen?": "Delete correspondent “%@”?",
         "Ablage": "File",
         "Auswahl": "Selection",
+        "System": "System",
+        "Entspricht aktuell: %@": "Currently resolves to: %@",
         // Nachträge 2
         "?": "?",
         "API-Token": "API token",

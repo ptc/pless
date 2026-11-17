@@ -1,7 +1,7 @@
 import Foundation
 import PlessCore
 
-/// Globaler Lookup für UI-Strings. Sprachwechsel wird über `.id(state.language)`
+/// Globaler Lookup für UI-Strings. Sprachwechsel wird über `.id(state.effectiveLanguage)`
 /// an den View-Roots re-rendert, sodass alle T()-Aufrufe neu ausgewertet werden.
 func T(_ key: String) -> String { L10n.t(key) }
 

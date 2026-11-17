@@ -33,8 +33,10 @@ final class AppState: ObservableObject {
     @Published var searchText: String = ""
     @Published var sidebarSelection: SidebarSelection = .all
     @Published var errorMessage: String?
-    /// UI-Sprache ("de" | "en") — triggert über .id(state.language) ein Re-Render der Views.
+    /// UI-Spracheinstellung ("system" | "de" | "en").
     @Published var language: String
+    /// Daraus aufgelöste effektive Sprache ("de" | "en") — triggert über .id(state.effectiveLanguage) ein Re-Render der Views.
+    @Published var effectiveLanguage: String
     @Published var statusKind: StatusKind = .idle
     @Published var statusText = "Bereit"
     @Published var categories: [PlessCore.Category] = []
@@ -70,7 +72,8 @@ final class AppState: ObservableObject {
         self.vaultPath = vaultPath
         self.settings = settings
         self.language = settings.language
-        L10n.language = settings.language
+        self.effectiveLanguage = L10n.resolve(settings.language)
+        L10n.language = self.effectiveLanguage
         do {
             let v = try Vault(root: vaultPath, inboxOverride: settings.inboxOverride())
             let database = try Database(url: v.databaseURL)
@@ -747,10 +750,11 @@ final class AppState: ObservableObject {
         applyCorrespondentSuggestion(documentId: documentId, name: name)
     }
 
-    /// UI-Sprache wechseln (persistiert in Settings, aktualisiert L10n + published state).
+    /// UI-Sprache wechseln ("system" | "de" | "en"; persistiert in Settings, löst "system" auf).
     func setLanguage(_ lang: String) {
         language = lang
-        L10n.language = lang
+        effectiveLanguage = L10n.resolve(lang)
+        L10n.language = effectiveLanguage
         settings.language = lang
     }
 

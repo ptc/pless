@@ -36,7 +36,7 @@ struct SettingsView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .id(state.language)   // Sprachwechsel → komplettes Re-Render aller T()-Strings
+        .id(state.effectiveLanguage)   // Sprachwechsel → komplettes Re-Render aller T()-Strings
     }
 
     // MARK: - Tabs
@@ -45,12 +45,15 @@ struct SettingsView: View {
         Form {
             Section(T("Sprache")) {
                 Picker(T("Sprache"), selection: Binding(get: { state.language }, set: { state.setLanguage($0) })) {
+                    Text(T("System")).tag("system")
                     Text(T("Deutsch")).tag("de")
                     Text(T("English")).tag("en")
                 }
                 .labelsHidden()
                 .frame(width: 160)
-                Text(T("Gilt ab sofort für die gesamte App-Oberfläche."))
+                Text(state.language == "system"
+                     ? TF("Entspricht aktuell: %@", state.effectiveLanguage == "en" ? T("English") : T("Deutsch"))
+                     : T("Gilt ab sofort für die gesamte App-Oberfläche."))
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section(T("Vault")) {

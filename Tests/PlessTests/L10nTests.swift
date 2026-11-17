@@ -6,6 +6,16 @@ enum L10nTests {
     static func register() {
         MiniTest.test("L10n: de liefert Key unverändert, en übersetzt, unbekannt → Key") { try basic() }
         MiniTest.test("L10n: TF mit Platzhaltern (%@ / %d) in de und en") { try formats() }
+        MiniTest.test("L10n: resolve — de/en direkt, system → OS-Sprache") { try resolveTest() }
+    }
+
+    private static func resolveTest() throws {
+        try MiniTest.expectEqual(L10n.resolve("de"), "de")
+        try MiniTest.expectEqual(L10n.resolve("en"), "en")
+        let sys = L10n.systemLanguage()
+        try MiniTest.expect(sys == "de" || sys == "en", "systemLanguage liefert de oder en")
+        try MiniTest.expectEqual(L10n.resolve("system"), sys)
+        try MiniTest.expectEqual(L10n.resolve("unsinn"), "de")   // ungültig → Fallback deutsch
     }
 
     private static func basic() throws {

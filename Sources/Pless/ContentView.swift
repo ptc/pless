@@ -83,7 +83,7 @@ struct ContentView: View {
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             state.dropFiles(providers)
         }
-        .id(state.language)   // Sprachwechsel → komplettes Re-Render aller T()-Strings
+        .id(state.effectiveLanguage)   // Sprachwechsel → komplettes Re-Render aller T()-Strings
         .overlay {
             if dropTargeted {
                 ZStack {

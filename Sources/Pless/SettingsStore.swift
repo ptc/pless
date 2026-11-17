@@ -10,7 +10,7 @@ enum SettingsKey {
     static let customInboxEnabled = "customInboxEnabled"
     static let customInboxPath = "customInboxPath"
     static let dateFormat = "dateFormat"
-    static let uiLanguage = "uiLanguage"             // "de" | "en"
+    static let uiLanguage = "uiLanguage"             // "system" | "de" | "en"
     static let ocrQuality = "ocrQuality"               // "accurate" | "fast"
     static let ocrLanguageCorrection = "ocrLanguageCorrection"
     static let ocrResolutionDPI = "ocrResolutionDPI"
@@ -39,7 +39,7 @@ final class SettingsStore: ObservableObject {
     @Published var dateFormat: String {
         didSet { save() }
     }
-    /// UI-Sprache ("de" | "en"); Default deutsch.
+    /// UI-Spracheinstellung ("system" | "de" | "en"); Default: Systemsprache des OS.
     @Published var language: String {
         didSet { save() }
     }
@@ -81,7 +81,7 @@ final class SettingsStore: ObservableObject {
         self.customInboxEnabled = defaults.bool(forKey: SettingsKey.customInboxEnabled)
         self.customInboxPath = defaults.string(forKey: SettingsKey.customInboxPath) ?? ""
         self.dateFormat = defaults.string(forKey: SettingsKey.dateFormat) ?? "dd.MM.yyyy"
-        self.language = defaults.string(forKey: SettingsKey.uiLanguage) ?? "de"
+        self.language = defaults.string(forKey: SettingsKey.uiLanguage) ?? "system"
         self.ocrQuality = defaults.string(forKey: SettingsKey.ocrQuality) ?? "accurate"
         self.ocrLanguageCorrection = defaults.object(forKey: SettingsKey.ocrLanguageCorrection) as? Bool ?? true
         self.ocrResolutionDPI = defaults.object(forKey: SettingsKey.ocrResolutionDPI) as? Int ?? 300
