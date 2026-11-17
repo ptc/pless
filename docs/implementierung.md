@@ -385,6 +385,7 @@ Kategorien
 | 2026-11-17 | 2a51dd7 | 9/UI | feat(ui): OCR-Text in der Vorschau markieren → Rechtsklick „Als Titel/Korrespondent übernehmen“ — 96 Tests grün |
 | 2026-11-17 | 592ff88 | 9/UI | feat(ui): Text direkt im PDFView selektieren → Rechtsklick „Als Titel/Korrespondent übernehmen“ — 96 Tests grün |
 | 2026-11-17 | 238c771 | — | feat: App-Icon aus docs/pless-icon.jpg (neues Script make-icon-from-image.swift, Bundle verifiziert) + Icon in README — 96 Tests grün |
+| 2026-11-17 | e7d961a | — | feat: App-Icon aus docs/pless-app-icon-svg.svg (qlmanage→PNG→iconset), Orientation-Fix kopfüber, README zeigt SVG — 96 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
