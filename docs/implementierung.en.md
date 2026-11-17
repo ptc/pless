@@ -392,6 +392,7 @@ Categories
 | 2026-11-17 | 238c771 | — | feat: App-Icon aus docs/pless-icon.jpg (neues Script make-icon-from-image.swift, Bundle verifiziert) + Icon in README — 96 Tests grün |
 | 2026-11-17 | e7d961a | — | feat: App-Icon aus docs/pless-app-icon-svg.svg (qlmanage→PNG→iconset), Orientation-Fix kopfüber, README zeigt SVG — 96 Tests grün |
 | 2026-11-17 | 7dc2e75 | — | docs: englische Versionen aller Docs (.en.md) + Sprachumschalter in der README — 96 Tests grün |
+| 2026-11-17 | 80cd00d | — | feat: App-UI zweisprachig (de/en) — L10n-Tabelle in PlessCore, Sprachwahl in den Einstellungen → Allgemein — 98 Tests grün |
 
 ## Open points / later ideas
 - Implement MCP protocolVersion `2025-06-18`
