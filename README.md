@@ -111,9 +111,10 @@ pless ist Open Source unter **GPL-3.0-or-later** — siehe [LICENSE](LICENSE)
 (SPDX: `GPL-3.0-or-later`). **Forks sind ausdrücklich willkommen**; Änderungen an einem
 Fork fallen automatisch unter dieselbe Lizenz. Externe Commits/PRs werden nicht angenommen.
 
-**Kommerzielle Lizenz (Dual Licensing):** Der Autor ist alleiniger Copyright-Holder und
-bietet auf Anfrage eine kommerzielle Lizenz an — für Firmen, die pless geschlossen einsetzen
-oder ohne Source-Offenlegung vertreiben wollen. Kontakt: dev@ptch.de
+**Kommerzielle Lizenz (Dual Licensing):** Der Autor ist alleiniger Copyright-Holder. Eine
+kommerzielle Lizenz (für geschlossenen Einsatz ohne Source-Offenlegung) ist grundsätzlich
+möglich, wird aber derzeit nicht aktiv angeboten — pless ist noch im Alpha-Stadium.
+Bei Interesse trotzdem melden: dev@ptch.de
 
 Externe Abhängigkeiten hat pless keine: nur Apple-System-Frameworks (dynamisch aus macOS
 geladen, nicht mit der App verteilt) und die systemeigene SQLite (Public Domain).
