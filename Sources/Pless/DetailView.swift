@@ -11,6 +11,7 @@ struct DetailView: View {
     @State private var pdfMode: PDFMode = .height  // Default: ganze skalierte Höhe
     @State private var pdfZoom: CGFloat = 1.0      // nur in .full wirksam (1.0 = 100 %)
     @State private var showOCRText = false          // OCR-Text-Panel (markierbar) erst auf Klick
+    @State private var ocrSelection = ""             // aktuell markierter Text im OCR-Panel
 
     var doc: PlessCore.Document? {
         state.selectedDoc
@@ -89,11 +90,20 @@ struct DetailView: View {
                             .help("OCR-Text ausblenden")
                         }
                         .padding(.horizontal, 8)
-                        TextEditor(text: .constant(text))
-                            .font(.caption)
-                            .scrollContentBackground(.hidden)
+                        SelectableTextView(text: text, selectedText: $ocrSelection)
                             .padding(.horizontal, 8)
                             .frame(height: 110)
+                            .contextMenu {
+                                let sel = ocrSelection.trimmingCharacters(in: .whitespacesAndNewlines)
+                                Button { state.setTitleFromText(doc.id, ocrSelection) } label: {
+                                    Label("Als Titel übernehmen", systemImage: "textformat")
+                                }
+                                .disabled(sel.isEmpty)
+                                Button { state.setCorrespondentFromText(doc.id, ocrSelection) } label: {
+                                    Label("Als Korrespondent übernehmen", systemImage: "person")
+                                }
+                                .disabled(sel.isEmpty)
+                            }
                     }
                     .padding(.vertical, 2)
                     .background(Color(nsColor: .windowBackgroundColor))
@@ -429,6 +439,54 @@ struct FlowLayout: Layout {
             sv.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
             x += s.width + spacing
             lineHeight = max(lineHeight, s.height)
+        }
+    }
+}
+
+/// Read-only, selektierbares Textfeld (NSTextView in ScrollView) — meldet die aktuelle
+/// Selektion über ein Binding, damit das Kontextmenü „Als Titel/Korrespondent übernehmen“
+/// auf den markierten Text zugreifen kann.
+struct SelectableTextView: NSViewRepresentable {
+    let text: String
+    @Binding var selectedText: String
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let tv = NSTextView()
+        tv.isEditable = false
+        tv.isSelectable = true
+        tv.isRichText = false
+        tv.drawsBackground = false
+        tv.backgroundColor = .clear
+        tv.font = NSFont.systemFont(ofSize: 11)
+        tv.textColor = NSColor.labelColor
+        tv.delegate = context.coordinator
+        tv.string = text
+        let scroll = NSScrollView()
+        scroll.documentView = tv
+        scroll.hasVerticalScroller = true
+        scroll.drawsBackground = false
+        return scroll
+    }
+
+    func updateNSView(_ scroll: NSScrollView, context: Context) {
+        guard let tv = scroll.documentView as? NSTextView, tv.string != text else { return }
+        let sel = tv.selectedRange()
+        tv.string = text
+        if sel.location < text.utf16.count {
+            tv.setSelectedRange(NSRange(location: sel.location, length: min(sel.length, text.utf16.count - sel.location)))
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: SelectableTextView
+        init(_ parent: SelectableTextView) { self.parent = parent }
+        func textViewDidChangeSelection(_ notification: Notification) {
+            guard let tv = notification.object as? NSTextView else { return }
+            let r = tv.selectedRange()
+            guard r.length > 0, let s = tv.string as NSString? else { parent.selectedText = ""; return }
+            parent.selectedText = s.substring(with: r)
         }
     }
 }

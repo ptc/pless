@@ -13,6 +13,15 @@ enum HeuristicsTests {
         MiniTest.test("Heuristik: Titel = erste sinnvolle Zeile") { try title() }
         MiniTest.test("Heuristik: Kategorie per Schlüsselwort") { try category() }
         MiniTest.test("Heuristik: suggest kombiniert alles") { try combined() }
+        MiniTest.test("Heuristik: Textauswahl als Titel/Korrespondent aufbereiten") { try selectionText() }
+    }
+
+    private static func selectionText() throws {
+        try MiniTest.expectEqual(Heuristics.asTitle("  KFZ-\nVersicherung  2026 \n"), "KFZ- Versicherung 2026")
+        try MiniTest.expectEqual(Heuristics.asTitle(""), "")
+        try MiniTest.expectEqual(Heuristics.asCorrespondent("Allianz Versicherung\nMusterstraße 1\n23433 Hamburg"), "Allianz Versicherung")
+        try MiniTest.expectEqual(Heuristics.asCorrespondent("\n  \nBöttcher AG\nRechnung"), "Böttcher AG")
+        try MiniTest.expectEqual(Heuristics.asCorrespondent(""), "")
     }
 
     private static func dates() throws {

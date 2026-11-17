@@ -194,6 +194,20 @@ public enum Heuristics {
         }
     }
 
+    /// Markierten Text als Titel aufbereiten: Newlines/Whitespaces kollabieren, trimmen.
+    public static func asTitle(_ raw: String) -> String {
+        raw.replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Markierten Text als Korrespondent aufbereiten: erste nicht-leere Zeile.
+    public static func asCorrespondent(_ raw: String) -> String {
+        raw.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .first { !$0.isEmpty } ?? ""
+    }
+
     private static func validDate(y: Int, m: Int, d: Int) -> String? {
         guard (1...12).contains(m), (1...31).contains(d) else { return nil }
         var c = DateComponents()

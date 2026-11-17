@@ -719,6 +719,30 @@ final class AppState: ObservableObject {
         refresh()
     }
 
+    /// Markierten Text aus der Vorschau als Titel übernehmen (Titel setzen + Datei via Schema umbenennen).
+    func setTitleFromText(_ documentId: Int64?, _ raw: String) {
+        guard let documentId, let db, let metadata else { return }
+        let title = Heuristics.asTitle(raw)
+        guard !title.isEmpty else { return }
+        do {
+            guard let doc = try db.document(byId: documentId) else { return }
+            _ = try metadata.saveMetadata(documentId: documentId, title: title, documentDate: doc.documentDate,
+                                          correspondentId: doc.correspondentId, categoryId: doc.categoryId, notes: doc.notes)
+            setStatus(.ok, "Titel übernommen: „\(title)“", autoIdleAfter: 6)
+        } catch {
+            errorMessage = "Titel konnte nicht gesetzt werden: \(error.localizedDescription)"
+        }
+        refresh()
+    }
+
+    /// Markierten Text aus der Vorschau als Korrespondent übernehmen (erste Zeile, find-or-create).
+    func setCorrespondentFromText(_ documentId: Int64?, _ raw: String) {
+        guard let documentId else { return }
+        let name = Heuristics.asCorrespondent(raw)
+        guard !name.isEmpty else { return }
+        applyCorrespondentSuggestion(documentId: documentId, name: name)
+    }
+
     func nameOfCategory(_ id: Int64?) -> String {
         guard let id else { return "" }
         return categories.first { $0.id == id }?.name ?? ""
