@@ -254,6 +254,7 @@ public enum L10n {
         "Ablage": "File",
         "Auswahl": "Selection",
         "System": "System",
+        "System (vom Betriebssystem)": "System (from the operating system)",
         "Entspricht aktuell: %@": "Currently resolves to: %@",
         // Nachträge 2
         "?": "?",

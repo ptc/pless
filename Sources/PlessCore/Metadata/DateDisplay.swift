@@ -4,6 +4,18 @@ import Foundation
 /// Format (Default deutsch `dd.MM.yyyy`, Locale de_DE).
 public enum DateDisplay {
 
+    /// "system" → vom Betriebssystem abgeleitetes Kurz-Datumsformat; sonst die Einstellung selbst.
+    public static func resolvePattern(_ setting: String) -> String {
+        setting == "system" ? systemPattern() : setting
+    }
+
+    /// Kurz-Datumsformat der aktuellen OS-Locale (z. B. de_DE → dd.MM.yyyy, en_US → MM/dd/yyyy).
+    public static func systemPattern() -> String {
+        var p = DateFormatter.dateFormat(fromTemplate: "yMd", options: 0, locale: Locale.current) ?? "dd.MM.yyyy"
+        if p.contains("yy") && !p.contains("yyyy") { p = p.replacingOccurrences(of: "yy", with: "yyyy") }
+        return p
+    }
+
     /// ISO-Datum (yyyy-MM-dd) → Anzeigeformat. Ungültige/unbekannte Eingabe wird 1:1 zurückgegeben.
     public static func format(iso: String?, pattern: String) -> String {
         guard let iso, !iso.isEmpty else { return "" }

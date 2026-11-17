@@ -9,7 +9,7 @@ enum SettingsKey {
     static let ocrLanguages = "ocrLanguages"
     static let customInboxEnabled = "customInboxEnabled"
     static let customInboxPath = "customInboxPath"
-    static let dateFormat = "dateFormat"
+    static let dateFormat = "dateFormat"               // "system" | "dd.MM.yyyy" | "yyyy-MM-dd" | "MM/dd/yyyy"
     static let uiLanguage = "uiLanguage"             // "system" | "de" | "en"
     static let ocrQuality = "ocrQuality"               // "accurate" | "fast"
     static let ocrLanguageCorrection = "ocrLanguageCorrection"
@@ -35,10 +35,12 @@ final class SettingsStore: ObservableObject {
     @Published var customInboxPath: String {
         didSet { save() }
     }
-    /// Anzeigeformat für Datumsfelder (DB bleibt ISO yyyy-MM-dd); Default deutsch.
+    /// Anzeigeformat für Datumsfelder (DB bleibt ISO yyyy-MM-dd); "system" = OS-Locale, Default system.
     @Published var dateFormat: String {
         didSet { save() }
     }
+    /// Eingestelltes Datumsformat aufgelöst ("system" → OS-Locale).
+    var resolvedDateFormat: String { DateDisplay.resolvePattern(dateFormat) }
     /// UI-Spracheinstellung ("system" | "de" | "en"); Default: Systemsprache des OS.
     @Published var language: String {
         didSet { save() }
@@ -80,7 +82,7 @@ final class SettingsStore: ObservableObject {
         self.ocrLanguages = Set(defaults.stringArray(forKey: SettingsKey.ocrLanguages) ?? ["de-DE", "en-US"])
         self.customInboxEnabled = defaults.bool(forKey: SettingsKey.customInboxEnabled)
         self.customInboxPath = defaults.string(forKey: SettingsKey.customInboxPath) ?? ""
-        self.dateFormat = defaults.string(forKey: SettingsKey.dateFormat) ?? "dd.MM.yyyy"
+        self.dateFormat = defaults.string(forKey: SettingsKey.dateFormat) ?? "system"
         self.language = defaults.string(forKey: SettingsKey.uiLanguage) ?? "system"
         self.ocrQuality = defaults.string(forKey: SettingsKey.ocrQuality) ?? "accurate"
         self.ocrLanguageCorrection = defaults.object(forKey: SettingsKey.ocrLanguageCorrection) as? Bool ?? true

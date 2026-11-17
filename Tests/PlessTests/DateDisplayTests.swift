@@ -7,6 +7,19 @@ enum DateDisplayTests {
         MiniTest.test("DateDisplay: ISO → deutsch (dd.MM.yyyy) und andere Formate") { try formatPatterns() }
         MiniTest.test("DateDisplay: parse akzeptiert Anzeigeformat und ISO, normalisiert auf ISO") { try parseInputs() }
         MiniTest.test("DateDisplay: ungültige Eingaben") { try invalidInputs() }
+        MiniTest.test("DateDisplay: resolvePattern — system → OS-Format, sonst 1:1; Roundtrip mit OS-Format") { try resolveSystem() }
+    }
+
+    private static func resolveSystem() throws {
+        try MiniTest.expectEqual(DateDisplay.resolvePattern("dd.MM.yyyy"), "dd.MM.yyyy")
+        try MiniTest.expectEqual(DateDisplay.resolvePattern("yyyy-MM-dd"), "yyyy-MM-dd")
+        let sys = DateDisplay.systemPattern()
+        try MiniTest.expect(!sys.isEmpty, "systemPattern nicht leer")
+        try MiniTest.expect(sys.contains("y") && sys.contains("d"), "systemPattern enthält Jahr und Tag")
+        try MiniTest.expectEqual(DateDisplay.resolvePattern("system"), sys)
+        // Roundtrip: ISO → OS-Format → zurück nach ISO
+        let shown = DateDisplay.format(iso: "2026-02-14", pattern: sys)
+        try MiniTest.expectEqual(DateDisplay.parse(shown, pattern: sys), "2026-02-14")
     }
 
     private static func formatPatterns() throws {

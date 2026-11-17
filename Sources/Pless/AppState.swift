@@ -154,7 +154,7 @@ final class AppState: ObservableObject {
 
     /// ISO-Datum (yyyy-MM-dd aus der DB) → Anzeigeformat aus den Einstellungen.
     func displayDate(_ iso: String?) -> String {
-        DateDisplay.format(iso: iso, pattern: settings.dateFormat)
+        DateDisplay.format(iso: iso, pattern: settings.resolvedDateFormat)
     }
 
     // MARK: - Mehrfachauswahl & Bulk
@@ -518,8 +518,8 @@ final class AppState: ObservableObject {
         guard let draft, let id = selection, let db, let metadata else { return }
         if !draft.date.isEmpty {
             // Eingabe im Anzeigeformat (z. B. dd.MM.yyyy) oder ISO → intern ISO speichern
-            guard let iso = DateDisplay.parse(draft.date, pattern: settings.dateFormat) else {
-                errorMessage = TF("Datum ungültig — bitte Format %@ verwenden", settings.dateFormat)
+            guard let iso = DateDisplay.parse(draft.date, pattern: settings.resolvedDateFormat) else {
+                errorMessage = TF("Datum ungültig — bitte Format %@ verwenden", settings.resolvedDateFormat)
                 return
             }
             draft.date = iso

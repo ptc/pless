@@ -97,6 +97,7 @@ struct SettingsView: View {
             Section(T("Anzeige")) {
                 LabeledContent(T("Datumsformat")) {
                     Picker(T("Datumsformat"), selection: $settings.dateFormat) {
+                        Text(T("System (vom Betriebssystem)")).tag("system")
                         Text(T("Deutsch (dd.MM.yyyy)")).tag("dd.MM.yyyy")
                         Text(T("ISO (yyyy-MM-dd)")).tag("yyyy-MM-dd")
                         Text(T("US (MM/dd/yyyy)")).tag("MM/dd/yyyy")
@@ -104,7 +105,9 @@ struct SettingsView: View {
                     .labelsHidden()
                     .frame(width: 200)
                 }
-                Text(T("Betrifft Anzeige in Liste, Details und Bearbeitungsmodus — gespeichert wird immer ISO (yyyy-MM-dd)."))
+                Text(settings.dateFormat == "system"
+                     ? TF("Entspricht aktuell: %@", settings.resolvedDateFormat)
+                     : T("Betrifft Anzeige in Liste, Details und Bearbeitungsmodus — gespeichert wird immer ISO (yyyy-MM-dd)."))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

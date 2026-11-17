@@ -27,9 +27,9 @@ struct MetadataEditView: View {
                     GridRow {
                         Text(T("Datum")).foregroundStyle(.secondary)
                         // Anzeige im eingestellten Format; Eingabe darf ISO oder Anzeigeformat sein
-                        TextField(state.settings.dateFormat, text: Binding(
+                        TextField(state.settings.resolvedDateFormat, text: Binding(
                             get: { state.displayDate(state.draft?.date) },
-                            set: { state.draft?.date = DateDisplay.parse($0, pattern: state.settings.dateFormat) ?? $0 }))
+                            set: { state.draft?.date = DateDisplay.parse($0, pattern: state.settings.resolvedDateFormat) ?? $0 }))
                             .textFieldStyle(.roundedBorder).frame(width: 110)
                     }
                     // Datums-Vorschläge aus dem OCR-/Textschicht-Text: jedes Datum anwählbar (im Anzeigeformat)
