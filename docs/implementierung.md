@@ -380,6 +380,7 @@ Kategorien
 | 2026-11-17 | 7d43e7e | — | chore: LICENSE GPL-3.0-or-later + README-Lizenzabschnitt (Dual Licensing, Forks ok, keine externen Abhängigkeiten) — 94 Tests grün |
 | 2026-11-17 | dcc5726 | 9 | feat: OCR konfigurierbar (Genauigkeit fast/accurate, dpi 200/300/400, Sprachkorrektur) — Default 300 dpi — 95 Tests grün |
 | 2026-11-17 | c5c6895 | 9/UI | feat(ui): OCR pro Dokument erneut anstoßen („OCR erneut“ in der Detail-Vorschau, auch wenn schon done) — 95 Tests grün |
+| 2026-11-17 | 3750379 | 9/UI | fix(ui): OCR in der Detail-Leiste als Icon-Dropdown (doc.text.viewfinder) statt Text-Buttons — 95 Tests grün |
 
 ## Offene Punkte / spätere Ideen
 - MCP protocolVersion `2025-06-18` umsetzen
