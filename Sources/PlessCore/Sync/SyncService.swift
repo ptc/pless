@@ -53,14 +53,15 @@ public final class SyncService: @unchecked Sendable {
     /// SHA-256 über die kanonischen Metadaten eines Dokuments (Titel, Datum, Korrespondent,
     /// Kategorie, Notizen, Tag-IDs) — ändert sich bei jeder Metadaten-Änderung, nicht bei Datei-Änderung.
     public static func metaHash(doc: Document, tagIds: [Int64]) -> String {
-        let canonical = [
+        let parts: [String] = [
             doc.title ?? "",
             doc.documentDate ?? "",
-            doc.correspondentId.map(String.init) ?? "",
-            doc.categoryId.map(String.init) ?? "",
+            doc.correspondentId.map { String($0) } ?? "",
+            doc.categoryId.map { String($0) } ?? "",
             doc.notes ?? "",
-            tagIds.sorted().map(String.init).joined(separator: ",")
-        ].joined(separator: "\u{1F}")
+            tagIds.sorted().map { String($0) }.joined(separator: ",")
+        ]
+        let canonical = parts.joined(separator: "\u{1F}")
         return FileHash.sha256(of: Data(canonical.utf8))
     }
 
