@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write   # für die Attestation
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: App bauen
+        run: bash Scripts/make-app.sh
+
+      - name: Version aus Tag übernehmen
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          plutil -replace CFBundleShortVersionString -string "$VERSION" dist/Pless.app/Contents/Info.plist
+
+      - name: ZIP erstellen
+        run: cd dist && zip -qry Pless-macOS.zip Pless.app
+
+      - name: SHA256 berechnen
+        run: cd dist && shasum -a 256 Pless-macOS.zip > Pless-macOS.zip.sha256
+
+      - name: Attestation (Build-Provenance)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/Pless-macOS.zip
+            dist/Pless-macOS.zip.sha256
+
+      - name: GitHub Release erstellen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME" 2>/dev/null || true
+          gh release upload "${GITHUB_REF_NAME}" dist/Pless-macOS.zip dist/Pless-macOS.zip.sha256 --clobber
