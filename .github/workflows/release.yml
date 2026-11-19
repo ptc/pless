@@ -39,5 +39,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME" 2>/dev/null || true
+          gh release create "${GITHUB_REF_NAME}" >/dev/null 2>&1 || true
           gh release upload "${GITHUB_REF_NAME}" dist/Pless-macOS.zip dist/Pless-macOS.zip.sha256 --clobber
