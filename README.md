@@ -55,6 +55,16 @@ passiert nie ein Netzwerk-Call.
 
 Technischer Hintergrund (Mapping, Checksumme, PATCH, Pull): [docs/technik.md](docs/technik.md).
 
+### Installation
+
+Lade `Pless-macOS.zip` von [Releases](https://github.com/ptc/pless/releases/latest) und entpacke es.
+
+**Hinweis zur Meldung „Pless ist beschädigt":** Die App ist ohne Apple-Zertifikat signiert, deshalb warnt macOS. Kein echter Schaden. Einmalig im Terminal ausführen:
+
+```bash
+xattr -cr /Applications/Pless.app
+```
+
 ## Build & Test (Xcode installiert, SwiftPM-only — kein Xcode-Projekt nötig)
 
 ```bash

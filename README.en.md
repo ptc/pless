@@ -55,6 +55,16 @@ no network call is ever made.
 
 Technical background (mapping, checksum, PATCH, pull): [docs/technik.en.md](docs/technik.en.md).
 
+### Installation
+
+Download `Pless-macOS.zip` from [Releases](https://github.com/ptc/pless/releases/latest) and unzip it.
+
+**Note on the "Pless is damaged" message:** The app is signed without an Apple certificate, so macOS warns about it. No actual damage. Run once in Terminal:
+
+```bash
+xattr -cr /Applications/Pless.app
+```
+
 ## Build & test (Xcode installed, SwiftPM only — no Xcode project needed)
 
 ```bash
