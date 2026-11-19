@@ -4,6 +4,28 @@ Internals for developers. The roadmap with phases & progress lives in
 [implementierung.en.md](implementierung.en.md), the product description in the
 [README](../README.en.md) (German) / [README](../README.md).
 
+## Installation & release
+
+**Release (end users):** download `Pless-macOS.zip` (+ `.sha256` for verification) from
+[GitHub Releases](https://github.com/ptc/pless/releases/latest), unzip and copy `Pless.app`
+to `/Applications`. The app is ad-hoc signed (no Apple certificate), so macOS reports
+“Pless is damaged” on first launch — no actual damage, run once in Terminal:
+`xattr -cr /Applications/Pless.app` (removes the quarantine attribute).
+
+**Release process:** `.github/workflows/release.yml` — a tag push builds the bundle via
+`Scripts/make-app.sh`, packs `dist/Pless-macOS.zip` + SHA-256 and publishes both as a
+GitHub release (`gh release create` / `gh release upload --clobber`).
+
+## Build, run & CLI
+
+```bash
+swift build --package-path /Users/ptc/dev/ppless
+swift run   --package-path /Users/ptc/dev/ppless PlessTests                # tests (exit code 0 = green)
+swift run   --package-path /Users/ptc/dev/ppless Pless                       # app (GUI)
+swift run   --package-path /Users/ptc/dev/ppless Pless --vault <path>        # app with another vault
+swift run   --package-path /Users/ptc/dev/ppless Pless mcp --vault <path>    # MCP server (stdio)
+```
+
 ## Architecture
 
 - **Swift 6, Swift Package Manager only** — no Xcode project, no external packages.
@@ -73,6 +95,19 @@ Tools: `search_documents`, `get_document`, `list_documents`, `list_categories`,
 `update_document` (incl. file rename), `assign_tag`, `get_stats`.
 Errors as JSON-RPC errors (-32700/-32601/…), `notifications/initialized` without reply.
 
+**Client config** (e.g. Claude Desktop; also copyable in the app settings under “MCP”):
+
+```json
+{
+  "mcpServers": {
+    "pless": {
+      "command": "<path-to-binary>/Pless",
+      "args": ["mcp", "--vault", "/Users/ptc/Documents/Pless"]
+    }
+  }
+}
+```
+
 ## Tests
 
 MiniTest (own runner in `Sources/MiniTest`, registration in `Tests/PlessTests/AllTests.swift`).
@@ -85,6 +120,17 @@ PATCH, pull, error paths) — last run 96 tests green.
 icon from `docs/pless-app-icon-svg.svg` via `Scripts/make-icon-from-image.swift` + iconutil).
 `dist/` is gitignored. Open: Developer-ID signing, share extension + app group
 (needs an Xcode project).
+
+## Legal & liability
+
+- **Use at your own risk:** private project at an early stage (0.1.x), without any warranty —
+  neither functionality nor data integrity. Back up the vault regularly (it is a plain folder,
+  e.g. via Time Machine).
+- pless is **not** affiliated with paperless-ngx and is not endorsed by it. “paperless” and
+  “paperless-ngx” are trademarks of their respective organizations; pless is an independent
+  project. The optional sync only uses the public API of paperless-ngx.
+- License: **GPL-3.0-or-later** (see [LICENSE](../LICENSE)); forks are welcome, external
+  commits/PRs are not accepted.
 
 ## Known limitations (technical)
 
