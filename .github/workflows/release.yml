@@ -6,7 +6,8 @@ on:
 
 permissions:
   contents: write
-  id-token: write   # für die Attestation
+  id-token: write
+  attestations: write   # neu: Hochladen der Attestation ins Repo
 
 jobs:
   build:
